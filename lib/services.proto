@@ -1,0 +1,24 @@
+
+syntax = "proto3";
+
+package coherence;
+
+import "messages.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+
+service NamedCacheService {
+
+    rpc clear(ClearRequest) returns (google.protobuf.Empty) {}
+
+    rpc isEmpty(IsEmptyRequest) returns (google.protobuf.BoolValue) {}
+
+    rpc get(GetRequest) returns (google.protobuf.BytesValue) {}
+
+    rpc put(PutRequest) returns (google.protobuf.BytesValue) {}
+
+    rpc size(SizeRequest) returns (google.protobuf.Int32Value) {}
+
+}
