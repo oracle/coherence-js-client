@@ -8,13 +8,27 @@ const oneDay = 86400;
 const noop = () => {}
 
 /**
- * CoherenceConnect implements the necessary methods so that it can be used
- * by the express-session module as a session store.
+ * A NamedCacheClient as a client to a NamedCache wich is a Map that holds
+ * resources shared among members of a cluster.
  *
- * Internally, it talks to a gRPC service as defined in the coherence_session_store.proto.
+ * All methods in this class return a Promise that eventually either resolves
+ * to a value (as described in the NamedCache) or an error if any exception
+ * occurs during the method invocation.
  */
 module.exports = class NamedCacheClient {
 
+  /**
+   * Creates a NamedCacheClient for the specified cache. The options to be used.
+   * The supported option values are:
+   *  address: the address to connect to. Defaults to 'localhost:1408'
+   *  ttl: the default time to live in milliseconds for the entries that are
+           put in the cache. Defaults to zero
+   *
+   * @param cacheName the name of the cache
+   * @param options   the options to be used. The supported option values are:
+   *                  address: the address to connect to. Defaults to 'localhost:1408'
+   *                  ttl: the default time to live in milliseconds. Defaults to zero
+   */
   constructor(cacheName, options = {}) {
     this.cacheName = cacheName;
     this.address = options.address || 'localhost:1408';
@@ -31,6 +45,11 @@ module.exports = class NamedCacheClient {
     this.client = new cache_proto.coherence.NamedCacheService(this.address, grpc.credentials.createInsecure());
   }
 
+  /**
+   * Clears all the mappings in the cache.
+   *
+   * @return a Promise that eventually resolves (with an undefined value)
+   */
   clear() {
     const self = this;
     const request = {
@@ -48,6 +67,12 @@ module.exports = class NamedCacheClient {
     });
   }
 
+  /**
+   * Checks if the NamedCache is empty or not.
+   *
+   * @return a Promise that eventually resolves to true if the cache is empty;
+   *         false otherwise
+   */
   isEmpty() {
     const self = this;
     const request = {
@@ -66,10 +91,12 @@ module.exports = class NamedCacheClient {
   }
 
   /**
-   * Returns a Promise that will eventually resolve to the value that
-   * is associated with the specified key.
+   * Returns the value to which this map maps the specified key.
    *
-   * @param key the callback to be invoked on completion
+   * @param key the key whose associated value is to be returned
+   *
+   * @return a Promise that will eventually resolve to the value that
+   * is associated with the specified key.
    */
   get(key) {
     const self = this;
@@ -84,17 +111,24 @@ module.exports = class NamedCacheClient {
         if (err) {
           reject(err);
         } else {
-          resolve(response.value);
+          if (response.value && response.value.length > 0) {
+            resolve(JSON.parse(Buffer.from(response.value)));
+          }
+          resolve(null);
         }
       });
     });
   }
 
   /**
-   * Returns a Promise that will eventually resolve to the value that
-   * is associated with the specified key.
+   * Associates the specified value with the specified key in this map. If the
+   * map previously contained a mapping for this key, the old value is replaced.
    *
-   * @param key the callback to be invoked on completion
+   * @param key the key with which the specified value is to be associated
+   * @param key the value to be associated with the specified key
+   *
+   * @return a Promise that will eventually resolve to the previous value that
+   * was associated with the specified key.
    */
   put(key, value, callback = noop) {
     const self = this;
@@ -110,9 +144,8 @@ module.exports = class NamedCacheClient {
         if (err) {
           reject(err);
         } else {
-          console.log("** Got response.value: <" + JSON.stringify(response.value) + ">")
           if (response.value && response.value.length > 0) {
-            resolve(JSON.parse(Buffer.from(response.value).toString()));
+            resolve(JSON.parse(Buffer.from(response.value)));
           }
           resolve(null);
         }
@@ -120,6 +153,12 @@ module.exports = class NamedCacheClient {
     });
   }
 
+  /**
+   * Returns the number of key-value mappings in this map.
+   *
+   * @return a Promise that will eventually resolve to the number of key-value
+   *         mappings in this map
+   */
   size() {
     const self = this;
     const request = {
