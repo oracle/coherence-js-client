@@ -1,0 +1,21 @@
+variables:
+  HTTP_PROXY: http://www-proxy-hqdc.us.oracle.com:80
+  HTTPS_PROXY: http://www-proxy-hqdc.us.oracle.com:80
+  NO_PROXY: 127.0.0.1,localhost,*.oracle.com,*.oraclecorp.com,.oraclecloud.com
+  http_proxy: http://www-proxy-hqdc.us.oracle.com:80
+  https_proxy: http://www-proxy-hqdc.us.oracle.com:80
+  no_proxy: 127.0.0.1,localhost,*.oracle.com,*.oraclecorp.com,*.oraclecloud.com
+
+before_script:
+  - echo $MAVEN_SETTINGS_XML > settings.xml
+stages:
+  - prepare
+  - build
+  - test
+
+build:
+  stage: prepare
+  script:
+  - npm install
+  tags:
+  - npm
