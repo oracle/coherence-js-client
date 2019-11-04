@@ -24,7 +24,8 @@ setup_node_js:
   stage: setup_node_js
   script:
   - nvm install v12.6.0
-  - node --version
+  - node -v
+  - npm -v
   tags:
   - coherence
 
