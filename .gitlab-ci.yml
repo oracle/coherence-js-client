@@ -10,10 +10,8 @@ before_script:
   - echo $MAVEN_SETTINGS_XML > settings.xml
 stages:
   - prepare
-  - build
-  - test
 
-build:
+prepare:
   stage: prepare
   script:
   - npm install
