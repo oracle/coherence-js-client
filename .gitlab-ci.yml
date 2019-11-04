@@ -12,6 +12,7 @@ stages:
   - download_nvm
   - setup_node_js
   - setup_project
+  - build_and_test
 
 download_nvm:
   stage: download_nvm
@@ -34,5 +35,12 @@ setup_project:
   script:
   - cat ./package.json
   - npm install
+  tags:
+  - coherence
+
+build_and_test:
+  stage: build_and_test
+  script:
+  - npm test
   tags:
   - coherence
