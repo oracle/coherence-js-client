@@ -3,10 +3,6 @@
 const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 
-const oneDay = 86400;
-
-const noop = () => {}
-
 /**
  * A NamedCacheClient as a client to a NamedCache wich is a Map that holds
  * resources shared among members of a cluster.
@@ -130,7 +126,7 @@ module.exports = class NamedCacheClient {
    * @return a Promise that will eventually resolve to the previous value that
    * was associated with the specified key.
    */
-  put(key, value, callback = noop) {
+  put(key, value) {
     const self = this;
     const request = {
       cache : self.cacheName,
