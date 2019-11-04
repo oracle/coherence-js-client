@@ -25,7 +25,6 @@ setup_node_js:
   script:
   - nvm install v12.6.0
   - node --version
-  - npm insta
   tags:
   - coherence
 
