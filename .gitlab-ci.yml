@@ -36,6 +36,7 @@ setup_project:
   - cat ./package.json
   - env
   - npm install
+  - npm --only=dev install
   tags:
   - coherence
 
