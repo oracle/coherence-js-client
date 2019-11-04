@@ -9,11 +9,20 @@ variables:
 before_script:
   - echo $MAVEN_SETTINGS_XML > settings.xml
 stages:
-  - prepare
+  - download_nvm
+  - setup_node_js
 
-prepare:
-  stage: prepare
+download_nvm:
+  stage: download_nvm
   script:
   - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
+  tags:
+  - coherence
+
+setup_node_js
+  stage: setup_node_js
+  script:
+  - nvm install v12.6.0
+  - nvm list
   tags:
   - coherence
