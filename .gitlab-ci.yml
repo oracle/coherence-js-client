@@ -11,6 +11,7 @@ before_script:
 stages:
   - download_nvm
   - setup_node_js
+  - setup_project
 
 download_nvm:
   stage: download_nvm
@@ -24,5 +25,13 @@ setup_node_js:
   script:
   - nvm install v12.6.0
   - node --version
+  - npm insta
+  tags:
+  - coherence
+
+setup_project:
+  stage: setup_project
+  script:
+  - npm install
   tags:
   - coherence
