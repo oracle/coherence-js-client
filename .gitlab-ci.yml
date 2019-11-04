@@ -31,6 +31,7 @@ setup_node_js:
 setup_project:
   stage: setup_project
   script:
+  - cat ./package.json
   - npm install
   tags:
   - coherence
