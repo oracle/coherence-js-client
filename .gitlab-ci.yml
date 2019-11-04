@@ -37,6 +37,7 @@ setup_project:
   - env
   - npm install
   - npm --only=dev install
+  - npm test
   tags:
   - coherence
 

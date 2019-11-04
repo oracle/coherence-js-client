@@ -12,6 +12,6 @@
     "mocha": "^6.2.2"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "./node_modules/.bin/mocha"
   }
 }
