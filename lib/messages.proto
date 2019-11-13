@@ -14,6 +14,10 @@
 // limitations under the License.
 //
 
+// Authors:
+//  Mahesh Kannan
+//  Jonathan Knight
+
 // NamedCacheService message types
 //
 
@@ -25,36 +29,188 @@ option java_multiple_files = true;
 
 option java_package = "com.oracle.coherence.grpc.proxy";
 
+// A request to clear all the entries in the cache.
 message ClearRequest {
+    // The name of the cache.
     string cache = 1;
 }
 
-message DestroyRequest {
-    string cache = 1;
-}
-
-message IsEmptyRequest {
-    string cache = 1;
-}
-
-message ReleaseRequest {
-    string cache = 1;
-}
-
-message SizeRequest {
-    string cache = 1;
-}
-
-message GetRequest {
+// A request to determine whether an entry exists in a cache
+// with a specific key and value.
+message ContainsEntryRequest {
+    // The name of the cache.
     string cache  = 1;
+    // The serialization format.
     string format = 2;
+    // The serialization format.
+    bytes  key    = 3;
+    // The value of the entry to verify.
+    bytes  value  = 4;
+}
+
+// A request to determine whether an entry exists in a cache
+// for the specified key.
+message ContainsKeyRequest {
+    // The name of the cache.
+    string cache  = 1;
+    // The serialization format.
+    string format = 2;
+    // The key of the entry to verify.
     bytes  key    = 3;
 }
 
+// A request to determine whether an entry exists in a cache
+// with the specified value.
+message ContainsValueRequest {
+    // The name of the cache.
+    string cache  = 1;
+    // The serialization format.
+    string format = 2;
+    // The value of the entry to verify.
+    bytes  value  = 3;
+}
+
+// A request to destroy a cache.
+message DestroyRequest {
+    // The name of the cache.
+    string cache = 1;
+}
+
+// A request to determine whether a cache is empty or not.
+message IsEmptyRequest {
+    // The name of the cache.
+    string cache = 1;
+}
+
+// A request to release a cache.
+message ReleaseRequest {
+    // The name of the cache.
+    string cache = 1;
+}
+
+// A request to determine the number of entries in a cache.
+message SizeRequest {
+    // The name of the cache.
+    string cache = 1;
+}
+
+// A request to obtain the value to which a cache maps the
+// specified key.
+message GetRequest {
+    // The name of the cache.
+    string cache  = 1;
+    // The serialization format.
+    string format = 2;
+    // The key of the entry to retrieve.
+    bytes  key    = 3;
+}
+
+// A request to associate the specified value with the
+// specified key in a cache.
 message PutRequest {
+    // The name of the cache.
     string cache   = 1;
+    // The serialization format.
     string format  = 2;
+    // The cache entry key.
     bytes  key     = 3;
+    // The value of the entry.
     bytes  value   = 4;
+    // The time to live in millis.
     uint32 ttl     = 5;
+}
+
+// A request to associate the specified value with the
+// specified key in a cache only if the specified key
+// is not associated with any value (including null).
+message PutIfAbsentRequest {
+    // The name of the cache.
+    string cache   = 1;
+    // The serialization format.
+    string format  = 2;
+    // The cache entry key.
+    bytes  key     = 3;
+    // The value to be put.
+    bytes  value   = 4;
+    // The time to live in millis.
+    uint32 ttl     = 5;
+}
+
+// A request to remove the mapping for a key from a cache
+// if it is present.
+message RemoveRequest {
+    // The name of the cache.
+    string cache   = 1;
+    // The serialization format.
+    string format  = 2;
+    // The key of the entry to be removed.
+    bytes  key     = 3;
+}
+
+// A request to remove the mapping for a key from a cache
+// only if the specified key is associated with the specified
+// value in that cache.
+message RemoveMappingRequest {
+    // The name of the cache.
+    string cache   = 1;
+    // The serialization format.
+    string format  = 2;
+    // The key of the entry to be removed.
+    bytes  key     = 3;
+    // The value of the entry to verify.
+    bytes  value   = 4;
+}
+
+// A request to replace the mapping for the specified key
+// with the specified value in a cache only if the specified
+// key is associated with some value in that cache.
+message ReplaceRequest {
+    // The name of the cache.
+    string cache   = 1;
+    // The serialization format.
+    string format  = 2;
+    // The key of the entry to be replaced.
+    bytes  key     = 3;
+    // The value of the entry to be replaced.
+    bytes  value   = 4;
+}
+
+// A request to replace the mapping for the specified key
+// with the specified newValue in a cache only if the specified
+// key is associated with the specified previousValue in
+// that cache.
+message ReplaceMappingRequest {
+    // The name of the cache.
+    string cache   = 1;
+    // The serialization format.
+    string format  = 2;
+    // The key of the entry to be replaced.
+    bytes  key     = 3;
+    // The previous value that should exist in the cache.
+    bytes  previousValue  = 4;
+    // The new value to put.
+    bytes  newValue       = 5;
+}
+
+// A request for a page of data from a cache.
+// This request is used for implementing methods such as NamedCache.keySet(),
+// NamedCache.entrySet() and NamedCache.values() where it would be impractical
+// to return the whole data set in one response.
+message PageRequest {
+    // The name of the cache.
+    string cache = 1;
+    // The serialization format
+    string format = 2;
+    // An opaque cookie to track the requested page.
+    bytes cookie = 4;
+}
+
+// A cache entry key/value pair.
+message EntryResult {
+    // The cache entry key.
+    bytes key = 1;
+    // The cache entry value.
+    bytes value = 2;
+    // An opaque cookie to track the requested page.
+    bytes cookie = 3;
 }
