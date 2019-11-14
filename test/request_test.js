@@ -19,19 +19,19 @@ describe('Request', function() {
   describe('#clear', function() {
 
     it('cannot create a clear request without cache name', async () => {
-      expect(() => Request.clear()).to.throw('cache name cannot be null or undefined');
+      expect(() => new Request().clear()).to.throw('cache name cannot be null or undefined');
     })
 
     it('cannot create a clear request with null cache name', async () => {
-      expect(() => Request.clear(null)).to.throw('cache name cannot be null or undefined');
+      expect(() => new Request(null).clear()).to.throw('cache name cannot be null or undefined');
     })
 
     it('cache name has to be a string', async () => {
-      expect(() => Request.clear({key: "Persons"})).to.throw('cache name has to be a string type');
+      expect(() => new Request({key: "Persons"}).clear()).to.throw('cache name has to be a string type');
     })
 
     it('can create a clear request with a cache name', async () => {
-      const get = Request.clear("States");
+      const get = new Request("States").clear();
       const expected = {
         cache: "States"
       };
@@ -45,7 +45,7 @@ describe('Request', function() {
   describe('#containsEntry', function() {
 
     it('can create a containsEntry request from a simple key', async () => {
-      const containsEntry = Request.containsEntry("States", "ca", states.ca);
+      const containsEntry = new Request("States").containsEntry("ca", states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -57,7 +57,7 @@ describe('Request', function() {
     })
 
     it('can create a containsEntry request from a complex key', async () => {
-      const containsEntry = Request.containsEntry("States", states.ca, states.ny);
+      const containsEntry = new Request("States").containsEntry(states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -74,7 +74,7 @@ describe('Request', function() {
   describe('#containsKey', function() {
 
     it('can create a containsKey request from a simple key', async () => {
-      const containsKey = Request.containsKey("States", "ca");
+      const containsKey = new Request("States").containsKey("ca");
       const expected = {
         cache: "States",
         format: "json",
@@ -85,7 +85,7 @@ describe('Request', function() {
     })
 
     it('can create a containsEntry request from a complex key', async () => {
-      const containsKey = Request.containsKey("States", states.ca);
+      const containsKey = new Request("States").containsKey(states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -101,7 +101,7 @@ describe('Request', function() {
   describe('#containsValue', function() {
 
     it('can create a containsValue request from a simple key', async () => {
-      const containsValue = Request.containsValue("States", "ca", states.ca);
+      const containsValue = new Request("States").containsValue("ca", states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -113,7 +113,7 @@ describe('Request', function() {
     })
 
     it('can create a containsEntry request from a complex key', async () => {
-      const containsValue = Request.containsValue("States", states.ca, states.ny);
+      const containsValue = new Request("States").containsValue(states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -130,7 +130,7 @@ describe('Request', function() {
   describe('#isEmpty', function() {
 
     it('can create a clear request with a cache name', async () => {
-      const isEmpty = Request.isEmpty("States");
+      const isEmpty = new Request("States").isEmpty("States");
       const expected = {
         cache: "States"
       };
@@ -144,7 +144,7 @@ describe('Request', function() {
   describe('#get', function() {
 
     it('can create a get request from a simple key', async () => {
-      const get = Request.get("States", "ca");
+      const get = new Request("States").get("ca");
       const expected = {
         cache: "States",
         format: "json",
@@ -155,7 +155,7 @@ describe('Request', function() {
     })
 
     it('can create a get request from a complex key', async () => {
-      const get = Request.get("States", states.ca);
+      const get = new Request("States").get(states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -171,7 +171,7 @@ describe('Request', function() {
   describe('#put', function() {
 
     it('can create a put request from a simple key', async () => {
-      const put = Request.put("States", "ca", states.ca);
+      const put = new Request("States").put("ca", states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -183,7 +183,7 @@ describe('Request', function() {
     })
 
     it('can create a put request from a complex key', async () => {
-      const put = Request.put("States", states.ca, states.ny);
+      const put = new Request("States").put(states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -200,7 +200,7 @@ describe('Request', function() {
   describe('#putIfAbsent', function() {
 
     it('can create a putIfAbsent request from a simple key', async () => {
-      const putIfAbsent = Request.putIfAbsent("States", "ca", states.ca);
+      const putIfAbsent = new Request("States").putIfAbsent("ca", states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -212,7 +212,7 @@ describe('Request', function() {
     })
 
     it('can create a putIfAbsent request from a complex key', async () => {
-      const putIfAbsent = Request.putIfAbsent("States", states.ca, states.ny);
+      const putIfAbsent = new Request("States").putIfAbsent(states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -228,7 +228,7 @@ describe('Request', function() {
   describe('#remove', function() {
 
     it('can create a remove request from a simple key', async () => {
-      const remove = Request.remove("States", "ca");
+      const remove = new Request("States").remove("ca");
       const expected = {
         cache: "States",
         format: "json",
@@ -239,7 +239,7 @@ describe('Request', function() {
     })
 
     it('can create a remove request from a complex key', async () => {
-      const remove = Request.remove("States", states.ca);
+      const remove = new Request("States").remove(states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -255,7 +255,7 @@ describe('Request', function() {
   describe('#removeMapping', function() {
 
     it('can create a removeMapping request from a simple key', async () => {
-      const removeMapping = Request.removeMapping("States", "ca", states.ca);
+      const removeMapping = new Request("States").removeMapping("ca", states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -267,7 +267,7 @@ describe('Request', function() {
     })
 
     it('can create a removeMapping request from a complex key', async () => {
-      const removeMapping = Request.removeMapping("States", states.ca, states.ny);
+      const removeMapping = new Request("States").removeMapping(states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -284,7 +284,7 @@ describe('Request', function() {
   describe('#replace', function() {
 
     it('can create a replace request from a simple key', async () => {
-      const replace = Request.replace("States", "ca");
+      const replace = new Request("States").replace("ca");
       const expected = {
         cache: "States",
         format: "json",
@@ -295,7 +295,7 @@ describe('Request', function() {
     })
 
     it('can create a replace request from a complex key', async () => {
-      const replace = Request.replace("States", states.ca);
+      const replace = new Request("States").replace(states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -311,7 +311,7 @@ describe('Request', function() {
   describe('#replaceMapping', function() {
 
     it('can create a replaceMapping request from a simple key', async () => {
-      const replaceMapping = Request.replaceMapping("States", "ca", states.ca, states.ny);
+      const replaceMapping = new Request("States").replaceMapping("ca", states.ca, states.ny);
       const expected = {
         cache: "States",
         format: "json",
@@ -324,7 +324,7 @@ describe('Request', function() {
     })
 
     it('can create a replaceMapping request from a complex key', async () => {
-      const replaceMapping = Request.replaceMapping("States", states.ca, states.ny, states.ca);
+      const replaceMapping = new Request("States").replaceMapping(states.ca, states.ny, states.ca);
       const expected = {
         cache: "States",
         format: "json",
@@ -341,12 +341,28 @@ describe('Request', function() {
   describe('#size', function() {
 
     it('can create a size request with a cache name', async () => {
-      const size = Request.size("States");
+      const size = new Request("States").size("States");
       const expected = {
         cache: "States"
       };
 
       expect(size).to.eql(expected);
+    })
+
+  }); // #size
+
+
+  describe('#page', function() {
+
+    it('can create a keySet request with a cache name', async () => {
+      const page = new Request("States").page("States");
+      const expected = {
+        cache: "States",
+        format: "json",
+        cookie: Buffer.alloc(0)
+      };
+
+      expect(page).to.eql(expected);
     })
 
   }); // #isEmpty

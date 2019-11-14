@@ -81,4 +81,7 @@ service NamedCacheService {
     // Determine the number of entries in a cache.
     rpc size(SizeRequest) returns (google.protobuf.Int32Value) {}
 
+    // Get the next page of a paged entry set request.
+    rpc nextEntrySetPage(PageRequest) returns (stream EntryResult){}
+
 }

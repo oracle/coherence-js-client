@@ -1,12 +1,12 @@
 /* test/cache_test.js */
 
 const chai            = require('chai');
-const expect          = chai.expect;
+const expect          = require('chai').expect;
 const chaiAsPromised  = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
 const CacheClient     = require('../client.js');
-const cache           = new CacheClient("Persons");
+const cache           = new CacheClient("States");
 const states          = require('./states.js');
 
 describe('NamedCacheService', function() {
@@ -503,7 +503,7 @@ describe('NamedCacheService', function() {
 
   describe('#size', function() {
 
-  it('should be zero on an empty cache', async () => {
+    it('should be zero on an empty cache', async () => {
       expect(await cache.size()).to.equal(0);
     });
 
@@ -526,6 +526,68 @@ describe('NamedCacheService', function() {
     });
 
   }); // #size
+
+
+  const func = function(a, b) {
+    const w = 0.2;
+
+    return a + w*b;
+  }
+
+  describe('#entrySet', function() {
+
+    it('call entrySet on an empty cache', async () => {
+      const set = cache.entrySet();
+
+      expect(await set.size()).to.equal(0);
+      expect(await set.has('foo')).to.equal(false);
+    });
+
+    it('call entrySet on a non empty cache', async () => {
+      for (let i = 0; i < 5; i++) {
+        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        await cache.put(key, value);
+      }
+
+      let count = 0;
+      for await (const value of cache.entrySet()) {
+        count++
+        console.log("Key: " + JSON.stringify(value.key))
+      }
+
+      expect(count).to.equal(5);
+    });
+
+  }); // #keySet
+
+
+  describe('#values', function() {
+
+    it('call values on an empty cache', async () => {
+      const set = cache.values();
+
+      expect(await set.size()).to.equal(0);
+      expect(await set.has('foo')).to.equal(false);
+    });
+
+    it('call values on a non empty cache', async () => {
+      for (let i = 0; i < 5; i++) {
+        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        await cache.put(key, value);
+      }
+
+      let count = 0;
+      for await (const value of cache.values()) {
+        count++
+        console.log("Value: " + JSON.stringify(value.value))
+      }
+
+      expect(count).to.equal(5);
+    });
+
+  }); // #keySet
 
 
 });

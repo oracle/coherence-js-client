@@ -8,70 +8,84 @@ const JSON_FORMAT = "json";
 
 module.exports = class Request {
 
-  static clear(cacheName) {
-    return new BaseRequest(cacheName);
+  constructor(cacheName) {
+    this.cacheName = cacheName;
   }
 
-  static containsEntry(cacheName, key, value) {
-    return new RequestWithKeyAndValue(cacheName, key, value);
+  clear() {
+    return new BaseRequest(this.cacheName);
   }
 
-  static containsKey(cacheName, key) {
-    return new RequestWithKey(cacheName, key);
+  containsEntry(key, value) {
+    return new RequestWithKeyAndValue(this.cacheName, key, value);
   }
 
-  static containsValue(cacheName, key, value) {
-    return new RequestWithKeyAndValue(cacheName, key, value);
+  containsKey(key) {
+    return new RequestWithKey(this.cacheName, key);
   }
 
-  static isEmpty(cacheName) {
-    return new BaseRequest(cacheName);
+  containsValue(key, value) {
+    return new RequestWithKeyAndValue(this.cacheName, key, value);
   }
 
-  static get(cacheName, key) {
-    return new RequestWithKey(cacheName, key);
+  isEmpty() {
+    return new BaseRequest(this.cacheName);
   }
 
-  static put(cacheName, key, value, ttl) {
-    const request = new RequestWithKeyAndValue(cacheName, key, value);
-    if (typeof ttl !== 'undefined' || ttl != null) {
+  get(key) {
+    return new RequestWithKey(this.cacheName, key);
+  }
+
+  put(key, value, ttl) {
+    const request = new RequestWithKeyAndValue(this.cacheName, key, value);
+    if (typeof ttl !== 'undefined' && ttl != null) {
       request.ttl = ttl;
     }
 
     return request;
   }
 
-  static putIfAbsent(cacheName, key, value, ttl) {
-    const request = new RequestWithKeyAndValue(cacheName, key, value);
-    if (typeof ttl !== 'undefined' || ttl != null) {
+  putIfAbsent(key, value, ttl) {
+    const request = new RequestWithKeyAndValue(this.cacheName, key, value);
+    if (typeof ttl !== 'undefined' && ttl != null) {
       request.ttl = ttl;
     }
 
     return request;
   }
 
-  static remove(cacheName, key) {
-    return new RequestWithKey(cacheName, key);
+  remove(key) {
+    return new RequestWithKey(this.cacheName, key);
   }
 
-  static removeMapping(cacheName, key, value) {
-    return new RequestWithKeyAndValue(cacheName, key, value);
+  removeMapping(key, value) {
+    return new RequestWithKeyAndValue(this.cacheName, key, value);
   }
 
-  static replace(cacheName, key) {
-    return new RequestWithKey(cacheName, key);
+  replace(key) {
+    return new RequestWithKey(this.cacheName, key);
   }
 
-  static replaceMapping(cacheName, key, value, newValue) {
-    const request = new RequestWithKey(cacheName, key);
+  replaceMapping(key, value, newValue) {
+    const request = new RequestWithKey(this.cacheName, key);
     request.previousValue = toBuffer(value);
     request.newValue = toBuffer(newValue);
 
     return request;
   }
 
-  static size(cacheName) {
-    return new BaseRequest(cacheName);
+  size() {
+    return new BaseRequest(this.cacheName);
+  }
+
+  page(cookie) {
+    const request = new BaseRequest(this.cacheName);
+    if (typeof cookie !== 'undefined' && cookie != null) {
+      request.format = JSON_FORMAT;
+      request.cookie = Buffer.alloc(0);
+    }
+
+    return request;
   }
 
 }

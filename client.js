@@ -2,29 +2,29 @@
 
 const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
-const Request = require('./request')
+const RequestFactory = require('./request')
+
+const StreamedCollection = require('./lib/StreamedCollection.js')
 
 /**
- * A NamedCacheClient as a client to a NamedCache wich is a Map that holds
- * resources shared among members of a cluster.
+ * A NamedCacheClient as a client to a NamedCache wich is a Map that
+ * holds resources shared among members of a cluster.
  *
- * All methods in this class return a Promise that eventually either resolves
- * to a value (as described in the NamedCache) or an error if any exception
- * occurs during the method invocation.
+ * All methods in this class return a Promise that eventually either
+ * resolves to a value (as described in the NamedCache) or an error
+ * if any exception occurs during the method invocation.
  */
 module.exports = class NamedCacheClient {
 
   /**
-   * Creates a NamedCacheClient for the specified cache. The options to be used.
-   * The supported option values are:
-   *  address: the address to connect to. Defaults to 'localhost:1408'
-   *  ttl: the default time to live in milliseconds for the entries that are
-           put in the cache. Defaults to zero
+   * Creates a NamedCacheClient for the specified cache. The options
+   * to be used. The supported option values are:
+   *    address: the address to connect to. Defaults to 'localhost:1408'
+   *    ttl:     the default time to live in milliseconds for the entries
+   *             that are put in the cache. Defaults to zero.
    *
    * @param cacheName the name of the cache
-   * @param options   the options to be used. The supported option values are:
-   *                  address: the address to connect to. Defaults to 'localhost:1408'
-   *                  ttl: the default time to live in milliseconds. Defaults to zero
+   * @param options   the options to be used.
    */
   constructor(cacheName, options = {}) {
     this.cacheName = cacheName;
@@ -37,9 +37,17 @@ module.exports = class NamedCacheClient {
       oneofs: true
     };
 
-    const pkg = protoLoader.loadSync(__dirname + '/lib/services.proto', loadOptions);
+    const pkg = protoLoader.loadSync(
+        __dirname + '/lib/services.proto', loadOptions);
     const cache_proto = grpc.loadPackageDefinition(pkg);
-    this.client = new cache_proto.coherence.NamedCacheService(this.address, grpc.credentials.createInsecure());
+    this.client = new cache_proto.coherence.NamedCacheService(
+                this.address, grpc.credentials.createInsecure());
+
+    this.Request = new RequestFactory(this.cacheName);
+  }
+
+  getCacheName() {
+    return this.cacheName;
   }
 
   /**
@@ -49,9 +57,10 @@ module.exports = class NamedCacheClient {
    */
   clear() {
     const self = this;
+    const request = this.Request.clear();
 
     return new Promise((resolve, reject) => {
-      self.client.clear(Request.clear(self.cacheName), (err, response) => {
+      self.client.clear(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -59,7 +68,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // clear()
 
   /**
    * Returns true if this cache contains a mapping for the specified key.
@@ -72,7 +81,7 @@ module.exports = class NamedCacheClient {
    */
   containsEntry(key, value) {
     const self = this;
-    const request = Request.containsEntry(self.cacheName, key, value);
+    const request = this.Request.containsEntry(key, value);
 
     return new Promise((resolve, reject) => {
       self.client.containsEntry(request, (err, response) => {
@@ -83,7 +92,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // containsEntry()
 
   /**
    * Returns true if the specified key is mapped to some value in this cache.
@@ -95,7 +104,7 @@ module.exports = class NamedCacheClient {
    */
   containsKey(key) {
     const self = this;
-    const request = Request.containsKey(self.cacheName, key);
+    const request = this.Request.containsKey(key);
 
     return new Promise((resolve, reject) => {
       self.client.containsKey(request, (err, response) => {
@@ -106,7 +115,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // containsKey()
 
   /**
    * Returns true if the specified value is mapped to some key.
@@ -118,7 +127,7 @@ module.exports = class NamedCacheClient {
    */
   containsValue(key, value) {
     const self = this;
-    const request = Request.containsValue(self.cacheName, key, value);
+    const request = this.Request.containsValue(key, value);
 
     return new Promise((resolve, reject) => {
       self.client.containsValue(request, (err, response) => {
@@ -129,7 +138,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // containsValue()
 
   /**
    * Checks if this cache is empty or not.
@@ -139,9 +148,10 @@ module.exports = class NamedCacheClient {
    */
   isEmpty() {
     const self = this;
+    const request = this.Request.isEmpty();
 
     return new Promise((resolve, reject) => {
-      self.client.isEmpty(Request.isEmpty(self.cacheName), (err, response) => {
+      self.client.isEmpty(request, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -149,7 +159,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // isEmpty()
 
   /**
    * Returns the value to which this cache maps the specified key.
@@ -161,7 +171,7 @@ module.exports = class NamedCacheClient {
    */
   get(key) {
     const self = this;
-    const request = Request.get(self.cacheName, key);
+    const request = this.Request.get(key);
 
     return new Promise((resolve, reject) => {
       self.client.get(request, (err, response) => {
@@ -175,7 +185,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // get()
 
   /**
    * Associates the specified value with the specified key in this map. If the
@@ -190,7 +200,7 @@ module.exports = class NamedCacheClient {
    */
   put(key, value, ttl) {
     const self = this;
-    const request = Request.put(self.cacheName, key, value, ttl);
+    const request = this.Request.put(key, value, ttl);
 
     return new Promise((resolve, reject) => {
       self.client.put(request, (err, response) => {
@@ -204,7 +214,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // put()
 
   /**
    * Associates the specified value with the specified key in this map only if the
@@ -219,7 +229,7 @@ module.exports = class NamedCacheClient {
    */
   putIfAbsent(key, value, ttl) {
     const self = this;
-    const request = Request.putIfAbsent(self.cacheName, key, value, ttl);
+    const request = this.Request.putIfAbsent(key, value, ttl);
 
     return new Promise((resolve, reject) => {
       self.client.putIfAbsent(request, (err, response) => {
@@ -233,7 +243,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // putIfAbsent()
 
 
   /**
@@ -246,7 +256,7 @@ module.exports = class NamedCacheClient {
    */
   remove(key) {
     const self = this;
-    const request = Request.remove(self.cacheName, key);
+    const request = this.Request.remove(key);
 
     return new Promise((resolve, reject) => {
       self.client.remove(request, (err, response) => {
@@ -260,7 +270,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // remove()
 
 
   /**
@@ -274,7 +284,7 @@ module.exports = class NamedCacheClient {
    */
   removeMapping(key, value) {
     const self = this;
-    const request = Request.removeMapping(self.cacheName, key, value);
+    const request = this.Request.removeMapping(key, value);
 
     return new Promise((resolve, reject) => {
       self.client.removeMapping(request, (err, response) => {
@@ -285,7 +295,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // removeMapping()
 
 
   /**
@@ -299,7 +309,7 @@ module.exports = class NamedCacheClient {
    */
   replace(key) {
     const self = this;
-    const request = Request.replace(self.cacheName, key);
+    const request = this.Request.replace(key);
 
     return new Promise((resolve, reject) => {
       self.client.replace(request, (err, response) => {
@@ -313,7 +323,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // replace()
 
   /**
    * Replace the mapping for the specified key only if currently mapped
@@ -328,7 +338,7 @@ module.exports = class NamedCacheClient {
    */
   replaceMapping(key, value, newValue) {
     const self = this;
-    const request = Request.replaceMapping(self.cacheName, key, value, newValue);
+    const request = this.Request.replaceMapping(key, value, newValue);
 
     return new Promise((resolve, reject) => {
       self.client.replaceMapping(request, (err, response) => {
@@ -339,9 +349,7 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
-
-
+  } // replaceMapping()
 
   /**
    * Returns the number of key-value mappings in this map.
@@ -351,7 +359,7 @@ module.exports = class NamedCacheClient {
    */
   size() {
     const self = this;
-    const request = Request.size(self.cacheName);
+    const request = this.Request.size();
 
     return new Promise((resolve, reject) => {
       self.client.size(request, (err, response) => {
@@ -362,5 +370,30 @@ module.exports = class NamedCacheClient {
         }
       });
     });
-  }
+  } // size()
+
+
+  /**
+   * Return the key-value mappings in this cache.
+   *
+   * @return a StreamedSet that can be iterated. Each element in the
+   *         Set will be a CacheEntry from which the key and value
+   *         can be obtained using (key() and value()) methods.
+   */
+  entrySet() {
+    return new StreamedCollection.EntrySet(this.cacheName, this, this.client);
+  } // entrySet()
+
+
+  /**
+   * Return the values in this cache.
+   *
+   * @return a StreamedSet that can be iterated. Each element in the
+   *         Set will be a CacheEntry from which the value
+   *         can be obtained using (value()) method.
+   */
+  values() {
+    return new StreamedCollection.ValuesSet(this.cacheName, this, this.client);
+  } // entrySet()
+
 }
