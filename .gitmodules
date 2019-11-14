@@ -1,0 +1,3 @@
+[submodule "lib/coherence"]
+	path = lib/coherence
+	url = https://gitlab-odx.oracledx.com/coherence/coherence-grpc-proto.git
