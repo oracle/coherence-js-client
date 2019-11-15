@@ -4,7 +4,7 @@ const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 const RequestFactory = require('./request')
 
-const StreamedCollection = require('./lib/StreamedCollection.js')
+const StreamedCollection = require('./src/StreamedCollection.js')
 
 /**
  * A NamedCacheClient as a client to a NamedCache wich is a Map that
@@ -38,7 +38,7 @@ module.exports = class NamedCacheClient {
     };
 
     const pkg = protoLoader.loadSync(
-        __dirname + '/lib/services.proto', loadOptions);
+        __dirname + '/src/cache/proto/services.proto', loadOptions);
     const cache_proto = grpc.loadPackageDefinition(pkg);
     this.client = new cache_proto.coherence.NamedCacheService(
                 this.address, grpc.credentials.createInsecure());
@@ -140,6 +140,24 @@ module.exports = class NamedCacheClient {
     });
   } // containsValue()
 
+
+  /**
+   * Return the key-value mappings in this cache.
+   *
+   * @return a StreamedSet that can be iterated. Each element in the
+   *         Set will be a CacheEntry from which the key and value
+   *         can be obtained using (key() and value()) methods.
+   */
+  entrySet() {
+    const set = new StreamedCollection.EntrySet(this.cacheName, this, this.client);
+    const self = this;
+    Object.defineProperties(set, {
+    'size': { get: async function () { return (await set.getCacheSize()); } }
+    });
+    return set;
+  } // entrySet()
+
+
   /**
    * Checks if this cache is empty or not.
    *
@@ -186,6 +204,18 @@ module.exports = class NamedCacheClient {
       });
     });
   } // get()
+
+
+  /**
+   * Return the keys in this cache.
+   *
+   * @return a StreamedSet that can be iterated. Each element in the
+   *         Set will be a key in the cache.
+   */
+  keySet() {
+    return new StreamedCollection.KeySet(this.cacheName, this, this.client);
+  } // keySet()
+
 
   /**
    * Associates the specified value with the specified key in this map. If the
@@ -358,6 +388,7 @@ module.exports = class NamedCacheClient {
    *         mappings in this map
    */
   size() {
+    console.log("** CACHE SIZE called....")
     const self = this;
     const request = this.Request.size();
 
@@ -371,19 +402,6 @@ module.exports = class NamedCacheClient {
       });
     });
   } // size()
-
-
-  /**
-   * Return the key-value mappings in this cache.
-   *
-   * @return a StreamedSet that can be iterated. Each element in the
-   *         Set will be a CacheEntry from which the key and value
-   *         can be obtained using (key() and value()) methods.
-   */
-  entrySet() {
-    return new StreamedCollection.EntrySet(this.cacheName, this, this.client);
-  } // entrySet()
-
 
   /**
    * Return the values in this cache.

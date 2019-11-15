@@ -1,13 +1,16 @@
 /* test/cache_test.js */
 
-const chai            = require('chai');
-const expect          = require('chai').expect;
-const chaiAsPromised  = require("chai-as-promised");
-chai.use(chaiAsPromised);
+const chai              = require('chai')
+  ,   expect            = chai.expect;
 
-const CacheClient     = require('../client.js');
-const cache           = new CacheClient("States");
-const states          = require('./states.js');
+const chaiAsPromised    = require('chai-as-promised');
+
+const states            = require('./states.js');
+const CacheClient       = require('../client.js');
+
+const cache             = new CacheClient("States");
+
+chai.use(chaiAsPromised);
 
 describe('NamedCacheService', function() {
 
@@ -552,6 +555,46 @@ describe('NamedCacheService', function() {
 
       let count = 0;
       for await (const value of cache.entrySet()) {
+        count++
+        console.log("Key: " + JSON.stringify(value.key))
+      }
+
+      expect(count).to.equal(5);
+    });
+
+
+    it('call size on an entrySet', async () => {
+      for (let i = 0; i < 5; i++) {
+        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        await cache.put(key, value);
+      }
+      expect(await cache.size()).to.equal(5);
+
+      expect(cache.entrySet().size).to.equal(5);
+    });
+
+    }); // #keySet
+
+
+  describe('#keySet', function() {
+
+    it('call keySet on an empty cache', async () => {
+      const set = cache.keySet();
+
+      expect(await set.size()).to.equal(0);
+      expect(await set.has('foo')).to.equal(false);
+    });
+
+    it('call entrySet on a non empty cache', async () => {
+      for (let i = 0; i < 5; i++) {
+        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        await cache.put(key, value);
+      }
+
+      let count = 0;
+      for await (const value of cache.keySet()) {
         count++
         console.log("Key: " + JSON.stringify(value.key))
       }

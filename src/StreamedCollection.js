@@ -24,8 +24,12 @@ class StreamedCollection
     return this.cache.remove(key);
   }
 
-  size() {
+  getCacheSize() {
     return this.cache.size();
+  }
+
+  getCookie(entry) {
+    return entry.cookie;
   }
 
   /**
@@ -39,6 +43,40 @@ class StreamedCollection
   }
 
 }
+
+
+class KeySet extends StreamedCollection {
+
+  constructor(cacheName, cache, grpcClient) {
+    super(cache);
+    this.Request = new RequestFactory(cacheName);
+    this.grpcClient = grpcClient;
+  }
+
+  has(key) {
+    return super.has(key) || this.cache.containsKey(key);
+  }
+
+  retrieveNextPage(cookie) {
+    return this.grpcClient.nextKeySetPage(this.Request.page(cookie));
+  }
+
+
+  getCookie(entry) {
+    return entry.value;
+  }
+
+  handle(entry) {
+    return {
+      value: {
+        get key() { return JSON.parse(Buffer.from(entry.value)); }
+      },
+      done: false
+    }
+  }
+
+}
+
 
 class EntrySet extends StreamedCollection {
 
@@ -139,7 +177,7 @@ class PageAdvancer {
       call.on('data', function (entry) {
         if (firstEntry) {
           firstEntry = false;
-          self.cookie = entry.cookie;
+          self.cookie = self.handler.getCookie(entry);
         } else {
           delete entry.cookie;
           data.push(self.handler.handle(entry));
@@ -151,7 +189,7 @@ class PageAdvancer {
         resolve(data);
       });
 
-      call.on('error', function (e) {
+      call.on('error', function (err) {
         console.log("Error: " + err);
         reject(err);
       });
@@ -167,5 +205,5 @@ class PageAdvancer {
 
 
 module.exports = {
-  EntrySet, ValuesSet
+  KeySet, EntrySet, ValuesSet
 }
