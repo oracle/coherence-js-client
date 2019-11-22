@@ -1,3 +1,6 @@
 [submodule "src/cache"]
 	path = src/cache
 	url = https://gitlab-odx.oracledx.com/coherence/coherence-grpc-proto.git
+[submodule "ext"]
+	path = ext
+	url = https://gitlab-odx.oracledx.com/coherence/coherence-grpc-proto.git
