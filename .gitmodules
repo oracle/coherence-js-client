@@ -1,0 +1,3 @@
+[submodule "ext"]
+	path = ext
+	url = https://gitlab-odx.oracledx.com/coherence-dev/coherence-grpc-proto.git
