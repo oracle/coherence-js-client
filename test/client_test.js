@@ -1,18 +1,22 @@
 /* test/cache_test.js */
 
-const chai              = require('chai')
-  ,   expect            = chai.expect;
+const chai = require('chai'),
+  expect = chai.expect;
 
-const chaiAsPromised    = require('chai-as-promised');
+const chaiAsPromised = require('chai-as-promised');
 
-const states            = require('./states.js');
-const CacheClient       = require('../client.js');
+const states = require('./states.js');
+const coherence = require('../target/src/cache/named_cache_client.js');
+const async_iter = require('../target/src/cache/async_iter.js');
 
-const cache             = new CacheClient("States");
+const cache = new coherence.NamedCacheClient("States");
+
+const Iter = new async_iter.AsyncIter();
+
 
 chai.use(chaiAsPromised);
 
-describe('NamedCacheService', function() {
+describe('NamedCacheService', function () {
 
   this.timeout(15000);
 
@@ -22,7 +26,7 @@ describe('NamedCacheService', function() {
   });
 
 
-  describe('#clear', function() {
+  describe('#clear', function () {
 
     it('size should be zero', async () => {
       await cache.clear();
@@ -47,7 +51,7 @@ describe('NamedCacheService', function() {
   }); // #clear
 
 
-  describe('#containsEntry', function() {
+  describe('#containsEntry', function () {
 
     it('containsEntry on an empty map should return false', async () => {
       expect(await cache.containsEntry("ca", states.ca)).to.equal(false);
@@ -72,7 +76,7 @@ describe('NamedCacheService', function() {
   }); // #containsEntry
 
 
-  describe('#containsKey', function() {
+  describe('#containsKey', function () {
 
     it('containsKey on an empty map should return false', async () => {
       expect(await cache.containsKey("ca")).to.equal(false);
@@ -97,7 +101,7 @@ describe('NamedCacheService', function() {
   }); // #containsKey
 
 
-  describe('#containsValue', function() {
+  describe('#containsValue', function () {
 
     it('containsValue on an empty map should return false', async () => {
       expect(await cache.containsValue("ca", states.ca)).to.equal(false);
@@ -105,24 +109,28 @@ describe('NamedCacheService', function() {
 
     it('containsValue on a non existent mapping should return false', async () => {
       await cache.put("ny", states.ny);
-      expect(await cache.containsValue("ca", states.ca)).to.equal(false);
+      expect(await cache.containsValue(states.ca)).to.equal(false);
     });
 
     it('containsValue on an existing mapping should return true', async () => {
       await cache.put("ca", states.ca);
-      expect(await cache.containsValue("ca", states.ca)).to.equal(true);
+      expect(await cache.containsValue(states.ca)).to.equal(true);
     });
-
 
     it('containsValue on an existing mapping with complex key should return true', async () => {
       await cache.put(states.ca, states.ca);
-      expect(await cache.containsValue(states.ca, states.ca)).to.equal(true);
+      expect(await cache.containsValue(states.ca)).to.equal(true);
+    });
+
+    it('containsValue on a non existent mapping with complex key should return false', async () => {
+      await cache.put(states.ca, states.ca);
+      expect(await cache.containsValue(states.ny)).to.equal(false);
     });
 
   }); // #containsValue
 
 
-  describe('#get', function() {
+  describe('#get', function () {
 
     it('get on an empty cache should return null', async () => {
       expect(await cache.get(states.ca)).to.equal(null);
@@ -136,6 +144,7 @@ describe('NamedCacheService', function() {
 
     it('get on an existing mapping should return that value', async () => {
       await cache.put(states.ca, states.ca);
+      expect(await cache.size()).to.equal(1);
       expect(await cache.get(states.ca)).to.eql(states.ca);
     });
 
@@ -153,7 +162,12 @@ describe('NamedCacheService', function() {
 
     it('multiple put and get on a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, linkId: {id: "id-" + (i * 2)}}
+        let key = {
+          id: "id-" + i,
+          linkId: {
+            id: "id-" + (i * 2)
+          }
+        }
         await cache.put(key, states);
 
         expect(await cache.get(key)).to.eql(states);
@@ -161,12 +175,44 @@ describe('NamedCacheService', function() {
       }
     });
 
-  });   // #get
+  }); // #get
 
 
-  describe('#isEmpty', function() {
+  describe('#getOrDefault', function () {
 
-    it('after clear isEmpty should be true', async () =>  {
+    it('getOrDefault on an empty cache should return defaultValue', async () => {
+      expect(await cache.getOrDefault('abc', states.ca)).to.eql(states.ca);
+    });
+
+    it('getOrDefault on a non existent mapping should return null', async () => {
+      await cache.put(123, states.ca);
+
+      expect(await cache.getOrDefault('xyz', states.ca)).to.eql(states.ca);
+    });
+
+    it('getOrDefault on an existing mapping should return that value', async () => {
+      await cache.put(states.ca, states.ca);
+      expect(await cache.size()).to.equal(1);
+      expect(await cache.getOrDefault(states.ca, states.ny)).to.eql(states.ca);
+    });
+
+    it('getOrDefault with a primitive key', async () => {
+      await cache.put(123, states.ca);
+      expect(await cache.getOrDefault(123, states.ny)).to.eql(states.ca);
+    });
+
+    it('getOrDefault with a complex key', async () => {
+      await cache.put(123, states.ca);
+
+      expect(await cache.getOrDefault(states.ca, states.ny)).to.eql(states.ny);
+      expect(await cache.get(states.ny)).to.equal(null);
+    });
+
+  }); // #getOrDefault
+
+  describe('#isEmpty', function () {
+
+    it('after clear isEmpty should be true', async () => {
       expect(await cache.isEmpty()).to.equal(true);
     });
 
@@ -191,7 +237,7 @@ describe('NamedCacheService', function() {
   }); // #isEmpty
 
 
-  describe('#put', function() {
+  describe('#put', function () {
 
     it('put should increment size', async () => {
       let sz = await cache.size();
@@ -240,10 +286,15 @@ describe('NamedCacheService', function() {
 
     it('put in a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, linkId: {id: "id-" + (i*2)}}
+        let key = {
+          id: "id-" + i,
+          linkId: {
+            id: "id-" + (i * 2)
+          }
+        }
         await cache.put(key, states.ca);
 
-        expect(await cache.size()).to.equal(i+1);
+        expect(await cache.size()).to.equal(i + 1);
         expect(await cache.get(key)).to.eql(states.ca);
       }
     });
@@ -251,7 +302,7 @@ describe('NamedCacheService', function() {
   }); // #put
 
 
-  describe('#putIfAbsent', function() {
+  describe('#putIfAbsent', function () {
 
     it('putIfAbsent on empty cache should return null', async () => {
       let sz = await cache.size();
@@ -293,10 +344,15 @@ describe('NamedCacheService', function() {
 
     it('putIfAbsent in a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, linkId: {id: "id-" + (i*2)}}
+        let key = {
+          id: "id-" + i,
+          linkId: {
+            id: "id-" + (i * 2)
+          }
+        }
         await cache.putIfAbsent(key, states.ca);
 
-        expect(await cache.size()).to.equal(i+1);
+        expect(await cache.size()).to.equal(i + 1);
         expect(await cache.get(key)).to.eql(states.ca);
       }
     });
@@ -304,7 +360,7 @@ describe('NamedCacheService', function() {
   }); // #putIfAbsent
 
 
-  describe('#remove', function() {
+  describe('#remove', function () {
 
     it('remove on an empty cache should return null', async () => {
       expect(await cache.remove(states.ca)).to.equal(null);
@@ -335,23 +391,33 @@ describe('NamedCacheService', function() {
 
     it('multiple put and remove on a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
         await cache.put(key, states);
       }
 
       for (let i = 0; i < 10; i++) {
         expect(await cache.size()).to.equal(10 - i);
 
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
         expect(await cache.remove(key)).to.eql(states);
         expect(await cache.size()).to.equal(10 - i - 1);
       }
     });
 
-  });   // #remove
+  }); // #remove
 
 
-  describe('#removeMapping', function() {
+  describe('#removeMapping', function () {
 
     it('removeMapping on empty cache should return false', async () => {
       expect(await cache.removeMapping('ca', states.ca)).to.equal(false);
@@ -383,14 +449,24 @@ describe('NamedCacheService', function() {
 
     it('removeMapping in a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
         await cache.put(key, i % 2 == 0 ? states.ca : states.ny);
       }
 
       for (let i = 0; i < 10; i++) {
         expect(await cache.size()).to.equal(10 - i);
 
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
         expect(await cache.removeMapping(key, i % 2 == 0 ? states.ca : states.ny))
           .to.equal(true);
         expect(await cache.size()).to.equal(10 - i - 1);
@@ -400,56 +476,77 @@ describe('NamedCacheService', function() {
   }); // #putIfAbsent
 
 
-  describe('#replace', function() {
+  describe('#replace', function () {
 
     it('replace on an empty cache should return null', async () => {
-      expect(await cache.replace(states.ca)).to.equal(null);
+      expect(await cache.replace('abc', states.ca)).to.equal(null);
     });
 
     it('replace on a non existent mapping should return null', async () => {
       await cache.put(123, states.ca);
 
-      expect(await cache.replace('abc')).to.equal(null);
+      expect(await cache.replace('abc', states.ca)).to.equal(null);
     });
 
     it('replace on an existing mapping should return that value', async () => {
       await cache.put(states.ca, states.ca);
-      expect(await cache.replace(states.ca)).to.eql(states.ca);
+      expect(await cache.replace(states.ca, 'abc')).to.eql(states.ca);
+      expect(await cache.get(states.ca)).to.eql('abc');
     });
 
     it('replace with a primitive key', async () => {
       await cache.put(123, states.ca);
-      expect(await cache.replace(123)).to.eql(states.ca);
+      expect(await cache.replace(123, states.ny)).to.eql(states.ca);
     });
 
     it('replace with a complex key', async () => {
       await cache.put(states.ca, states.ca);
 
-      expect(await cache.replace(states.ca)).to.eql(states.ca);
-      expect(await cache.replace(states.ny)).to.equal(null);
+      expect(await cache.replace(states.ca, states.ny)).to.eql(states.ca);
+      expect(await cache.get(states.ca)).to.eql(states.ny);
     });
 
     it('multiple put and replace on a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
+        let value = {
+          value: "id-" + i,
+          link: {
+            value: "id-" + (i * 2)
+          }
+        };
         await cache.put(key, value);
       }
 
       for (let i = 0; i < 10; i++) {
         expect(await cache.size()).to.equal(10);
 
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        expect(await cache.replace(key)).to.eql(value);
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
+        let value = {
+          value: "id-" + i,
+          link: {
+            value: "id-" + (i * 2)
+          }
+        };
+        expect(await cache.replace(key, 'abc')).to.eql(value);
         expect(await cache.size()).to.equal(10);
       }
     });
 
-  });   // #replace
+  }); // #replace
 
 
-  describe('#replaceMapping', function() {
+  describe('#replaceMapping', function () {
 
     it('replaceMapping on empty cache should return false', async () => {
       expect(await cache.replaceMapping('ca', states.ca, states.ny)).to.equal(false);
@@ -483,17 +580,42 @@ describe('NamedCacheService', function() {
 
     it('replaceMapping in a loop', async () => {
       for (let i = 0; i < 10; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
+        let value = {
+          value: "id-" + i,
+          link: {
+            value: "id-" + (i * 2)
+          }
+        };
         await cache.put(key, value);
       }
 
       for (let i = 0; i < 10; i++) {
         expect(await cache.size()).to.equal(10);
 
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        let newValue = {newValue: "new-id-" + i, link: {value: "id-" + (i * 2)}};
+        let key = {
+          id: "id-" + i,
+          link: {
+            id: "id-" + (i * 2)
+          }
+        };
+        let value = {
+          value: "id-" + i,
+          link: {
+            value: "id-" + (i * 2)
+          }
+        };
+        let newValue = {
+          newValue: "new-id-" + i,
+          link: {
+            value: "id-" + (i * 2)
+          }
+        };
         expect(await cache.replaceMapping(key, value, newValue)).to.equal(true);
         expect(await cache.size()).to.equal(10);
         expect(await cache.get(key)).to.eql(newValue);
@@ -504,7 +626,7 @@ describe('NamedCacheService', function() {
 
 
 
-  describe('#size', function() {
+  describe('#size', function () {
 
     it('should be zero on an empty cache', async () => {
       expect(await cache.size()).to.equal(0);
@@ -530,107 +652,12 @@ describe('NamedCacheService', function() {
 
   }); // #size
 
-
-  const func = function(a, b) {
+  const func = function (a, b) {
     const w = 0.2;
 
-    return a + w*b;
+    return a + w * b;
   }
 
-  describe('#entrySet', function() {
-
-    it('call entrySet on an empty cache', async () => {
-      const set = cache.entrySet();
-
-      expect(await set.size()).to.equal(0);
-      expect(await set.has('foo')).to.equal(false);
-    });
-
-    it('call entrySet on a non empty cache', async () => {
-      for (let i = 0; i < 5; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        await cache.put(key, value);
-      }
-
-      let count = 0;
-      for await (const value of cache.entrySet()) {
-        count++
-        console.log("Key: " + JSON.stringify(value.key))
-      }
-
-      expect(count).to.equal(5);
-    });
-
-
-    it('call size on an entrySet', async () => {
-      for (let i = 0; i < 5; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        await cache.put(key, value);
-      }
-      expect(await cache.size()).to.equal(5);
-
-      expect(cache.entrySet().size).to.equal(5);
-    });
-
-    }); // #keySet
-
-
-  describe('#keySet', function() {
-
-    it('call keySet on an empty cache', async () => {
-      const set = cache.keySet();
-
-      expect(await set.size()).to.equal(0);
-      expect(await set.has('foo')).to.equal(false);
-    });
-
-    it('call entrySet on a non empty cache', async () => {
-      for (let i = 0; i < 5; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        await cache.put(key, value);
-      }
-
-      let count = 0;
-      for await (const value of cache.keySet()) {
-        count++
-        console.log("Key: " + JSON.stringify(value.key))
-      }
-
-      expect(count).to.equal(5);
-    });
-
-  }); // #keySet
-
-
-  describe('#values', function() {
-
-    it('call values on an empty cache', async () => {
-      const set = cache.values();
-
-      expect(await set.size()).to.equal(0);
-      expect(await set.has('foo')).to.equal(false);
-    });
-
-    it('call values on a non empty cache', async () => {
-      for (let i = 0; i < 5; i++) {
-        let key = {id: "id-" + i, link: {id: "id-" + (i * 2)}};
-        let value = {value: "id-" + i, link: {value: "id-" + (i * 2)}};
-        await cache.put(key, value);
-      }
-
-      let count = 0;
-      for await (const value of cache.values()) {
-        count++
-        console.log("Value: " + JSON.stringify(value.value))
-      }
-
-      expect(count).to.equal(5);
-    });
-
-  }); // #keySet
 
 
 });
