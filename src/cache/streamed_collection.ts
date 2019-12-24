@@ -2,12 +2,14 @@ import { NamedCacheClient } from "./named_cache_client";
 import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
 import { EntryResult, PageRequest } from "./proto/messages_pb";
 import { ClientReadableStream } from "grpc";
+import { Serializer } from "../util/serializer";
 
 interface IRemoteSet<T> {
     clear(): Promise<void>;
     delete(value: T): Promise<boolean>;
     has(value: T): Promise<boolean>;
     size(): Promise<number>;
+    [Symbol.iterator](): IterableIterator<T>
 }
 
 class PagedSet<K, V, T>
@@ -164,7 +166,7 @@ class EntrySetHelper<K, V>
     }
 
     handleEntry(e: EntryResult): NamedCacheEntry<K, V> {
-        return new NamedCacheEntry(e);
+        return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8());
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -187,7 +189,7 @@ class ValueSetHelper<K, V>
     }
 
     handleEntry(e: EntryResult): V {
-        return JSON.parse(Buffer.from(e.getValue()).toString())
+        return Serializer.deserialize(e.getValue_asU8())
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -210,7 +212,7 @@ class KeySetHelper<K, V>
     }
 
     handleEntry(e: BytesValue): K {
-        return JSON.parse(Buffer.from(e.getValue()).toString())
+        return Serializer.deserialize(e.getValue_asU8())
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -301,20 +303,52 @@ interface IStreamedDataHelper<R, T> {
 
 }
 
+// class AllEntries<K, V, R, T> {
+//     private data: Set<R>;
+
+//     private iter: IterableIterator<[R, R]>;
+
+//     constructor(v: Set<R>) {
+//         this.data = v;
+//         this.iter = this.data.entries();
+//     }
+
+//     async next(): Promise<{ done?: boolean, value?: T }> {
+//         const result: this.iter.next();
+
+//         }
+//         return new Promise.resolve({done: done, value: value});
+//     }
+// }
+
+
 class NamedCacheEntry<K, V> {
 
-    private entry: EntryResult;
+    private key!: K;
 
-    constructor(entry: EntryResult) {
-        this.entry = entry;
+    private value!: V;
+
+    private keyBytes: Uint8Array;
+
+    private valueBytes: Uint8Array;
+
+    constructor(keyBytes: Uint8Array, valueBytes: Uint8Array) {
+        this.keyBytes = keyBytes;
+        this.valueBytes = valueBytes;
     }
 
     getKey(): K {
-        return JSON.parse(Buffer.from(this.entry.getKey()).toString())
+        if (!this.key) {
+            this.key = Serializer.deserialize(this.keyBytes);
+        }
+        return this.key;
     }
 
     getValue(): V {
-        return JSON.parse(Buffer.from(this.entry.getValue()).toString())
+        if (!this.value) {
+            this.value = Serializer.deserialize(this.valueBytes);
+        }
+        return this.value;    
     }
 }
 

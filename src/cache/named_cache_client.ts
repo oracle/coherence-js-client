@@ -21,13 +21,18 @@ import { NamedCacheServiceClient, NamedCacheServiceService } from './proto/servi
 import {
     EntryResult,
     IsEmptyRequest,
-    SizeRequest
+    SizeRequest,
+    Entry
 } from './proto/messages_pb';
 
-import { RequestFactory } from './request_factory';
+import { RequestFactory, Comparator } from './request_factory';
 import { IMap } from './i_map';
-import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
+import { BytesValue, BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 import { KeySet, EntrySet, NamedCacheEntry, IRemoteSet, ValueSet } from './streamed_collection';
+import { resolvePtr } from 'dns';
+import { Filter } from '../filter/filter';
+import { ValueExtractor } from '../extractor/value_extractor';
+import { Serializer } from '../util/serializer';
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -91,6 +96,16 @@ export class NamedCacheClient<K, V>
         return this.client;
     }
 
+    addIndex(extractor: ValueExtractor<any, any>, ordered?: boolean, comparator?: Comparator): Promise<void> {
+        const self = this;
+        const request = this.reqFactory.addIndex(extractor, ordered, comparator);
+        return new Promise((resolve, reject) => {
+            self.client.addIndex(request, (err: grpc.ServiceError | null) => {
+                self.resolveValue(resolve, reject, err);
+            });
+        });
+    }
+
     /**
      * Clears all the mappings in the cache.
      *
@@ -98,14 +113,28 @@ export class NamedCacheClient<K, V>
      */
 
     clear(): Promise<void> {
-
-        const clr = NamedCacheServiceService.clear;
         const self = this;
         return new Promise((resolve, reject) => {
             self.client.clear(self.reqFactory.clear(), (err: grpc.ServiceError | null) => {
-                this.realizeValue(resolve, reject, err);
+                self.resolveValue(resolve, reject, err);
             });
         });
+    }
+
+    private resolveValue<T>(resolve: (value?: T | PromiseLike<T>) => void,
+        reject: (reason?: any) => void,
+        err?: grpc.ServiceError | null,
+        fn?: () => T | undefined) {
+
+        if (err) {
+            reject(err);
+        } else {
+            if (fn) {
+                resolve(fn());
+            } else {
+                resolve();
+            }
+        }
     }
 
     /**
@@ -117,12 +146,12 @@ export class NamedCacheClient<K, V>
      * @return A Promise that eventually resolves to true if the mapping
      *         exists or false otherwise.
      */
-    containsEntry(key: K, value: V): Promise<Boolean> {
+    containsEntry(key: K, value: V): Promise<boolean> {
         const self = this;
         return new Promise((resolve, reject) => {
             const request = self.reqFactory.containsEntry(key, value);
-            this.client.containsEntry(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.containsEntry(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -139,8 +168,8 @@ export class NamedCacheClient<K, V>
         const self = this;
         const request = self.reqFactory.containsKey(key);
         return new Promise((resolve, reject) => {
-            this.client.containsKey(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.containsKey(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -153,12 +182,12 @@ export class NamedCacheClient<K, V>
      * @return A Promise that eventually resolves to true if a mapping
      *         exists or false otherwise.
      */
-    containsValue(value: V): Promise<Boolean> {
+    containsValue(value: V): Promise<boolean> {
         const self = this;
         const request = this.reqFactory.containsValue(value);
         return new Promise((resolve, reject) => {
-            this.client.containsValue(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.containsValue(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -169,8 +198,29 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the keys contained in this map
      */
-    entrySet(): IRemoteSet<NamedCacheEntry<K, V>> {
-        return new EntrySet(this);   //TODO return StreamedSet
+    entrySet(): Promise<IRemoteSet<NamedCacheEntry<K, V>>>;
+    entrySet(filter: Filter<any>): Set<Promise<NamedCacheEntry<K, V>>>;
+    entrySet(arg?: any): any {
+        const self = this;
+        if (!arg) {
+            return new Promise((resolve, reject) => resolve(new EntrySet(this)));
+        }
+
+        const set = new Set<Promise<NamedCacheEntry<K, V>>>();
+        const request = this.reqFactory.entrySet(arg);
+        const call = self.client.entrySet(request);
+
+        return new Promise((resolve, reject) => {
+            call.on('data', function (e: Entry) {
+                const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8());
+                set.add(new Promise((resolve, reject) => resolve(entry)));
+            });
+            call.on('end', () => resolve(set) );
+            call.on('error', (e) => {
+                console.log("*** ERROR: " + e)
+                reject(e)
+            });
+        });
     }
 
 
@@ -182,22 +232,24 @@ export class NamedCacheClient<K, V>
      * @return A Promise that will eventually resolve to the value that
      *         is associated with the specified key.
      */
-    get(key: K): Promise<V> {
-        const self = this;
-        return new Promise((resolve, reject) => {
-            this.client.get(self.reqFactory.get(key), (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp, NamedCacheClient.toValue);
-            });
-        });
+    get(key: K): Promise<V | null> {
+        return this.getOrDefault(key, null);    
     }
 
     /**
      * Returns the value to which the specified key is mapped, or
      * the specified defaultValue if this map contains no mapping for the key.
      */
-    async getOrDefault(key: K, defaultValue: V): Promise<V> {
-        return this.get(key).then(val => {
-            return val == null ? defaultValue : val;
+    async getOrDefault(key: K, defaultValue: V | null): Promise<V | null> {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            self.client.get(self.reqFactory.get(key), (err, resp) => {
+                if (resp && resp.getPresent()) {
+                    self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                } else {
+                    resolve(defaultValue);
+                }
+            });
         });
     }
 
@@ -207,12 +259,13 @@ export class NamedCacheClient<K, V>
      * @return A Promise that eventually resolves to true if the cache is empty;
      *         false otherwise.
      */
-    isEmpty(): Promise<Boolean> {
+    isEmpty(): Promise<boolean> {
+        const self = this;
         return new Promise((resolve, reject) => {
             const request = new IsEmptyRequest();
             request.setCache(this.cacheName);
-            this.client.isEmpty(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.isEmpty(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -222,8 +275,31 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the keys contained in this map
      */
-    keySet(): IRemoteSet<K> {
-        return new KeySet(this);   //TODO return StreamedSet
+    keySet(): Promise<IRemoteSet<K>>;
+    keySet(filter: Filter<any>): Set<Promise<K>>;
+    keySet(arg?: any): any {
+        const self = this;
+        if (!arg) {
+            return new Promise((resolve, reject) => resolve(new KeySet(this)));
+        }
+
+        const set = new Set<Promise<K>>();
+        const request = this.reqFactory.keySet(arg);
+        const call = self.client.keySet(request);
+
+        return new Promise((resolve, reject) => {
+            call.on('data', function (r: BytesValue) {
+                const k = Serializer.deserialize(r.getValue_asU8());
+                if (k) {
+                    set.add(new Promise((resolve, reject) => resolve(k)));
+                }
+            });
+            call.on('end', () => resolve(set) );
+            call.on('error', (e) => {
+                console.log("*** ERROR: " + e)
+                reject(e)
+            });
+        });
     }
 
     /**
@@ -240,8 +316,8 @@ export class NamedCacheClient<K, V>
     put(key: K, value: V, ttl?: number): Promise<V> {
         const self = this;
         return new Promise((resolve, reject) => {
-            this.client.put(self.reqFactory.put(key, value, ttl), (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp, NamedCacheClient.toValue);
+            self.client.put(self.reqFactory.put(key, value, ttl), (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -261,8 +337,8 @@ export class NamedCacheClient<K, V>
         const self = this;
         const request = self.reqFactory.putIfAbsent(key, value, ttl);
         return new Promise((resolve, reject) => {
-            this.client.putIfAbsent(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp, NamedCacheClient.toValue);
+            self.client.putIfAbsent(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -276,9 +352,10 @@ export class NamedCacheClient<K, V>
      * is associated with the specified key.
      */
     remove(key: K): Promise<V> {
+        const self = this;
         return new Promise((resolve, reject) => {
-            this.client.remove(this.reqFactory.remove(key), (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp, NamedCacheClient.toValue);
+            self.client.remove(this.reqFactory.remove(key), (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -294,10 +371,11 @@ export class NamedCacheClient<K, V>
      *         mapping exists in the cache; false otherwise
      */
     removeMapping(key: K, value: V): Promise<boolean> {
+        const self = this;
         const request = this.reqFactory.removeMapping(key, value);
         return new Promise((resolve, reject) => {
-            this.client.removeMapping(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.removeMapping(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -314,10 +392,11 @@ export class NamedCacheClient<K, V>
      * is associated with the specified key.
      */
     replace(key: K, value: V): Promise<V> {
+        const self = this;
         const request = this.reqFactory.replace(key, value);
         return new Promise((resolve, reject) => {
-            this.client.replace(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp, NamedCacheClient.toValue);
+            self.client.replace(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -334,11 +413,12 @@ export class NamedCacheClient<K, V>
      *         mapping exists in the cache; false otherwise
      */
     replaceMapping(key: K, value: V, newValue: V): Promise<Boolean> {
+        const self = this;
         const request = this.reqFactory.replaceMapping(key, value, newValue);
 
         return new Promise((resolve, reject) => {
-            this.client.replaceMapping(request, (err, resp) => {
-                this.realizeValue(resolve, reject, err, resp);
+            self.client.replaceMapping(request, (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
         });
     }
@@ -347,8 +427,28 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the values contained in this cache
      */
-    values(): IRemoteSet<V> {
-        return new ValueSet(this);   //TODO return StreamedSet
+    values(): Promise<IRemoteSet<V>>;
+    values(filter: Filter<any>): Set<Promise<V>>;
+    values(arg?: any): any {
+        const self = this;
+        if (!arg) {
+            return new Promise((resolve, reject) => resolve(new ValueSet(this)));
+        }
+
+        const set = new Set<Promise<V>>();
+        const request = this.reqFactory.values(arg);
+        const call = self.client.values(request);
+
+        return new Promise((resolve, reject) => {
+            call.on('data', function (b: BytesValue) {
+                set.add(new Promise((resolve, reject) => resolve(Serializer.deserialize(b.getValue_asU8()))));
+            });
+            call.on('end', () => resolve(set) );
+            call.on('error', (e) => {
+                console.log("*** ERROR: " + e)
+                reject(e)
+            });
+        });
     }
 
     nextEntrySetPage(cookie: Uint8Array | string | undefined): grpc.ClientReadableStream<EntryResult> {
@@ -381,35 +481,9 @@ export class NamedCacheClient<K, V>
         });
     }
 
-
-    private realizeValue<T, S>(resolve: (value?: T | S | PromiseLike<T | S>) => void,
-        reject: (reason?: any) => void,
-        err: grpc.ServiceError | null,
-        resp?: { getValue(): T } | undefined,
-        fn?: (val: T) => S) {
-
-        if (err) {
-            reject(err);
-        } else {
-            if (resp) {
-                if (fn) {
-                    resolve(fn(resp.getValue()));
-                } else {
-                    resolve(resp.getValue());
-                }
-            } else {
-                resolve();
-            }
-        }
-    }
-
-    static toBuffer(obj: any) {
-        return Buffer.from(JSON.stringify(obj));
-    }
-
-    static toValue(value: Uint8Array | string) {
+    static toValue<V>(value: Uint8Array): V {
         return (value && value.length > 0)
-            ? JSON.parse(Buffer.from(value).toString())
+            ? Serializer.deserialize(value)
             : null;
     }
 

@@ -37,13 +37,13 @@ export interface IMap<K, V> {
      * @return A Promise that will eventually resolve to the value that
      *         is associated with the specified key.
      */
-    get(key: K): Promise<V>;
+    get(key: K): Promise<V | null>;
 
     /**
      * Returns the value to which the specified key is mapped, or
      * the specified defaultValue if this map contains no mapping for the key.
      */
-    getOrDefault(key: K, defaultValue: V): Promise<V>;
+    getOrDefault(key: K, defaultValue: V): Promise<V | null>;
 
     /**
      * Checks if this map is empty or not.
@@ -69,7 +69,7 @@ export interface IMap<K, V> {
      * @return a set view of the keys contained in this map
      */
     // keySet(): Set<K>;
-    
+
     /**
      * Associates the specified value with the specified key in this map. If the
      * map previously contained a mapping for this key, the old value is replaced.
