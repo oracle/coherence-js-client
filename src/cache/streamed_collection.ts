@@ -4,7 +4,7 @@ import { EntryResult, PageRequest } from "./proto/messages_pb";
 import { ClientReadableStream } from "grpc";
 import { Serializer } from "../util/serializer";
 
-interface IRemoteSet<T> {
+interface RemoteSet<T> {
     clear(): Promise<void>;
     delete(value: T): Promise<boolean>;
     has(value: T): Promise<boolean>;
@@ -13,7 +13,7 @@ interface IRemoteSet<T> {
 }
 
 class PagedSet<K, V, T>
-    implements IRemoteSet<T> {
+    implements RemoteSet<T> {
 
     namedCache: NamedCacheClient<K, V>;
 
@@ -354,4 +354,4 @@ class NamedCacheEntry<K, V> {
 
 type Cookie = Uint8Array | string | undefined;
 
-export { KeySet, EntrySet, ValueSet, IRemoteSet, NamedCacheEntry };
+export { KeySet, EntrySet, ValueSet, RemoteSet, NamedCacheEntry };

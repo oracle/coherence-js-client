@@ -7,6 +7,7 @@ import {
     PutRequest,
     PutIfAbsentRequest,
     PageRequest,
+    RemoveIndexRequest,
     RemoveRequest,
     RemoveMappingRequest,
     ReplaceRequest,
@@ -22,7 +23,9 @@ import { Filter } from "../filter/filter";
 import { ValueExtractor } from "../extractor/value_extractor";
 import { EntrySet } from "./streamed_collection";
 
-export type Comparator = { '@class': string };
+export interface Comparator {
+    '@class': string;
+}
 
 /**
  * A class to facilitate Request message creation.
@@ -39,8 +42,7 @@ export class RequestFactory<K, V> {
         this.cacheName = cacheName;
     }
 
-    //FIXME: comparator: {'@class': string}
-    addIndex(extractor: ValueExtractor<any, any>, sorted?: boolean, comparator?: any): AddIndexRequest {
+    addIndex(extractor: ValueExtractor<any, any>, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
         const request = new AddIndexRequest();
 
         request.setCache(this.cacheName);
@@ -52,6 +54,16 @@ export class RequestFactory<K, V> {
         if (comparator) {
             request.setComparator(Serializer.serialize(comparator));
         }
+
+        return request;
+    }
+
+    removeIndex(extractor: ValueExtractor<any, any>): RemoveIndexRequest {
+        const request = new RemoveIndexRequest();
+
+        request.setCache(this.cacheName);
+        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setExtractor(Serializer.serialize(extractor));
 
         return request;
     }

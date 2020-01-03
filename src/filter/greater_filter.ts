@@ -1,4 +1,4 @@
-import { ComparisonFilter } from './base_filter';
+import { ComparisonFilter } from './filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 
 export class GreaterFilter<T, E>

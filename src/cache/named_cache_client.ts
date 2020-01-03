@@ -26,10 +26,9 @@ import {
 } from './proto/messages_pb';
 
 import { RequestFactory, Comparator } from './request_factory';
-import { IMap } from './i_map';
-import { BytesValue, BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
-import { KeySet, EntrySet, NamedCacheEntry, IRemoteSet, ValueSet } from './streamed_collection';
-import { resolvePtr } from 'dns';
+import { NamedCache } from './named_cache';
+import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
+import { KeySet, EntrySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
 import { Filter } from '../filter/filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 import { Serializer } from '../util/serializer';
@@ -43,7 +42,14 @@ import { Serializer } from '../util/serializer';
  * if any exception occurs during the method invocation.
  */
 export class NamedCacheClient<K, V>
-    implements IMap<K, V> {
+    implements NamedCache<K, V> {
+
+    lock(key: any, cWait?: number | undefined): boolean {
+        throw new Error("Method not implemented.");
+    }
+    unlock(key: any): boolean {
+        throw new Error("Method not implemented.");
+    }
 
     /**
      * The name of the coherence NamedCache.
@@ -63,7 +69,7 @@ export class NamedCacheClient<K, V>
     /**
      * Request feactory. Used for internal purpose only.
      */
-    reqFactory: RequestFactory<K, V>;
+    requests: RequestFactory<K, V>;
 
     /**
      * Create a new NamedCacheClient with the specified address and cache name.
@@ -80,7 +86,7 @@ export class NamedCacheClient<K, V>
         this.options = options;
         this.client = new NamedCacheServiceClient(address || 'localhost:1408',
             grpc.credentials.createInsecure());
-        this.reqFactory = new RequestFactory(this.cacheName);
+        this.requests = new RequestFactory(this.cacheName);
     }
 
     /**
@@ -89,7 +95,7 @@ export class NamedCacheClient<K, V>
      * @return An instance of RequestFactory.
      */
     getRequestFactory(): RequestFactory<K, V> {
-        return this.reqFactory;
+        return this.requests;
     }
 
     getNamedCacheServiceClient(): NamedCacheServiceClient {
@@ -98,12 +104,22 @@ export class NamedCacheClient<K, V>
 
     addIndex(extractor: ValueExtractor<any, any>, ordered?: boolean, comparator?: Comparator): Promise<void> {
         const self = this;
-        const request = this.reqFactory.addIndex(extractor, ordered, comparator);
+        const request = this.requests.addIndex(extractor, ordered, comparator);
         return new Promise((resolve, reject) => {
             self.client.addIndex(request, (err: grpc.ServiceError | null) => {
                 self.resolveValue(resolve, reject, err);
             });
         });
+    }
+
+    removeIndex<T, E>(extractor: ValueExtractor<T, E>): Promise<void> {
+        const self = this;
+        const request = this.requests.removeIndex(extractor);
+        return new Promise((resolve, reject) => {
+            // self.client.removeIndex(request, (err: grpc.ServiceError | null) => {
+            //     self.resolveValue(resolve, reject, err);
+            // });
+        });    
     }
 
     /**
@@ -115,7 +131,7 @@ export class NamedCacheClient<K, V>
     clear(): Promise<void> {
         const self = this;
         return new Promise((resolve, reject) => {
-            self.client.clear(self.reqFactory.clear(), (err: grpc.ServiceError | null) => {
+            self.client.clear(self.requests.clear(), (err: grpc.ServiceError | null) => {
                 self.resolveValue(resolve, reject, err);
             });
         });
@@ -149,7 +165,7 @@ export class NamedCacheClient<K, V>
     containsEntry(key: K, value: V): Promise<boolean> {
         const self = this;
         return new Promise((resolve, reject) => {
-            const request = self.reqFactory.containsEntry(key, value);
+            const request = self.requests.containsEntry(key, value);
             self.client.containsEntry(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
             });
@@ -166,7 +182,7 @@ export class NamedCacheClient<K, V>
      */
     containsKey(key: K): Promise<boolean> {
         const self = this;
-        const request = self.reqFactory.containsKey(key);
+        const request = self.requests.containsKey(key);
         return new Promise((resolve, reject) => {
             self.client.containsKey(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
@@ -184,7 +200,7 @@ export class NamedCacheClient<K, V>
      */
     containsValue(value: V): Promise<boolean> {
         const self = this;
-        const request = this.reqFactory.containsValue(value);
+        const request = this.requests.containsValue(value);
         return new Promise((resolve, reject) => {
             self.client.containsValue(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
@@ -198,22 +214,22 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the keys contained in this map
      */
-    entrySet(): Promise<IRemoteSet<NamedCacheEntry<K, V>>>;
-    entrySet(filter: Filter<any>): Set<Promise<NamedCacheEntry<K, V>>>;
-    entrySet(arg?: any): any {
+    entrySet(): RemoteSet<NamedCacheEntry<K, V>>;
+    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<NamedCacheEntry<K, V>>>;
+    entrySet(filter?: Filter<any>, comp?: Comparator): RemoteSet<NamedCacheEntry<K, V>> | Promise<Set<NamedCacheEntry<K, V>>> {
         const self = this;
-        if (!arg) {
-            return new Promise((resolve, reject) => resolve(new EntrySet(this)));
+        if (!filter) {
+            return new EntrySet(this);
         }
 
-        const set = new Set<Promise<NamedCacheEntry<K, V>>>();
-        const request = this.reqFactory.entrySet(arg);
+        const set = new Set<NamedCacheEntry<K, V>>();
+        const request = this.requests.entrySet(filter, comp);
         const call = self.client.entrySet(request);
 
         return new Promise((resolve, reject) => {
             call.on('data', function (e: Entry) {
                 const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8());
-                set.add(new Promise((resolve, reject) => resolve(entry)));
+                set.add(entry);
             });
             call.on('end', () => resolve(set) );
             call.on('error', (e) => {
@@ -243,7 +259,7 @@ export class NamedCacheClient<K, V>
     async getOrDefault(key: K, defaultValue: V | null): Promise<V | null> {
         const self = this;
         return new Promise((resolve, reject) => {
-            self.client.get(self.reqFactory.get(key), (err, resp) => {
+            self.client.get(self.requests.get(key), (err, resp) => {
                 if (resp && resp.getPresent()) {
                     self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
                 } else {
@@ -271,27 +287,37 @@ export class NamedCacheClient<K, V>
     }
 
     /**
-     * Returns a Set view of the keys contained in this map.
-     *
-     * @return a set view of the keys contained in this map
+     * Return a set view of the keys contained in this map for entries that 
+     * satisfy the criteria expressed by the filter.
+     * 
+     * @remarks
+     * Unlike the keySet() method, the set returned by this method may 
+     * not be backed by the map, so changes to the set may not reflected 
+     * in the map, and vice-versa.
+     * 
+     * @param filter     - The Filter object representing the criteria 
+     *                     that the entries of this map should satisfy.
+     * @param comparator - The Comparator object which imposes an ordering 
+     *                     on entries in the indexed map; or null if the 
+     *                     entries' values natural ordering should be used.
      */
-    keySet(): Promise<IRemoteSet<K>>;
-    keySet(filter: Filter<any>): Set<Promise<K>>;
-    keySet(arg?: any): any {
+    keySet(): RemoteSet<K>;
+    keySet(filter: Filter<any>, comparator?: Comparator): Promise<Set<K>>;
+    keySet(filter?: Filter<any>, comparator?: Comparator): RemoteSet<K> | Promise<Set<K>> {
         const self = this;
-        if (!arg) {
-            return new Promise((resolve, reject) => resolve(new KeySet(this)));
+        if (!filter) {
+            return new KeySet(this);
         }
 
-        const set = new Set<Promise<K>>();
-        const request = this.reqFactory.keySet(arg);
+        const set = new Set<K>();
+        const request = this.requests.keySet(filter);
         const call = self.client.keySet(request);
 
         return new Promise((resolve, reject) => {
             call.on('data', function (r: BytesValue) {
                 const k = Serializer.deserialize(r.getValue_asU8());
                 if (k) {
-                    set.add(new Promise((resolve, reject) => resolve(k)));
+                    set.add(k);
                 }
             });
             call.on('end', () => resolve(set) );
@@ -316,7 +342,7 @@ export class NamedCacheClient<K, V>
     put(key: K, value: V, ttl?: number): Promise<V> {
         const self = this;
         return new Promise((resolve, reject) => {
-            self.client.put(self.reqFactory.put(key, value, ttl), (err, resp) => {
+            self.client.put(self.requests.put(key, value, ttl), (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
@@ -335,7 +361,7 @@ export class NamedCacheClient<K, V>
      */
     putIfAbsent(key: K, value: V, ttl?: number): Promise<V> {
         const self = this;
-        const request = self.reqFactory.putIfAbsent(key, value, ttl);
+        const request = self.requests.putIfAbsent(key, value, ttl);
         return new Promise((resolve, reject) => {
             self.client.putIfAbsent(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
@@ -354,7 +380,7 @@ export class NamedCacheClient<K, V>
     remove(key: K): Promise<V> {
         const self = this;
         return new Promise((resolve, reject) => {
-            self.client.remove(this.reqFactory.remove(key), (err, resp) => {
+            self.client.remove(this.requests.remove(key), (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
             });
         });
@@ -372,7 +398,7 @@ export class NamedCacheClient<K, V>
      */
     removeMapping(key: K, value: V): Promise<boolean> {
         const self = this;
-        const request = this.reqFactory.removeMapping(key, value);
+        const request = this.requests.removeMapping(key, value);
         return new Promise((resolve, reject) => {
             self.client.removeMapping(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp);
@@ -393,7 +419,7 @@ export class NamedCacheClient<K, V>
      */
     replace(key: K, value: V): Promise<V> {
         const self = this;
-        const request = this.reqFactory.replace(key, value);
+        const request = this.requests.replace(key, value);
         return new Promise((resolve, reject) => {
             self.client.replace(request, (err, resp) => {
                 self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
@@ -412,9 +438,9 @@ export class NamedCacheClient<K, V>
      * @return a Promise that will eventually resolve to true if the specifiedf
      *         mapping exists in the cache; false otherwise
      */
-    replaceMapping(key: K, value: V, newValue: V): Promise<Boolean> {
+    replaceMapping(key: K, value: V, newValue: V): Promise<boolean> {
         const self = this;
-        const request = this.reqFactory.replaceMapping(key, value, newValue);
+        const request = this.requests.replaceMapping(key, value, newValue);
 
         return new Promise((resolve, reject) => {
             self.client.replaceMapping(request, (err, resp) => {
@@ -427,21 +453,26 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the values contained in this cache
      */
-    values(): Promise<IRemoteSet<V>>;
-    values(filter: Filter<any>): Set<Promise<V>>;
-    values(arg?: any): any {
+    /*
+    keySet(): RemoteSet<K>;
+    keySet(filter: Filter<V>, comparator?: Comparator): Promise<Set<K>>;
+    keySet(filter?: Filter<any>, comparator?: Comparator): RemoteSet<K> | Promise<Set<K>> {
+    */
+    values(): RemoteSet<V>;
+    values(filter: Filter<any>, comparator?: Comparator): Promise<Set<V>>;
+    values(filter?: Filter<any>, comparator?: Comparator): RemoteSet<V> | Promise<Set<V>> {
         const self = this;
-        if (!arg) {
-            return new Promise((resolve, reject) => resolve(new ValueSet(this)));
+        if (!filter) {
+            return new ValueSet(this);
         }
 
-        const set = new Set<Promise<V>>();
-        const request = this.reqFactory.values(arg);
+        const set = new Set<V>();
+        const request = this.requests.values(filter, comparator);
         const call = self.client.values(request);
 
         return new Promise((resolve, reject) => {
             call.on('data', function (b: BytesValue) {
-                set.add(new Promise((resolve, reject) => resolve(Serializer.deserialize(b.getValue_asU8()))));
+                set.add(Serializer.deserialize(b.getValue_asU8()));
             });
             call.on('end', () => resolve(set) );
             call.on('error', (e) => {
@@ -452,11 +483,11 @@ export class NamedCacheClient<K, V>
     }
 
     nextEntrySetPage(cookie: Uint8Array | string | undefined): grpc.ClientReadableStream<EntryResult> {
-        return this.client.nextEntrySetPage(this.reqFactory.pageRequest(cookie));
+        return this.client.nextEntrySetPage(this.requests.pageRequest(cookie));
     }
 
     nextKeySetPage(cookie: Uint8Array | string | undefined): grpc.ClientReadableStream<BytesValue> {
-        return this.client.nextKeySetPage(this.reqFactory.pageRequest(cookie));
+        return this.client.nextKeySetPage(this.requests.pageRequest(cookie));
     }
 
 
@@ -486,7 +517,6 @@ export class NamedCacheClient<K, V>
             ? Serializer.deserialize(value)
             : null;
     }
-
 }
 
 /**
@@ -499,5 +529,4 @@ export interface NamedCacheOptions {
      * among multiple NamedCacheClients.
      */
     channel?: grpc.Channel;
-
 }

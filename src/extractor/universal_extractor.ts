@@ -1,26 +1,19 @@
 
-import { AbstractExtractor, Target } from './abstract_extractor';
+import { ValueExtractor } from './value_extractor';
 
 export class UniversalExtractor<T, E>
-    extends AbstractExtractor<T, E> {
+    extends ValueExtractor<T, E> {
 
     name: string;
 
     params?: any[];
 
-    // constructor(name: string, params?: any[], target?: Target | undefined) {
-    constructor(name: string) {
-            super('UniversalExtractor');
-
-        // Util.ensureNotNull(name, "name cannot be null");
-        // if (params && params.length > 0) {
-        //     Util.ensureValidMethodSuffix(name);
-        // }
-
+    constructor(name: string, params?: any[]) {
+        super('UniversalExtractor');
         this.name = name;
-        // if (params) {
-        //     this.params = params;
-        // }
+        if (params) {
+            this.params = params;
+        }
     }
 
 }

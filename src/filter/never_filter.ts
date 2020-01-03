@@ -1,8 +1,7 @@
 import { Filter } from './filter';
-import { BaseFilter } from './base_filter';
 
 export class NeverFilter
-    extends BaseFilter<any> {
+    extends Filter<any> {
 
     constructor() {
         super('NeverFilter');

@@ -6,13 +6,12 @@ const path = require('path');
 import { RequestFactory } from '../src/cache/request_factory';
 import { expect } from 'chai';
 
-import { Serializer } from '../src/util/serializer';
-import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
-import { UniversalExtractor } from '../src/extractor/universal_extractor';
-import { states, StateType } from './states';
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
+import { Util } from '../src/util/util';
+import { Serializer } from '../src/util/serializer';
+import { Extractors } from '../src/extractor/extractors';
 
 const reqFactory = new RequestFactory<string, any>("States");
 const cache = new NamedCacheClient<string, any>('States');
@@ -45,7 +44,7 @@ extends BaseCollectionTestsSuite {
         let count = 0;
         const set = new Set<string>();
 
-        for await (let k of keys) {
+        for await (let k of keys) {            
             count++;
             set.add(k);      
         }
@@ -55,7 +54,8 @@ extends BaseCollectionTestsSuite {
     }
 
     @test async keySetWithEqualsFilter() {
-        const keys = await cache.keySet(Filters.equals('str', '234'));
+        Serializer.printJSON("** EQ Filter: ", Filters.equal('str', 234))
+        const keys = await cache.keySet(Filters.equal('str', '234'));
         let count = 0;
         for await (let k of keys) {
             count++;
@@ -67,7 +67,7 @@ extends BaseCollectionTestsSuite {
 
     @test async keySetWithEqualsForNumberFilter() {
 
-        const keys = await cache.keySet(Filters.greater('ival', 123));
+        const keys = await cache.keySet(Filters.greater(Extractors.extract('ival'), 123));
         let count = 0;
         const expected = new Set<string>();
         expected.add('234').add('345').add('456');
@@ -123,7 +123,7 @@ extends BaseCollectionTestsSuite {
     }
 
     @test async entrySetWithEqualsFilter() {
-        const entries = await cache.entrySet(Filters.equals('str', '234'));
+        const entries = await cache.entrySet(Filters.equal('str', '234'));
         let count = 0;
         for await (let e of entries) {
             count++;
@@ -135,7 +135,7 @@ extends BaseCollectionTestsSuite {
 
     @test async entrySetWithEqualsForNumberFilter() {
 
-        const entries = await cache.entrySet(Filters.equals('ival', 345));
+        const entries = await cache.entrySet(Filters.equal('ival', 345));
         let count = 0;
         for await (let e of entries) {
             count++;
@@ -185,7 +185,7 @@ extends BaseCollectionTestsSuite {
     }
 
     @test async valuesWithEqualsFilter() {
-        const values = await cache.values(Filters.equals('str', '234'));
+        const values = await cache.values(Filters.equal('str', '234'));
         let count = 0;
         for await (let v of values) {
             count++;
@@ -197,7 +197,7 @@ extends BaseCollectionTestsSuite {
 
     @test async valuesWithEqualsForNumberFilter() {
 
-        const values = await cache.values(Filters.equals('ival', 345));
+        const values = await cache.values(Filters.equal('ival', 345));
         let count = 0;
         for await (let v of values) {
             count++;

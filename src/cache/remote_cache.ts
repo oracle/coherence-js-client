@@ -1,6 +1,10 @@
+import { ConcurrentMap } from "./concurrent_map";
+import { QueryMap } from "./query_map";
+import { NamedCacheEntry, RemoteSet } from './streamed_collection';
 
 
-export interface IMap<K, V> {
+
+export interface RemoteCache<K, V> {
 
     /**
      * Clears all the mappings in the cache.
@@ -17,7 +21,7 @@ export interface IMap<K, V> {
      * @return A Promise that eventually resolves to true if the key is mapped
      *         to some value or false otherwise.
      */
-    containsKey(key: K): Promise<Boolean>;
+    containsKey(key: K): Promise<boolean>;
 
     /**
      * Returns true if the specified value is mapped to some key.
@@ -27,7 +31,7 @@ export interface IMap<K, V> {
      * @return A Promise that eventually resolves to true if a mapping
      *         exists or false otherwise.
      */
-    containsValue(value: V): Promise<Boolean>;
+    containsValue(value: V): Promise<boolean>;
 
     /**
      * Returns the value to which this cache maps the specified key.
@@ -51,24 +55,7 @@ export interface IMap<K, V> {
      * @return A Promise that eventually resolves to true if the map is empty;
      *         false otherwise.
      */
-    isEmpty(): Promise<Boolean>;
-
-    /**
-     * Returns a Set view of the keys contained in this map.
-     * The set is backed by the map, so changes to the map are
-     * reflected in the set, and vice-versa.  If the map is modified
-     * while an iteration over the set is in progress (except through
-     * the iterator's own <tt>remove</tt> operation), the results of
-     * the iteration are undefined.  The set supports element removal,
-     * which removes the corresponding mapping from the map, via the
-     * <tt>Iterator.remove</tt>, <tt>Set.remove</tt>,
-     * <tt>removeAll</tt>, <tt>retainAll</tt>, and <tt>clear</tt>
-     * operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
-     * operations.
-     *
-     * @return a set view of the keys contained in this map
-     */
-    // keySet(): Set<K>;
+    isEmpty(): Promise<boolean>;
 
     /**
      * Associates the specified value with the specified key in this map. If the
@@ -102,7 +89,7 @@ export interface IMap<K, V> {
      * @return a Promise that will eventually resolve to true if the specifiedf
      *         mapping exists in the cache; false otherwise
      */
-    removeMapping(key: K, value: V): Promise<Boolean>
+    removeMapping(key: K, value: V): Promise<boolean>
 
     /**
      * Replace the entry for the specified key only if it is currently
@@ -127,7 +114,7 @@ export interface IMap<K, V> {
      * @return a Promise that will eventually resolve to true if the specifiedf
      *         mapping exists in the cache; false otherwise
      */
-    replaceMapping(key: K, value: V, newValue: V): Promise<Boolean>;
+    replaceMapping(key: K, value: V, newValue: V): Promise<boolean>;
 
     /**
      * Returns the number of key-value mappings in this map.

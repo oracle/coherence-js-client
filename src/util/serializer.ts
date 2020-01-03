@@ -14,10 +14,6 @@ export class Serializer {
         return buf;
     }
 
-    public static toValue(value: Uint8Array): any {
-        return this.toValue(value);
-    }
-
     public static deserialize(value: any): any {
         if (value && value.length > 0) {
             let buf = Buffer.from(value);
@@ -29,6 +25,10 @@ export class Serializer {
             }
         }
         return null;
+    }
+
+    static printJSON(message: string, obj: any): void {
+        console.log(message + JSON.stringify(Serializer.deserialize(Serializer.serialize(obj))));
     }
 
 }

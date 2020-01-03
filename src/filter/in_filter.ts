@@ -1,10 +1,10 @@
-import { ComparisonFilter } from './base_filter';
+import { ComparisonFilter } from './filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 
 export class InFilter<T, E>
-    extends ComparisonFilter<T, E, any[]> {
+    extends ComparisonFilter<T, E, Set<E>> {
 
-    constructor(extractor: ValueExtractor<T, E>, setValues: any[]) {
+    constructor(extractor: ValueExtractor<T, E>, setValues: Set<E>) {
         super('InFilter', extractor, setValues);
     }
 }

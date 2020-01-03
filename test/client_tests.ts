@@ -235,7 +235,7 @@ class IsEmptySuite
         expect(await cache.isEmpty()).to.equal(true);
 
         await cache.put(val123, val234);
-        
+
         expect(await cache.size()).to.not.equal(0);
         expect(await cache.isEmpty()).to.equal(false);
     }

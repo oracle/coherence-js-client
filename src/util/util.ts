@@ -1,3 +1,5 @@
+import { Serializer } from "./serializer";
+
 export class Util {
     
     static EXTRACTOR_PACKAGE = 'com.tangosol.util.extractor.';
@@ -32,13 +34,12 @@ export class Util {
         }
     }
 
-    static fqFilterName(name: string): string {
+    static toFilterName(name: string): string {
         return this.FILTER_PACKAGE + name;
     }
 
-    static fqExtractorName(name: string): string {
+    static toExtractorName(name: string): string {
         return this.EXTRACTOR_PACKAGE + name;
     }
-
-
+    
 }

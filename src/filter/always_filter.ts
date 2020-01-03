@@ -1,9 +1,16 @@
-import { BaseFilter } from './base_filter';
-import { Util } from '../util/util';
+import { Filter } from './filter';
 
-export class AlwaysFilter
-    extends BaseFilter<any> {
+/**
+* Filter which always evaluates to `true`.
+*
+* @param <T> the type of the input argument to the filter.
+*/
+export class AlwaysFilter<T = any>
+    extends Filter<T> {
 
+    /**
+     * Construct an AlwaysFilter.
+     */
     constructor() {
         super('AlwaysFilter');
     }
