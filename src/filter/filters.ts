@@ -115,7 +115,7 @@ export class Filters {
     static arrayContainsAll<T, E>(extractor: ValueExtractor<T, E[]>, ...value: E[]): Filter<T>;
     static arrayContainsAll<T, E, K extends E>(extractor: ValueExtractor<T, E>, values: Set<K>): Filter<T>;
     static arrayContainsAll<T, E, K>(extractor: ValueExtractor<T, E>, value: E[] | Set<K>): Filter<T> {
-        return new ContainsAllFilter(extractor, (value instanceof Set) ? value : new Set(value));
+        return new ContainsAllFilter(extractor, value);
     }
 
         /**
@@ -135,7 +135,7 @@ export class Filters {
     static arrayContainsAny<T, E>(extractor: ValueExtractor<T, E>, ...value: E[]): Filter<T>;
     static arrayContainsAny<T, E, K extends E>(extractor: ValueExtractor<T, E>, values: Set<K>): Filter<T>;
     static arrayContainsAny<T, E, K>(extractor: ValueExtractor<T, E>, value: E[] | Set<K>): Filter<T> {
-        return new ContainsAnyFilter(extractor, (value instanceof Set) ? value : new Set(value));
+        return new ContainsAnyFilter(extractor, value);
     }
 
     /**
@@ -193,7 +193,7 @@ export class Filters {
     static containsAll<T, E>(extractor: ValueExtractor<T, E>, ...values: any[]): Filter<T>;
     static containsAll<T, E>(extractor: ValueExtractor<T, E>, values: Set<any>): Filter<T>;
     static containsAll<T, E>(extractor: ValueExtractor<T, E>, values: any[] | Set<any>): Filter<T> {
-        return new ContainsAllFilter(extractor, (values instanceof Set) ? values : new Set(values));
+        return new ContainsAllFilter(extractor, values);
     }
 
     /**
@@ -213,7 +213,7 @@ export class Filters {
     static containsAny<T, E>(extractor: ValueExtractor<T, E>, ...values: any[]): Filter<T>;
     static containsAny<T, E>(extractor: ValueExtractor<T, E>, values: Set<any>): Filter<T>;
     static containsAny<T, E>(extractor: ValueExtractor<T, E>, values: any[] | Set<any>): Filter<T> {
-        return new ContainsAnyFilter(extractor, (values instanceof Set) ? values : new Set(values));
+        return new ContainsAnyFilter(extractor, values);
     }
 
     /**
