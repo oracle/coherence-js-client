@@ -13,6 +13,7 @@ import { UniversalExtractor } from '../src/extractor/universal_extractor';
 import { states, StateType } from './states';
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
+import { BetweenFilter } from '../src/filter/between_filter';
 
 const reqFactory = new RequestFactory<any, any>("FilterTestsCache");
 const cache = new NamedCacheClient<any, any>('FilterTestsCache');
@@ -127,8 +128,8 @@ class ArrayContainsFilterSuite
 class ArrayContainsAllFilterSuite 
     extends BaseFilterTestsSuite {
 
-        /*
-    @test async checkEntrySetWithFilterArrayContainsAll() {
+    //@test 
+    async checkEntrySetWithFilterArrayContainsAll() {
         const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([1, 2]));
         const entries = await cache.entrySet(f1);
 
@@ -139,5 +140,99 @@ class ArrayContainsAllFilterSuite
 
         expect(entries2.size).to.equal(3);
     }
-    */
+    
+}
+
+@suite(timeout(3000))
+class ArrayContainsAnyFilterSuite 
+    extends BaseFilterTestsSuite {
+
+    //@test 
+    async checkEntrySetWithFilterArrayContainsAny() {
+        const f1 = Filters.arrayContainsAny(Extractors.extract('iarr'), new Set([1, 2]));
+        const entries = await cache.entrySet(f1);
+
+        expect(entries.size).to.equal(1);
+
+        const f2 = Filters.arrayContainsAny(Extractors.extract('iarr'), [3, 4]);
+        const entries2 = await cache.entrySet(f2);
+
+        expect(entries2.size).to.equal(3);
+    }
+    
+}
+
+@suite(timeout(3000))
+class BetweenFilterSuite 
+    extends BaseFilterTestsSuite {
+
+    @test 
+    async checkEntrySetWithBetweenFilter() {
+        const f1 = Filters.between(Extractors.extract('ival'), 123, 345);
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(1);
+
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(2);
+
+        const f3 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true);
+        const entries3 = await cache.entrySet(f3);
+        expect(entries3.size).to.equal(3);
+    }
+    
+}
+
+@suite(timeout(3000))
+class ContainsFilterSuite 
+    extends BaseFilterTestsSuite {
+
+    //@test 
+    async checkEntrySetWithContainsFilter() {
+        const f1 = Filters.contains(Extractors.extract('iarr'), 2);
+        console.log("** Contains filter: " + JSON.stringify(f1));
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+
+        const f2 = Filters.contains(Extractors.extract('iarr'), 3);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(2);
+    }
+    
+}
+
+
+@suite(timeout(3000))
+class ContainsAllFilterSuite 
+    extends BaseFilterTestsSuite {
+
+    //@test 
+    async checkEntrySetWithContainsFilter() {
+        const f1 = Filters.containsAll(Extractors.extract('iarr'), [2]);
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+
+        const f2 = Filters.containsAll(Extractors.extract('iarr'), 3, 4);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(3);
+    }
+    
+}
+
+
+@suite(timeout(3000))
+class ContainsAnyFilterSuite 
+    extends BaseFilterTestsSuite {
+
+    //@test 
+    async checkEntrySetWithContainsFilter() {
+        const f1 = Filters.containsAny(Extractors.extract('iarr'), [1, 5]);
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), 1, 5);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(4);
+    }
+    
 }
