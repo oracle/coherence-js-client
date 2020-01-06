@@ -2,15 +2,8 @@ import { NamedCacheClient } from "./named_cache_client";
 import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
 import { EntryResult, PageRequest } from "./proto/messages_pb";
 import { ClientReadableStream } from "grpc";
-import { Serializer } from "../util/serializer";
-
-interface RemoteSet<T> {
-    clear(): Promise<void>;
-    delete(value: T): Promise<boolean>;
-    has(value: T): Promise<boolean>;
-    size(): Promise<number>;
-    [Symbol.iterator](): IterableIterator<T>
-}
+import { Serializer } from '../util/serializer';
+import { RemoteSet, Entry } from '../cache/query_map';
 
 class PagedSet<K, V, T>
     implements RemoteSet<T> {
@@ -119,7 +112,7 @@ class EntrySet<K, V>
         super(namedCache);
     }
 
-    delete(e: NamedCacheEntry<K, V>): Promise<boolean> {
+    delete(e: Entry<K, V>): Promise<boolean> {
         return this.namedCache.removeMapping(e.getKey(), e.getValue());
     }
 
@@ -322,7 +315,8 @@ interface IStreamedDataHelper<R, T> {
 // }
 
 
-class NamedCacheEntry<K, V> {
+class NamedCacheEntry<K, V> 
+    implements Entry<K, V> {
 
     private key!: K;
 
@@ -354,4 +348,4 @@ class NamedCacheEntry<K, V> {
 
 type Cookie = Uint8Array | string | undefined;
 
-export { KeySet, EntrySet, ValueSet, RemoteSet, NamedCacheEntry };
+export { KeySet, EntrySet, NamedCacheEntry, ValueSet, RemoteSet };

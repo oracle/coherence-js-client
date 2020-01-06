@@ -175,7 +175,7 @@ class GetOrDefaultSuite
     
     @test async getOrDefaultOnEmptyMap() {
         await cache.clear();
-        expect(await cache.getOrDefault('123', this.dVal)).to.eql(this.dVal);
+        expect(await cache.getOrDefault('123abc', this.dVal)).to.eql(this.dVal);
     }
 
     @test async getOrDefaultOnExistingMapping() {

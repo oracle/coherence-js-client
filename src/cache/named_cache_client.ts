@@ -21,13 +21,14 @@ import { NamedCacheServiceClient, NamedCacheServiceService } from './proto/servi
 import {
     EntryResult,
     IsEmptyRequest,
-    SizeRequest,
-    Entry
+    SizeRequest
 } from './proto/messages_pb';
+import { Entry as GrpcEntry} from './proto/messages_pb';
 
 import { RequestFactory, Comparator } from './request_factory';
 import { NamedCache } from './named_cache';
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
+import { Entry } from './query_map';
 import { KeySet, EntrySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
 import { Filter } from '../filter/filter';
 import { ValueExtractor } from '../extractor/value_extractor';
@@ -214,20 +215,20 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the keys contained in this map
      */
-    entrySet(): RemoteSet<NamedCacheEntry<K, V>>;
-    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<NamedCacheEntry<K, V>>>;
-    entrySet(filter?: Filter<any>, comp?: Comparator): RemoteSet<NamedCacheEntry<K, V>> | Promise<Set<NamedCacheEntry<K, V>>> {
+    entrySet(): RemoteSet<Entry<K, V>>;
+    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<Entry<K, V>>>;
+    entrySet(filter?: Filter<any>, comp?: Comparator): RemoteSet<Entry<K, V>> | Promise<Set<Entry<K, V>>> {
         const self = this;
         if (!filter) {
             return new EntrySet(this);
         }
 
-        const set = new Set<NamedCacheEntry<K, V>>();
+        const set = new Set<Entry<K, V>>();
         const request = this.requests.entrySet(filter, comp);
         const call = self.client.entrySet(request);
 
         return new Promise((resolve, reject) => {
-            call.on('data', function (e: Entry) {
+            call.on('data', function (e: GrpcEntry) {
                 const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8());
                 set.add(entry);
             });
