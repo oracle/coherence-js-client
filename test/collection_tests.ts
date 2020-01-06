@@ -54,7 +54,6 @@ extends BaseCollectionTestsSuite {
     }
 
     @test async keySetWithEqualsFilter() {
-        Serializer.printJSON("** EQ Filter: ", Filters.equal('str', 234))
         const keys = await cache.keySet(Filters.equal('str', '234'));
         let count = 0;
         for await (let k of keys) {

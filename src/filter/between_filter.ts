@@ -23,10 +23,6 @@ export class BetweenFilter<T, E>
 
     private to: E;
 
-    private includeLowerBound: boolean;
-
-    private includeUpperBound: boolean;
-
     constructor(extractor: ValueExtractor<T, E>, from: E, to: E, 
         includeLowerBound: boolean = false, includeUpperBound: boolean = false) 
     {
@@ -40,7 +36,5 @@ export class BetweenFilter<T, E>
 
         this.from = from;
         this.to = to;
-        this.includeLowerBound = includeLowerBound;
-        this.includeUpperBound = includeUpperBound;
     }
 }

@@ -1,234 +1,544 @@
 // Reference mocha-typescript's global definitions:
 /// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 
-const path = require('path');
-
 import { RequestFactory } from '../src/cache/request_factory';
 import { expect } from 'chai';
 
-import { Serializer } from '../src/util/serializer';
 import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
-import { UniversalExtractor } from '../src/extractor/universal_extractor';
-import { states, StateType } from './states';
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { BetweenFilter } from '../src/filter/between_filter';
 
-const reqFactory = new RequestFactory<any, any>("FilterTestsCache");
-const cache = new NamedCacheClient<any, any>('FilterTestsCache');
-
-const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
-const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4]};
-const val345 = {id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5]};
-const val456 = {id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6]};
-
-class BaseFilterTestsSuite {
-    async before() {
-        await cache.clear();
-        
-        await cache.put("123", val123)
-        await cache.put("234", val234)
-        await cache.put("345", val345)
-        await cache.put("456", val456)
-    }
-}
+import { 
+    AbstractNamedCacheTestsSuite,
+    cache, nested,
+    val123, val234, val345, val456,
+    toObj, tscObj, trieObj, jadeObj, javascriptObj
+} from './abstract_named_cache_tests';
 
 @suite(timeout(3000))
-class FilterComposition 
-    extends BaseFilterTestsSuite {
+class FilterTestsSuite 
+    extends AbstractNamedCacheTestsSuite {
 
-    @test async withAnd() {
+    @test async composeFilterWithAnd() {
         const f1 = Filters.equal('str', '123');
         const f2 = f1.and(Filters.equal('ival', 123))
         const entries = await cache.entrySet(f2);
 
-        expect(entries.size).to.equal(1);
+        let values = super.entriesToValues(entries);
+        expect(values.length).to.equal(1);
+        expect(values[0]).to.eql(val123);
     }
 
-    @test async withOr() {
+    @test async composeFilterWithOr() {
         const f1 = Filters.equal('str', '123');
         const f2 = f1.or(Filters.equal('ival', 234))
-        const entries = await cache.entrySet(f2);
 
-        expect(entries.size).to.equal(2);
+        let values = Array.from(await cache.values(f2))
+        expect(values.length).to.equal(2);
+        expect(values).to.have.deep.members([val123, val234]);
     }
 
-    @test async withXor() {
+    @test async composeFilterWithXor() {
         const f1 = Filters.equal('str', '123');
         const f2 = f1.xor(Filters.equal('ival', 123))
         const entries = await cache.entrySet(f2);
 
         expect(entries.size).to.equal(0);
     }
-}
 
-
-@suite(timeout(3000))
-class AllFilterSuite 
-    extends BaseFilterTestsSuite {
-
-    @test async checkDefaultEntrySet() {
+    @test async testEntrySetWithAllFilterWithNoResult() {
         const f1 = Filters.all(Filters.always(), Filters.never());
         const entries = await cache.entrySet(f1);
 
         expect(entries.size).to.equal(0);
     }
 
-    @test async checkEntrySetWithFilterAll() {
+    // AllFilter
+    @test async testAllFilterWithKeySet() {
         const f1 = Filters.all(Filters.equal('str', '123'), Filters.equal('ival', 234));
-        const entries = await cache.entrySet(f1);
-
-        expect(entries.size).to.equal(0);
+        expect(Array.from(await cache.keySet(f1)).length).to.equal(0);
+    }
+    @test async testAllFilterWithEntrySet() {
+        const f1 = Filters.all(Filters.equal('str', '123'), Filters.equal('ival', 234));
+        expect(Array.from(await cache.entrySet(f1)).length).to.equal(0);
+    }
+    @test async testAllFilterWithValues() {
+        const f1 = Filters.all(Filters.equal('str', '123'), Filters.equal('ival', 234));
+        expect(Array.from(await cache.values(f1)).length).to.equal(0);
     }
 
-}
+    // AnyFilter
+    @test async testAnyFilterWithKeySet() {
+        const f1 = Filters.any(Filters.equal('str', '123'), Filters.equal('ival', 456));
+        const keys = await cache.keySet(f1);
 
-
-@suite(timeout(3000))
-class AnyFilterSuite 
-    extends BaseFilterTestsSuite {
-
-    @test async checkDefaultEntrySet() {
-        const f1 = Filters.any(Filters.never(), Filters.always());
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['123', '456']);
+    }
+    @test async testAnyFilterWithEntrySet() {
+        const f1 = Filters.any(Filters.equal('str', '123'), Filters.equal('ival', 456));
         const entries = await cache.entrySet(f1);
 
-        expect(entries.size).to.equal(4);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val456]);
+    }
+    @test async testAnyFilterWithValues() {
+        const f1 = Filters.any(Filters.equal('str', '123'), Filters.equal('ival', 456));
+        const values = await cache.values(f1);
+
+        expect(Array.from(values)).to.have.deep.members([val123, val456]);
     }
 
-    @test async checkEntrySetWithFilterAny() {
-        const f1 = Filters.any(Filters.equal('str', '123'), Filters.equal('ival', 234));
+    // ArrayContains
+    @test async testArrayContainsWithKeySet() {
+        const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
+        const keys = await cache.keySet(f1);
+
+        expect(keys.size).to.equal(3);
+        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345']);
+    }
+    @test async testArrayContainsWithEntrySet() {
+        const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
         const entries = await cache.entrySet(f1);
 
-        expect(entries.size).to.equal(2);
+        expect(entries.size).to.equal(3);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345]);
+    }
+    @test async testArrayContainsWithValues() {
+        const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
+        const entries = await cache.values(f1);
+        expect(entries.size).to.equal(3);
+        expect(Array.from(entries)).to.have.deep.members([val123, val234, val345]);
     }
 
-}
-
-@suite(timeout(3000))
-class ArrayContainsFilterSuite 
-    extends BaseFilterTestsSuite {
-
-    @test async checkEntrySetWithFilterArrayContains() {
-        const f1 = Filters.arrayContains(Extractors.extract('iarr'), 2);
-        const entries = await cache.entrySet(f1);
-
-        expect(entries.size).to.equal(2);
-
-        const f2 = Filters.arrayContains(Extractors.extract('iarr'), 3);
-        const entries2 = await cache.entrySet(f2);
-
-        expect(entries2.size).to.equal(3);
-    }
-
-}
-
-
-@suite(timeout(3000))
-class ArrayContainsAllFilterSuite 
-    extends BaseFilterTestsSuite {
-
+    // ArrayContainsAll
     @test 
-    async checkEntrySetWithFilterArrayContainsAll() {
+    async testArrayContainsAllWithKeySet() {
+        const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]);
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(1);
+        expect(Array.from(keys)[0]).to.equal('123');
+    }
+    @test 
+    async testArrayContainsAllWithEntrySet() {
         const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]);
         const entries = await cache.entrySet(f1);
-        expect(entries.size).to.equal(1);
 
-        const f2 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4]);
-        const entries2 = await cache.entrySet(f2);
-        expect(entries2.size).to.equal(2);
+        expect(entries.size).to.equal(1);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123]);
+    }
+    @test 
+    async testArrayContainsAllWithValues() {
+        const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]);
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(1);
+        expect(Array.from(values)[0]).to.eql(val123);
     }
     
-}
-
-@suite(timeout(3000))
-class ArrayContainsAnyFilterSuite 
-    extends BaseFilterTestsSuite {
-
+    // ArrayContainsAny
     @test 
-    async checkEntrySetWithFilterArrayContainsAny() {
+    async testArrayContainsAnyWithKeySet() {
+        const f1 = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2]);
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['123', '234']);
+    }
+    @test 
+    async testArrayContainsAnyWithEntrySet() {
         const f1 = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2]);
         const entries = await cache.entrySet(f1);
         expect(entries.size).to.equal(2);
-
-        const f2 = Filters.arrayContainsAny(Extractors.extract('iarr'), [3, 4]);
-        const entries2 = await cache.entrySet(f2);
-        expect(entries2.size).to.equal(4);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234]);
     }
-    
-}
-
-@suite(timeout(3000))
-class BetweenFilterSuite 
-    extends BaseFilterTestsSuite {
-
     @test 
-    async checkEntrySetWithBetweenFilter() {
+    async testArrayContainsAnyWithValues() {
+        const f1 = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2]);
+        const values = await cache.entrySet(f1);
+        expect(values.size).to.equal(2);
+        expect(this.entriesToValues(values)).to.have.deep.members([val123, val234]);
+    }
+
+    // BetweenFilter
+    @test 
+    async testBetweenWithKeySet() {
+        const f1 = Filters.between(Extractors.extract('ival'), 123, 345);
+        const entries = await cache.keySet(f1);
+
+        expect(entries.size).to.equal(1);
+        expect(Array.from(entries)[0]).to.equal('234');
+    }
+    async testBetweenWithEntrySet() {
         const f1 = Filters.between(Extractors.extract('ival'), 123, 345);
         const entries = await cache.entrySet(f1);
+
         expect(entries.size).to.equal(1);
+        expect(Array.from(entries)[0].getKey()).to.equal('234');
+        expect(Array.from(entries)[0].getValue()).to.eql(val234);
+    }
+    async testBetweenWithValues() {
+        const f1 = Filters.between(Extractors.extract('ival'), 123, 345);
+        const entries = await cache.values(f1);
 
+        expect(entries.size).to.equal(1);
+        expect(Array.from(entries)[0]).to.eql(val234);
+    }
+    // BetweenFilter with lower bound
+    @test 
+    async testBetweenFilterWithLowerBoundWithKeySet() {
         const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true);
-        const entries2 = await cache.entrySet(f2);
-        expect(entries2.size).to.equal(2);
+        const keys = await cache.keySet(f2);
 
-        const f3 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true);
-        const entries3 = await cache.entrySet(f3);
-        expect(entries3.size).to.equal(3);
+        expect(keys.size).to.equal(2);        
+        expect(Array.from(keys)).to.have.deep.members(['123', '234']);
     }
-    
-}
+    async testBetweenFilterWithLowerBoundWithEntrySet() {
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true);
+        const entries = await cache.entrySet(f2);
 
-@suite(timeout(3000))
-class ContainsFilterSuite 
-    extends BaseFilterTestsSuite {
-
-    @test 
-    async checkEntrySetWithContainsFilter() {
-        const f1 = Filters.contains(Extractors.extract('iarr'), 2);
-        console.log("** [ContainsFilterSuite] Contains filter: " + JSON.stringify(f1));
-        const entries = await cache.entrySet(f1);
-        expect(entries.size).to.equal(2);
-
-        // const f2 = Filters.contains(Extractors.extract('iarr'), 3);
-        // const entries2 = await cache.entrySet(f2);
-        // expect(entries2.size).to.equal(2);
+        expect(entries.size).to.equal(2);        
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234]);
     }
-    
-}
+    async testBetweenFilterWithLowerBoundWithValues() {
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true);
+        const values = await cache.values(f2);
 
-
-@suite(timeout(3000))
-class ContainsAllFilterSuite 
-    extends BaseFilterTestsSuite {
-
+        expect(values.size).to.equal(2);        
+        expect(this.entriesToValues(values)).to.have.deep.members([val123, val234]);
+    }
+    // BetweenFilter with lower and upper bound
     @test 
-    async checkEntrySetWithContainsFilter() {
-        const f1 = Filters.containsAll(Extractors.extract('iarr'), [2]);
-        const entries = await cache.entrySet(f1);
-        expect(entries.size).to.equal(2);
+    async testBetweenFilterWithLowerBoundAndUpperBoundWithKeySet() {
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true);
+        const keys = await cache.keySet(f2);
 
+        expect(keys.size).to.equal(3);        
+        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345']);
+    }
+    async testBetweenFilterWithLowerBoundAndUpperBoundWithEntrySet() {
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true);
+        const entries = await cache.entrySet(f2);
+
+        expect(entries.size).to.equal(3);        
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345]);
+    }
+    async testBetweenFilterWithLowerBoundAndUpperBoundWithValues() {
+        const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true);
+        const values = await cache.values(f2);
+
+        expect(values.size).to.equal(3);        
+        expect(this.entriesToValues(values)).to.have.deep.members([val123, val234, val345]);
+    }
+
+    // ContainsFilter
+    @test 
+    async testContainsWithKeySet() {
+        const f1 = Filters.contains(Extractors.extract('iarr'), 3);
+        const keys = await cache.keySet(f1);
+
+        expect(keys.size).to.equal(3);
+        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345']);   
+    }
+    @test 
+    async testContainsWithEntrySet() {
+        const f2 = Filters.contains(Extractors.extract('iarr'), 3);
+        const entries = await cache.entrySet(f2);
+
+        expect(entries.size).to.equal(3);        
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345]);      
+    }
+    @test 
+    async testContainsWithValues() {
+        const f2 = Filters.contains(Extractors.extract('iarr'), 3);
+        const values = await cache.values(f2);
+
+        expect(values.size).to.equal(3);        
+        expect(Array.from(values)).to.have.deep.members([val123, val234, val345]);       
+    }
+
+    // ContainsAllFilter
+    @test
+    async testContainsAllWithKeySet() {
         const f2 = Filters.containsAll(Extractors.extract('iarr'), [3, 4]);
+        const keys = await cache.keySet(f2);
+
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['234', '345']);
+    }
+    @test
+    async testContainsAllWithEntrySet() {
+        const f2 = Filters.containsAll(Extractors.extract('iarr'), [3, 4]);
+        const entries = await cache.entrySet(f2);
+
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val234, val345]); 
+    }
+    @test
+    async testContainsAllWithValues() {
+        const f2 = Filters.containsAll(Extractors.extract('iarr'), [3, 4]);
+        const values = await cache.values(f2);
+
+        expect(values.size).to.equal(2);
+        expect(Array.from(values)).to.have.deep.members([val234, val345]); 
+    }
+    @test
+    async testContainsAllWithEmptyResult() {
+        const f2 = Filters.containsAll(Extractors.extract('iarr'), [3, 4, 34]);
         const entries2 = await cache.entrySet(f2);
-        expect(entries2.size).to.equal(2);
+        expect(entries2.size).to.equal(0);
+    }
+
+    // ContainsAny
+    @test 
+    async testContainsAnyWithKeySet() {
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), [3, 4]);
+        const keys = await cache.keySet(f2);
+
+        expect(keys.size).to.equal(4);
+        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345', '456']);
+    }
+    @test 
+    async testContainsAnyWithEntrySet() {
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), [3, 4]);
+        const entries = await cache.entrySet(f2);
+
+        expect(entries.size).to.equal(4);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345, val456]);
+
+    }
+    @test 
+    async testContainsAnyWithValues() {
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), [3, 4]);
+        const values = await cache.values(f2);
+
+        expect(values.size).to.equal(4);
+        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456]);
+    }
+    @test
+    async testContainsAnyWithEmptyResult() {
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), [15, 59, 358]);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(0);
+    }
+    @test
+    async testContainsAnyWithEmptyCollection() {
+        const f2 = Filters.containsAny(Extractors.extract('iarr'), []);
+        const entries2 = await cache.entrySet(f2);
+        expect(entries2.size).to.equal(0);
     }
     
-}
-
-
-@suite(timeout(3000))
-class ContainsAnyFilterSuite 
-    extends BaseFilterTestsSuite {
-
-    @test 
-    async checkEntrySetWithContainsFilter() {
-        const f1 = Filters.containsAny(Extractors.extract('iarr'), [1, 2]);
+    // Equal
+    @test
+    async testEqualsFilterWithKeySet() {
+        const f1 = Filters.equal(Extractors.extract('ival'), 234)
+                          .or(Filters.equal(Extractors.extract('ival'), 345));
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['234', '345']);
+    }
+    async testEqualsFilterWithEntrySet() {
+        const f1 = Filters.equal(Extractors.extract('ival'), 234)
+                          .or(Filters.equal(Extractors.extract('ival'), 345));
         const entries = await cache.entrySet(f1);
         expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val234, val345]);
+    }
+    async testEqualsFilterWithValues() {
+        const f1 = Filters.equal(Extractors.extract('ival'), 234)
+                          .or(Filters.equal(Extractors.extract('ival'), 345));
+        const values = await cache.keySet(f1);
+        expect(values.size).to.equal(1);
+        expect(Array.from(values)).to.have.deep.members([val234, val345]);
+    }
+    @test
+    async testEqualsFilterWithFieldName() {
+        const f1 = Filters.equal('ival', 123).or(Filters.equal('ival', 234));
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234]);
+    }
 
-        const f2 = Filters.containsAny(Extractors.extract('iarr'), [1, 5]);
-        const entries2 = await cache.entrySet(f2);
+    // GreaterFilter
+    @test
+    async testGreaterFilterWithKeySet() {
+        const f1 = Filters.greater('ival', 123).and(
+            Filters.greater(Extractors.extract('ival'), 234)
+        );
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['345', '456']);
+    }
+    @test
+    async testGreaterFilterWithEntrySet() {
+        const f1 = Filters.greater('ival', 123).and(
+            Filters.greater(Extractors.extract('ival'), 234)
+        );
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['345', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val345, val456]);
+    }
+    @test
+    async testGreaterFilterWithValues() {
+        const f1 = Filters.greater('ival', 123).and(
+            Filters.greater(Extractors.extract('ival'), 234)
+        );
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(2);
+        expect(Array.from(values)).to.have.deep.members([val345, val456]);
+    }
+    @test
+    async testGreaterFilterWithFieldName() {
+        const f1 = Filters.greater('ival', 123);
+        const entries2 = await cache.entrySet(f1);
         expect(entries2.size).to.equal(3);
     }
-    
+    @test
+    async testGreaterFilterWithComposition() {
+        const f1 = Filters.greater('ival', 123).or(
+            Filters.greater(Extractors.extract('ival'), 345)
+        );
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(3);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['234', '345', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val234, val345, val456]);
+    }
+
+    // GreaterEqualsFilter
+    @test
+    async testGreaterEqualsFilterWithKeySet() {
+        const f1 = Filters.greaterEqual('ival', 234).and(
+            Filters.greaterEqual(Extractors.extract('ival'), 345)
+        );
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['345', '456']);
+    }
+    @test
+    async testGreaterEqualsFilterWithEntrySet() {
+        const f1 = Filters.greaterEqual('ival', 234).and(
+            Filters.greaterEqual(Extractors.extract('ival'), 345)
+        );
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['345', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val345, val456]);
+    }
+    @test
+    async testGreaterEqualsFilterWithValues() {
+        const f1 = Filters.greaterEqual('ival', 234).and(
+            Filters.greaterEqual(Extractors.extract('ival'), 345)
+        );
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(2);
+        expect(Array.from(values)).to.have.deep.members([val345, val456]);
+    }
+
+     // In
+
+    @test
+    async testInFilterWithKeySet() {
+        const f1 = Filters.in(Extractors.extract('ival'), [345, 456]);
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['345', '456']);
+    }
+    @test
+    async testInFilterWithEntrySet() {
+        const f1 = Filters.in(Extractors.extract('ival'), [123, 234]).or(Filters.equal('ival', 345));
+
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(3);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345]);
+    }
+    @test
+    async testInFilterWithValues() {
+        const f1 = Filters.in(Extractors.extract('ival'), [123234]);
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(0);
+    }
+
+    // Not
+    @test
+    async testNotFilter() {
+        const f1 = Filters.not(
+            Filters.equal(Extractors.extract('ival'), 234)
+        );
+        const entries2 = await cache.entrySet(f1);
+        expect(entries2.size).to.equal(3);
+    }
+    @test
+    async testNotWithFieldName() {
+        const f1 = Filters.not(Filters.equal('ival', 123));
+        const entries2 = await cache.entrySet(f1);
+        expect(entries2.size).to.equal(3);
+    }
+    @test
+    async testNotWithComposition() {
+        const f1 = Filters.not(Filters.equal('ival', 123).or(
+            Filters.equal(Extractors.extract('ival'), 234))
+        );
+        const entries2 = await cache.entrySet(f1);
+        expect(entries2.size).to.equal(2);
+    }
+
+    // Null 
+    @test
+    async testIsNullFilterWithKeySet() {
+        const f1 = Filters.isNull(Extractors.extract('nullIfOdd'));
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['123', '345']);
+    }
+    @test
+    async testIsNullFilterWithEntrySet() {
+        const f1 = Filters.isNull(Extractors.extract('nullIfOdd'));
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '345']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val123, val345]);
+    }
+    @test
+    async testIsNullFilterWithValues() {
+        const f1 = Filters.isNull(Extractors.extract('nullIfOdd'));
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(2);
+        expect(Array.from(values)).to.have.deep.members([val123, val345]);
+    }
+
+    // NotNull 
+    @test
+    async testIsNotNullFilterWithKeySet() {
+        const f1 = Filters.isNotNull(Extractors.extract('nullIfOdd'));
+        const keys = await cache.keySet(f1);
+        expect(keys.size).to.equal(2);
+        expect(Array.from(keys)).to.have.deep.members(['234', '456']);
+    }
+    @test
+    async testIsNotNullFilterWithEntrySet() {
+        const f1 = Filters.isNotNull(Extractors.extract('nullIfOdd'));
+        const entries = await cache.entrySet(f1);
+        expect(entries.size).to.equal(2);
+        expect(this.entriesToKeys(entries)).to.have.deep.members(['234', '456']);
+        expect(this.entriesToValues(entries)).to.have.deep.members([val234, val456]);
+    }
+    @test
+    async testIsNotNullFilterWithValues() {
+        const f1 = Filters.isNotNull(Extractors.extract('nullIfOdd'));
+        const values = await cache.values(f1);
+        expect(values.size).to.equal(2);
+        expect(Array.from(values)).to.have.deep.members([val234, val456]);
+    }
 }

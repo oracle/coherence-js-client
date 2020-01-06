@@ -1,8 +1,9 @@
 import { IdentityExtractor } from "./identity_extractor";
-import { ChainedExtractor, ValueExtractor } from "./value_extractor";
+import { ChainedExtractor, ValueExtractor, ReflectionExtractor } from "./value_extractor";
 import { UniversalExtractor } from "./universal_extractor";
 import { Util } from '../util/util';
 import { MultiExtractor } from "./multi_extractor";
+import { Filter } from "../filter/filter";
 /**
  * Simple Extractor DSL.
  * 
@@ -36,14 +37,18 @@ export class Extractors {
      *
      * @see UniversalExtractor
      */
+    static chained<T, R>(...extractors: ValueExtractor[]): ValueExtractor<T, R>;
+    static chained<T, R>(...fields: string[]): ValueExtractor<T, R>;
     static chained<T, R>(...extractorsOrFields: ValueExtractor[] | string[]): ValueExtractor<T, R> {
+        let extractors = new Array<ValueExtractor<T, R>>();
         Util.ensureNotEmpty(extractorsOrFields, "The extractors or fields parameter cannot be null or empty");
 
-        let extractors = new Array<ValueExtractor<T, R>>();
-        if (extractorsOrFields && (typeof extractorsOrFields === 'string')) {
+        if (extractorsOrFields && (typeof extractorsOrFields[0] === 'string')) {
             for (let e of (extractorsOrFields as string[])) {
-                if (e && e.length > 0) {    // filter null and empty
-                    extractors.concat(Extractors.extract<T, R>(e));
+                if (e && e.length > 0) {    
+                    for (let fieldName of e.split('.')) {
+                        extractors.push(Extractors.extract<T, R>(fieldName));
+                    }
                 }
             }
         } else {

@@ -245,8 +245,8 @@ export class Filters {
      * @see EqualsFilter
      */
     static equal<T, E>(extractor: ValueExtractor<T, E>, value: E): EqualsFilter<T, E>;
-    static equal<T, E>(arg: any, value: E): EqualsFilter<T, E> {
-        if ((typeof arg) === 'string') {
+    static equal<T, E>(arg: string | ValueExtractor<T, E>, value: E): EqualsFilter<T, E> {
+        if (!(arg instanceof ValueExtractor)) {
             return new EqualsFilter('EqualsFilter', new UniversalExtractor(arg), value);
         }
         return new EqualsFilter('EqualsFilter', arg, value);
@@ -266,8 +266,13 @@ export class Filters {
      *
      * @see GreaterFilter
      */   
-    static greater<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
-        return new GreaterFilter(extractor, value);
+    static greater<T, E>(fieldName: string, value: E): GreaterFilter<T, E>;
+    static greater<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E>;
+    static greater<T, E>(arg: string | ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
+        if (!(arg instanceof ValueExtractor)) {
+            return new GreaterFilter(new UniversalExtractor(arg), value);
+        }
+        return new GreaterFilter(arg, value);
     }
 
         /**
@@ -284,8 +289,13 @@ export class Filters {
      *
      * @see GreaterEqualsFilter
      */
-    static greaterEqual<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
-        return new GreaterFilter(extractor, value);
+    static greaterEqual<T, E>(fieldName: string, value: E): GreaterFilter<T, E>;
+    static greaterEqual<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E>;
+    static greaterEqual<T, E>(arg: string | ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
+        if (!(arg instanceof ValueExtractor)) {
+            return new GreaterEqualsFilter(new UniversalExtractor(arg), value);
+        }
+        return new GreaterEqualsFilter(arg, value);
     }
 
     
@@ -306,6 +316,7 @@ export class Filters {
     static in<T, E>(extractor: ValueExtractor<T, E>, ...values: E[]): Filter<T>;
     static in<T, E>(extractor: ValueExtractor<T, E>, values: Set<E>): Filter<T>;
     static in<T, E>(extractor: ValueExtractor<T, E>, values: E[] | Set<E>): Filter<T> {
+        
         return new InFilter(extractor, (values instanceof Set) ? values : new Set(values));
     }
 
