@@ -21,16 +21,18 @@ import { NamedCacheServiceClient, NamedCacheServiceService } from './proto/servi
 import {
     EntryResult,
     IsEmptyRequest,
-    SizeRequest
+    SizeRequest,
+    Entry
 } from './proto/messages_pb';
 import { Entry as GrpcEntry} from './proto/messages_pb';
 
 import { RequestFactory, Comparator } from './request_factory';
 import { NamedCache } from './named_cache';
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
-import { Entry } from './query_map';
+import { MapEntry } from './query_map';
 import { KeySet, EntrySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
 import { Filter } from '../filter/filter';
+import { EntryProcessor } from '../processor/entry_processor';
 import { ValueExtractor } from '../extractor/value_extractor';
 import { Serializer } from '../util/serializer';
 
@@ -215,15 +217,15 @@ export class NamedCacheClient<K, V>
      *
      * @return a set view of the keys contained in this map
      */
-    entrySet(): RemoteSet<Entry<K, V>>;
-    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<Entry<K, V>>>;
-    entrySet(filter?: Filter<any>, comp?: Comparator): RemoteSet<Entry<K, V>> | Promise<Set<Entry<K, V>>> {
+    entrySet(): RemoteSet<MapEntry<K, V>>;
+    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<MapEntry<K, V>>>;
+    entrySet(filter?: Filter<any>, comp?: Comparator): RemoteSet<MapEntry<K, V>> | Promise<Set<MapEntry<K, V>>> {
         const self = this;
         if (!filter) {
             return new EntrySet(this);
         }
 
-        const set = new Set<Entry<K, V>>();
+        const set = new Set<MapEntry<K, V>>();
         const request = this.requests.entrySet(filter, comp);
         const call = self.client.entrySet(request);
 
@@ -266,6 +268,60 @@ export class NamedCacheClient<K, V>
                 } else {
                     resolve(defaultValue);
                 }
+            });
+        });
+    }
+
+    /**
+     * Invoke the passed EntryProcessor against the Entry specified by the
+     * passed key, returning the result of the invocation.
+     *
+     * @param <R>       the type of value returned by the EntryProcessor
+     * @param key       the key to process; it is not required to exist within
+     *                  the Map
+     * @param processor the EntryProcessor to use to process the specified key
+     *
+     * @return the result of the invocation as returned from the EntryProcessor
+     */
+    invoke<R>(key: K, processor: EntryProcessor<K, V, R>): Promise<R | null> {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            self.client.invoke(self.requests.invoke(key, processor), (err, resp) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                }
+            });
+        });
+    }
+
+    /**
+     * Invoke the passed EntryProcessor against the entries specified by the
+     * passed keys, returning the result of the invocation for each.
+     *
+     * @param <R>       the type of value returned by the EntryProcessor
+     * @param collKeys  the keys to process; these keys are not required to
+     *                  exist within the Map
+     * @param processor the EntryProcessor to use to process the specified keys
+     *
+     * @return a Map containing the results of invoking the EntryProcessor
+     * against each of the specified keys
+     */
+    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | undefined, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
+        const self = this;
+        const call = self.client.invokeAll(self.requests.invokeAll(keysOrFilter, processor));
+        const result: Map<K, R> = new Map<K, R>();
+        return new Promise((resolve, reject) => {
+            call.on('data', function (e: Entry) {
+                const key = Serializer.deserialize(e.getKey_asU8());
+                const value = Serializer.deserialize(e.getValue_asU8());
+                result.set(key, value);
+            });
+            call.on('end', () => resolve(result) );
+            call.on('error', (e) => {
+                console.log("*** invokeAll ERROR: " + e)
+                reject(e)
             });
         });
     }

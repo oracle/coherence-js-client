@@ -1,20 +1,15 @@
 // Reference mocha-typescript's global definitions:
 /// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 
-const path = require('path');
-
 import { RequestFactory } from '../src/cache/request_factory';
 import { expect } from 'chai';
 
-import { Serializer } from '../src/util/serializer';
 import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
-import { UniversalExtractor } from '../src/extractor/universal_extractor';
-import { states, StateType } from './states';
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
+import { Processors } from '../src/processor/processors';
 
-const reqFactory = new RequestFactory<any, any>("States");
 const cache = new NamedCacheClient<any, any>('States');
 
 const val123 = {id: 123, str: '123', ival: 123, fval: 12.3};
@@ -30,6 +25,17 @@ class BaseClientTestsSuite {
         await cache.put("234", val234)
         await cache.put("345", val345)
         await cache.put("456", val456)
+    }
+
+    protected extractKeysAndValues(map: Map<any, any>): {keys: Array<any>, values: Array<any>} {
+        const keys = new Array<any>();
+        const values = new Array<any>();
+
+        for (let [key, value] of map) {
+            keys.push(key);
+            values.push(value);
+        }
+        return {keys, values};
     }
 }
 
@@ -238,5 +244,62 @@ class IsEmptySuite
 
         expect(await cache.size()).to.not.equal(0);
         expect(await cache.isEmpty()).to.equal(false);
+    }
+}
+
+
+@suite(timeout(3000))
+class InvokeSuite 
+    extends BaseClientTestsSuite {
+
+    @test async invokeOnAnExistingKey() {
+        expect(await cache.invoke('123', Processors.extract())).to.eql(val123);
+    }
+    @test async invokeOnANonExistingKey() {
+        expect(await cache.invoke('123456', Processors.extract())).to.equal(null);
+    }
+}
+
+@suite(timeout(3000))
+class InvokeAllSuite 
+    extends BaseClientTestsSuite {
+
+    @test 
+    async invokeAllWithKeys() {
+        const requestKeys : Set<string> = new Set(['123', '234', '345', '456']);
+        const result = await cache.invokeAll(requestKeys, Processors.extract());
+
+        let {keys, values} = super.extractKeysAndValues(result);
+        expect(Array.from(keys)).to.have.deep.members(['345', '123', '234', '456']);
+        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456]);
+    }
+    @test 
+    async invokeAllWithASubsetOfKeys() {
+        const requestKeys : Set<string> = new Set(['234', '345']);
+        const result = await cache.invokeAll(requestKeys, Processors.extract());
+
+        let {keys, values} = super.extractKeysAndValues(result);
+        expect(Array.from(keys)).to.have.deep.members(Array.from(requestKeys));
+        expect(Array.from(values)).to.have.deep.members([val234, val345]);    
+    }
+    @test 
+    async invokeAllWithEmptyKeys() {
+        const requestKeys : Set<string> = new Set([]);
+        const result = await cache.invokeAll(requestKeys, Processors.extract());
+
+        let {keys, values} = super.extractKeysAndValues(result);
+        expect(Array.from(keys)).to.have.deep.members(['345', '123', '234', '456']);
+        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456]);       
+    }
+    @test async invokeAllWithAlwaysFilter() {
+        const result = await cache.invokeAll(Filters.always(), Processors.extract());
+
+        let {keys, values} = super.extractKeysAndValues(result);
+
+        expect(keys.length).to.equal(4);
+        expect(values.length).to.equal(4);
+
+        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345', '456']);
+        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456]);
     }
 }

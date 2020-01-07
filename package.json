@@ -22,7 +22,8 @@
   },
   "scripts": {
     "pretest": "tsc",
-    "test": "nyc mocha",
+    "test": "mocha",
+    "coverage": "nyc mocha",
     "watch": "mocha-typescript-watch",
     "prepare": "tsc"
   }

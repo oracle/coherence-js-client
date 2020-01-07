@@ -1,11 +1,9 @@
 import { ValueExtractor } from '../extractor/value_extractor';
 import { ContainsAnyFilter } from '../filter/contains_any_filter';
 import { Filter } from '../filter/filter';
-import { NamedCacheEntry } from './streamed_collection';
 import { Comparator } from './request_factory';
 
-
-export interface Entry<K, V> {
+export interface MapEntry<K, V> {
      
     /**
      * Returns the key corresponding to this entry.    
@@ -16,8 +14,7 @@ export interface Entry<K, V> {
      * Returns the value corresponding to this entry.    
      */
     getValue(): V;
-}
-
+};
 
 export interface RemoteSet<T> {
     clear(): Promise<void>;

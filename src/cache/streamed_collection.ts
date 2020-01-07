@@ -3,7 +3,7 @@ import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
 import { EntryResult, PageRequest } from "./proto/messages_pb";
 import { ClientReadableStream } from "grpc";
 import { Serializer } from '../util/serializer';
-import { RemoteSet, Entry } from '../cache/query_map';
+import { RemoteSet, MapEntry } from '../cache/query_map';
 
 class PagedSet<K, V, T>
     implements RemoteSet<T> {
@@ -112,7 +112,7 @@ class EntrySet<K, V>
         super(namedCache);
     }
 
-    delete(e: Entry<K, V>): Promise<boolean> {
+    delete(e: MapEntry<K, V>): Promise<boolean> {
         return this.namedCache.removeMapping(e.getKey(), e.getValue());
     }
 
@@ -316,7 +316,7 @@ interface IStreamedDataHelper<R, T> {
 
 
 class NamedCacheEntry<K, V> 
-    implements Entry<K, V> {
+    implements MapEntry<K, V> {
 
     private key!: K;
 

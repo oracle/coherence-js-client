@@ -1,5 +1,4 @@
 import { Util } from '../util/util';
-import { IdentityExtractor } from './identity_extractor';
 
 export enum Target { VALUE = 0, KEY = 1 };
 
@@ -128,5 +127,14 @@ export class ChainedExtractor<T=any, E=any>
         }
 
         return arr;
+    }
+}
+export class IdentityExtractor<T>
+    extends ValueExtractor<T, T> {
+
+    public static INSTANCE = new IdentityExtractor();
+    
+    constructor() {
+        super('IdentityExtractor');
     }
 }

@@ -1,18 +1,5 @@
 import { Filter } from "../filter/filter";
-
-export interface Entry<K, V> {
-
-}
-
-export abstract class EntryProcessor<K, V, R> {
-
-    '@class': string;
-
-    constructor(typeName: string) {
-        this['@class'] = typeName;
-    }
-    
-}
+import { EntryProcessor } from '../processor/entry_processor';
 
 export interface InvocableMap<K, V> {
 
@@ -27,7 +14,7 @@ export interface InvocableMap<K, V> {
      *
      * @return the result of the invocation as returned from the EntryProcessor
      */
-    invoke<R>(key: K, processor: EntryProcessor<K, V, R>): R;
+    invoke<R>(key: K, processor: EntryProcessor<K, V, R>): Promise<R | null>;
 
     /**
      * Invoke the passed EntryProcessor against the entries specified by the
@@ -41,5 +28,5 @@ export interface InvocableMap<K, V> {
      * @return a Map containing the results of invoking the EntryProcessor
      * against each of the specified keys
      */
-    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | undefined, processor: EntryProcessor<K, V, R>): Map<K, R>;
+    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | undefined, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
 }

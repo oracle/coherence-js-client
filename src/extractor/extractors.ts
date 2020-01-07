@@ -1,5 +1,4 @@
-import { IdentityExtractor } from "./identity_extractor";
-import { ChainedExtractor, ValueExtractor, ReflectionExtractor } from "./value_extractor";
+import { ChainedExtractor, IdentityExtractor, ValueExtractor } from "./value_extractor";
 import { UniversalExtractor } from "./universal_extractor";
 import { Util } from '../util/util';
 import { MultiExtractor } from "./multi_extractor";

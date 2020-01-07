@@ -15,13 +15,16 @@ import {
     KeySetRequest,
     AddIndexRequest,
     EntrySetRequest,
-    ValuesRequest
+    ValuesRequest,
+    InvokeRequest,
+    InvokeAllRequest
 } from "./proto/messages_pb";
 
 import { Serializer } from "../util/serializer";
 import { Filter } from "../filter/filter";
 import { ValueExtractor } from "../extractor/value_extractor";
 import { EntrySet } from "./streamed_collection";
+import { EntryProcessor } from "../processor/entry_processor";
 
 export interface Comparator {
     '@class': string;
@@ -160,6 +163,39 @@ export class RequestFactory<K, V> {
             request.setComparator(Serializer.serialize(comparator));
         }
 
+        return request;
+    }
+
+    invoke<R>(key: K, processor: EntryProcessor<K, V, R>): InvokeRequest {
+        const request = new InvokeRequest();
+        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setCache(this.cacheName);
+        request.setKey(Serializer.serialize(key));
+        request.setProcessor(Serializer.serialize(processor));
+
+        return request;
+    }
+
+    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | null | undefined, processor: EntryProcessor<K, V, R>): InvokeAllRequest {
+        const request = new InvokeAllRequest();
+        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setCache(this.cacheName);
+        request.setProcessor(Serializer.serialize(processor));
+        if (keysOrFilter) {
+            if (keysOrFilter instanceof Filter) {
+                request.setFilter(Serializer.serialize(keysOrFilter));
+            } else {
+                const arr: Array<Uint8Array> = new Array<Uint8Array>();
+                for (let key of keysOrFilter) {
+                    const k: Uint8Array = Serializer.serialize(key);
+                    console.log("* invokeAll: serialized key: " + k)
+                    arr.push(Serializer.serialize(key))
+                }
+
+                request.setKeysList(arr);
+            }
+        }
+        
         return request;
     }
 
