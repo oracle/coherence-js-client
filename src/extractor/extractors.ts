@@ -57,7 +57,7 @@ export class Extractors {
         if (extractors.length == 1) {
             return extractors[0];
         }
-        return new ChainedExtractor(extractors);
+        return new ChainedExtractor<any, any>(extractors);
 
     }
     

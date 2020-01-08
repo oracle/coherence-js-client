@@ -37,7 +37,7 @@ export abstract class Filter<T = any> {
 export abstract class ExtractorFilter<T, E>
     extends Filter<T> {
 
-    extractor: ValueExtractor<T, E>;
+    extractor: ValueExtractor<T, E | any>;      // This is because ChainedExtractor cannot guarantee <T, E>
 
     constructor(typeName: string, extractor: ValueExtractor<T, E>);
     constructor(typeName: string, method: string);

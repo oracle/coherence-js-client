@@ -41,5 +41,9 @@ export class Util {
     static toExtractorName(name: string): string {
         return this.EXTRACTOR_PACKAGE + name;
     }
-    
+
+    static isIterableType<T>(arg: any): arg is Iterable<T> {
+        return arg && typeof arg[Symbol.iterator] === 'function'
+    }
+
 }

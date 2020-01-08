@@ -1,6 +1,7 @@
 import { BaseProcessor } from './base_processor';
 import { Util } from '../util/util';
 import { IdentityExtractor, ValueExtractor, ReflectionExtractor, ChainedExtractor } from '../extractor/value_extractor';
+import { UniversalExtractor } from '../extractor/universal_extractor';
 
 /**
  * An invocable agent that operates against the entry objects within a
@@ -16,15 +17,18 @@ import { IdentityExtractor, ValueExtractor, ReflectionExtractor, ChainedExtracto
 export class ExtractorProcessor<K, V, T, E>
     extends BaseProcessor<K, V, T> {
 
-    extractor: ValueExtractor<T, E>;
+    name?: string
+
+    extractor: ValueExtractor<T, E | any>;      // This is because ChainedExtractor doesnt guarantee <T, E>
 
     constructor(methodName?: string) {
         super('ExtractorProcessor');
+        // this.name = methodName;
         if (!methodName) {
             this.extractor = IdentityExtractor.INSTANCE;
         } else {
             this.extractor = (methodName.indexOf('.') < 0)
-                ? new ReflectionExtractor(methodName)
+                ? new UniversalExtractor(methodName)        // ?? fails ==> new ReflectionExtractor(methodName)
                 : new ChainedExtractor(methodName);
         }
     }

@@ -35,6 +35,8 @@ import { Filter } from '../filter/filter';
 import { EntryProcessor } from '../processor/entry_processor';
 import { ValueExtractor } from '../extractor/value_extractor';
 import { Serializer } from '../util/serializer';
+import { Filters } from '../filter/filters';
+import { Util } from '../util/util';
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -288,6 +290,7 @@ export class NamedCacheClient<K, V>
         return new Promise((resolve, reject) => {
             self.client.invoke(self.requests.invoke(key, processor), (err, resp) => {
                 if (err) {
+                    console.log("** INVOKE ERR: " + err)
                     reject(err);
                 } else {
                     self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
@@ -308,8 +311,27 @@ export class NamedCacheClient<K, V>
      * @return a Map containing the results of invoking the EntryProcessor
      * against each of the specified keys
      */
-    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | undefined, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
+    invokeAll<R=any>(processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(keysOrFilterOrProcessor: Iterable<K> | Filter<V> | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
         const self = this;
+        let keysOrFilter: Iterable<K> | Filter;
+        if (processor) {
+            // Two args invocation
+            if (keysOrFilterOrProcessor instanceof Filter) {
+                keysOrFilter = keysOrFilterOrProcessor;
+            } else if (Util.isIterableType(keysOrFilterOrProcessor)) {
+                keysOrFilter = keysOrFilterOrProcessor;
+            } else {
+                throw new Error('invokeAll() takes only one processor as argument');
+            }
+        } else {
+            // One arg (which is a EntryProcessor)
+            keysOrFilter = Filters.always();
+            processor = keysOrFilterOrProcessor as EntryProcessor;
+        }
+        
         const call = self.client.invokeAll(self.requests.invokeAll(keysOrFilter, processor));
         const result: Map<K, R> = new Map<K, R>();
         return new Promise((resolve, reject) => {
@@ -587,3 +609,4 @@ export interface NamedCacheOptions {
      */
     channel?: grpc.Channel;
 }
+

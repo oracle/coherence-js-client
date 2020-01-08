@@ -28,5 +28,8 @@ export interface InvocableMap<K, V> {
      * @return a Map containing the results of invoking the EntryProcessor
      * against each of the specified keys
      */
-    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | undefined, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R=any>(keysOrFilterOrProcessor: Iterable<K> | Filter<V> | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
 }

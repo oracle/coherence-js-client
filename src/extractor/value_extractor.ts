@@ -34,12 +34,29 @@ export abstract class ValueExtractor<T=any, E=any> {
             : new ChainedExtractor([before, this]);
     }
 
-    andThen(after: ValueExtractor): ValueExtractor {
+    /**
+     * Returns a composed extractor that first applies this extractor to its
+     * input, and then applies the {@code after} extractor to the result. If
+     * evaluation of either extractor throws an exception, it is relayed to
+     * the caller of the composed extractor.
+     *
+     * @param <V>   the type of output of the {@code after} extractor, and of
+     *              the composed extractor
+     * @param after the extractor to apply after this extractor is applied
+     *
+     * @return a composed extractor that first applies this extractor and then
+     *         applies the {@code after} extractor
+     *
+     * @throws NullPointerException if the passed extractor is null
+     *
+     * @see #compose(ValueExtractor)
+     */
+    andThen<V=any>(after: ValueExtractor<E, V>): ValueExtractor<T, V> {
         Util.ensureNotNull(after, 'before cannot be null');
 
-        return (after instanceof ChainedExtractor) 
+        return (!(after instanceof ChainedExtractor)) 
             ? after.compose(this)
-            : new ChainedExtractor([this, after]);
+            : new ChainedExtractor<T, V>([this, after]);
     }
 
     /**
@@ -50,7 +67,7 @@ export abstract class ValueExtractor<T=any, E=any> {
      *
      * @return an extractor that always returns its input argument
      */
-    static identityCast<T, E>(): ValueExtractor<T, E> {
+    static identityCast<P, Q>(): ValueExtractor<P, Q> {
         return IdentityExtractor.INSTANCE;
     }
 
@@ -87,7 +104,7 @@ export class ReflectionExtractor<T, E>
 export class ChainedExtractor<T=any, E=any>
     extends AbstractCompositeExtractor<T, E> {
 
-    constructor(extractors: ValueExtractor<T, E>[]);
+    constructor(extractors: ValueExtractor[]);
     constructor(method: string);
     constructor(extractorsOrMethod: ValueExtractor<T, E>[] | string) {
         if (typeof extractorsOrMethod === 'string') {
@@ -129,7 +146,7 @@ export class ChainedExtractor<T=any, E=any>
         return arr;
     }
 }
-export class IdentityExtractor<T>
+export class IdentityExtractor<T=any>
     extends ValueExtractor<T, T> {
 
     public static INSTANCE = new IdentityExtractor();

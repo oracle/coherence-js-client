@@ -1,3 +1,6 @@
+import { MapEntry } from "../cache/query_map";
+import { Filter } from "../filter/filter";
+
 /**
  * An invocable agent that operates against the entry objects within a
  * {@link module:coherence-js/cache/NamedCache}.  Several of the methods
@@ -9,8 +12,13 @@
  * @param <R> the type of value returned by the EntryProcessor.
  * 
  */
- export interface EntryProcessor<K, V, R> {
+ export interface EntryProcessor<K=any, V=any, R=any> {
 
-    //process(entry: Entry<K, V>): R;
+   '@class': string;
+
+    process(entry: MapEntry<K, V>): R;
     
+    andThen(processor: EntryProcessor<K, V, any>): EntryProcessor<K, V, any>;
+    
+    when(filter: Filter<V>): EntryProcessor<K, V, R>;
  }

@@ -25,6 +25,8 @@ import { Filter } from "../filter/filter";
 import { ValueExtractor } from "../extractor/value_extractor";
 import { EntrySet } from "./streamed_collection";
 import { EntryProcessor } from "../processor/entry_processor";
+import { Filters } from "../filter/filters";
+import { Util } from "../util/util";
 
 export interface Comparator {
     '@class': string;
@@ -176,26 +178,20 @@ export class RequestFactory<K, V> {
         return request;
     }
 
-    invokeAll<R>(keysOrFilter: Set<K> | Filter<V> | null | undefined, processor: EntryProcessor<K, V, R>): InvokeAllRequest {
+    invokeAll<R>(keysOrFilter: Iterable<K> | Filter<V>, processor?: EntryProcessor<K, V, R>): InvokeAllRequest {
         const request = new InvokeAllRequest();
         request.setFormat(RequestFactory.JSON_FORMAT);
         request.setCache(this.cacheName);
-        request.setProcessor(Serializer.serialize(processor));
-        if (keysOrFilter) {
-            if (keysOrFilter instanceof Filter) {
-                request.setFilter(Serializer.serialize(keysOrFilter));
-            } else {
-                const arr: Array<Uint8Array> = new Array<Uint8Array>();
-                for (let key of keysOrFilter) {
-                    const k: Uint8Array = Serializer.serialize(key);
-                    console.log("* invokeAll: serialized key: " + k)
-                    arr.push(Serializer.serialize(key))
-                }
-
-                request.setKeysList(arr);
+        if (Util.isIterableType(keysOrFilter)) {
+            const arr: Array<Uint8Array> = new Array<Uint8Array>();
+            for (let key of keysOrFilter) {
+                arr.push(Serializer.serialize(key))
             }
+            request.setKeysList(arr);        
+        } else {
+            request.setFilter(Serializer.serialize(keysOrFilter));
         }
-        
+        request.setProcessor(Serializer.serialize(processor));
         return request;
     }
 
