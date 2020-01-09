@@ -21,15 +21,16 @@ export interface InvocableMap<K, V> {
      * passed keys, returning the result of the invocation for each.
      *
      * @param <R>       the type of value returned by the EntryProcessor
-     * @param collKeys  the keys to process; these keys are not required to
+     * @param keys      the keys to process; these keys are not required to
      *                  exist within the Map
+     * @param filter    the Filter that is used to select the keys to be
+     *                  processed
      * @param processor the EntryProcessor to use to process the specified keys
      *
      * @return a Map containing the results of invoking the EntryProcessor
-     * against each of the specified keys
+     *         against each of the specified keys
      */
-    invokeAll<R=any>(processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-    invokeAll<R=any>(keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-    invokeAll<R=any>(filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-    invokeAll<R=any>(keysOrFilterOrProcessor: Iterable<K> | Filter<V> | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R>(processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R>(keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
+    invokeAll<R>(filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
 }

@@ -2,13 +2,13 @@ import { Serializer } from "./serializer";
 
 export class Util {
     
-    static EXTRACTOR_PACKAGE = 'com.tangosol.util.extractor.';
+    static EXTRACTOR_PACKAGE = 'extractor.';
 
-    static FILTER_PACKAGE = 'com.tangosol.util.filter.';
+    static FILTER_PACKAGE = 'filter.';
 
-    static PROCESSOR_PACKAGE = 'com.tangosol.util.processor.';
+    static PROCESSOR_PACKAGE = 'processor.';
 
-    static AGGREGATOR_PACKAGE = 'com.tangosol.util.aggregator.';
+    static AGGREGATOR_PACKAGE = 'aggregator.';
 
     static BEAN_ACCESSOR_PREFIXES: string[] = ['get', 'set'];
 

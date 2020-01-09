@@ -1,14 +1,13 @@
 // Reference mocha-typescript's global definitions:
 /// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 
-import { 
-    AbstractNamedCacheTestsSuite,
-    cache, nested,
-    val123, val234, val345, val456,
-    toObj, tscObj, trieObj, jadeObj, javascriptObj
-} from './abstract_named_cache_tests';
 
 import { expect } from 'chai';
+
+import { AbstractNamedCacheTestsSuite, 
+         val123, val234, val345, val456,
+         trieObj, jadeObj, javascriptObj
+} from './abstract_named_cache_tests';
 
 import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
@@ -22,7 +21,7 @@ class ExtractorTestsSuite
     async testChainedExtractorWithKeySet() {
         const f1 = Filters.equal(Extractors.chained(
             Extractors.extract('t'), Extractors.extract('r'), Extractors.extract('word')), "Trie");
-        const entries = await nested.entrySet(f1);
+        const entries = await this.nested.entrySet(f1);
 
         expect(entries.size).to.equal(1);            
         expect(this.entriesToKeys(entries)).to.have.deep.members(['Trie']);
@@ -34,7 +33,7 @@ class ExtractorTestsSuite
             Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('v'), Extractors.extract('word')), "JavaScript");
         const f2= f1.or(Filters.equal(Extractors.chained(
             Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('d'), Extractors.extract('word')), "Jade"));
-        const entries = await nested.entrySet(f2);
+        const entries = await this.nested.entrySet(f2);
 
         expect(entries.size).to.equal(2);            
         expect(this.entriesToKeys(entries)).to.have.deep.members(['JavaScript', 'Jade']);
@@ -46,7 +45,7 @@ class ExtractorTestsSuite
             Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('v'), Extractors.extract('word')), "JavaScript");
         const f2= f1.or(Filters.equal(Extractors.chained(
             Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('d'), Extractors.extract('word')), "Jade"));
-        const values = await nested.values(f2);
+        const values = await this.nested.values(f2);
 
         expect(values.size).to.equal(2);            
         expect(Array.from(values)).to.have.deep.members([javascriptObj, jadeObj]);       
@@ -54,7 +53,7 @@ class ExtractorTestsSuite
     @test
     async testChainedExtractorWithFieldNamesWithKeySet() {
         const f1 = Filters.equal(Extractors.chained('t.r.word'), "Trie");
-        const entries = await nested.entrySet(f1);
+        const entries = await this.nested.entrySet(f1);
 
         expect(entries.size).to.equal(1);            
         expect(this.entriesToKeys(entries)).to.have.deep.members(['Trie']);
@@ -64,7 +63,7 @@ class ExtractorTestsSuite
     async testChainedExtractorWithFieldNamesWithEntrySet() {
         const f1 = Filters.equal(Extractors.chained('j.a.v.word'), "JavaScript");
         const f2= f1.or(Filters.equal(Extractors.chained('j.a.d.word'), "Jade"));
-        const entries = await nested.entrySet(f2);
+        const entries = await this.nested.entrySet(f2);
 
         expect(entries.size).to.equal(2);            
         expect(this.entriesToKeys(entries)).to.have.deep.members(['JavaScript', 'Jade']);
@@ -74,7 +73,7 @@ class ExtractorTestsSuite
     async testChainedExtractorWithFieldNamesWithValues() {
         const f1 = Filters.equal(Extractors.chained('j.a.v.word'), "JavaScript");
         const f2= f1.or(Filters.equal(Extractors.chained('j.a.d.word'), "Jade"));
-        const values = await nested.values(f2);
+        const values = await this.nested.values(f2);
 
         expect(values.size).to.equal(2);            
         expect(Array.from(values)).to.have.deep.members([javascriptObj, jadeObj]);       
@@ -83,14 +82,14 @@ class ExtractorTestsSuite
     // UniversalExtractor
     @test async testUniversalExtractorWithArrayContainsWithKeySet() {
         const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
-        const keys = await cache.keySet(f1);
+        const keys = await this.cache.keySet(f1);
 
         expect(keys.size).to.equal(3);
         expect(Array.from(keys)).to.have.deep.members(['123', '234', '345']);
     }
     @test async testUniversalExtractorWithArrayContainsWithEntrySet() {
         const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
-        const entries = await cache.entrySet(f1);
+        const entries = await this.cache.entrySet(f1);
 
         expect(entries.size).to.equal(3);
         expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345']);
@@ -98,7 +97,7 @@ class ExtractorTestsSuite
     }
     @test async testUniversalExtractorWithArrayContainsWithValues() {
         const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3);
-        const entries = await cache.values(f1);
+        const entries = await this.cache.values(f1);
         expect(entries.size).to.equal(3);
         expect(Array.from(entries)).to.have.deep.members([val123, val234, val345]);
     }

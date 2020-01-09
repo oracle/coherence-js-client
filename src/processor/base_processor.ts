@@ -37,6 +37,17 @@ export abstract class BaseProcessor<K, V, R>
 }
 
 
+export class MapHolder<K, V> {
+    entries: Array<{key: any, value: any}>;
+
+    constructor(entries: Map<K, V>) {
+        this.entries = new Array<{key: any, value: any}>();
+        for (let [k, v] of entries) {
+            this.entries.push({key: k, value: v})
+        }
+    }
+}
+
 /**
  * ConditionalProcessor` represents a processor that is invoked
  * conditionally based on the result of an entry evaluation.  A

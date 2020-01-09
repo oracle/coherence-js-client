@@ -17,7 +17,8 @@ import {
     EntrySetRequest,
     ValuesRequest,
     InvokeRequest,
-    InvokeAllRequest
+    InvokeAllRequest,
+    GetAllRequest
 } from "./proto/messages_pb";
 
 import { Serializer } from "../util/serializer";
@@ -154,6 +155,17 @@ export class RequestFactory<K, V> {
         return request;
     }
 
+    getAll(keys: Iterable<K>): GetAllRequest {
+        const request = new GetAllRequest();
+        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setCache(this.cacheName);
+        for (let key of keys) {
+           request.addKey(Serializer.serialize(key));
+        }
+
+        return request;
+    }
+
     entrySet(filter?: Filter<any>, comparator?: any): EntrySetRequest {
         const request = new EntrySetRequest();
         request.setFormat(RequestFactory.JSON_FORMAT);
@@ -183,11 +195,9 @@ export class RequestFactory<K, V> {
         request.setFormat(RequestFactory.JSON_FORMAT);
         request.setCache(this.cacheName);
         if (Util.isIterableType(keysOrFilter)) {
-            const arr: Array<Uint8Array> = new Array<Uint8Array>();
             for (let key of keysOrFilter) {
-                arr.push(Serializer.serialize(key))
+                request.addKeys(Serializer.serialize(key))
             }
-            request.setKeysList(arr);        
         } else {
             request.setFilter(Serializer.serialize(keysOrFilter));
         }

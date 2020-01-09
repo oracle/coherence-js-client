@@ -29,16 +29,6 @@ export interface RemoteCache<K, V> {
     containsValue(value: V): Promise<boolean>;
 
     /**
-     * Returns the value to which this cache maps the specified key.
-     *
-     * @param key The key whose associated value is to be returned.
-     *
-     * @return A Promise that will eventually resolve to the value that
-     *         is associated with the specified key.
-     */
-    get(key: K): Promise<V | null>;
-
-    /**
      * Returns the value to which the specified key is mapped, or
      * the specified defaultValue if this map contains no mapping for the key.
      */
@@ -51,19 +41,6 @@ export interface RemoteCache<K, V> {
      *         false otherwise.
      */
     isEmpty(): Promise<boolean>;
-
-    /**
-     * Associates the specified value with the specified key in this map. If the
-     * map previously contained a mapping for this key, the old value is replaced.
-     *
-     * @param key The key with which the specified value is to be associated.
-     * @param value The value to be associated with the specified key.
-     * @param ttl The expiry time in millis.
-     *
-     * @return A Promise that will eventually resolve to the previous value that
-     *         was associated with the specified key.
-     */
-    put(key: K, value: V, ttl?: number): Promise<V>;
 
     /**
      * Remove the value to which this cache maps the specified key.

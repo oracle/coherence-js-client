@@ -258,6 +258,41 @@ export class NamedCacheClient<K, V>
     }
 
     /**
+     * Get all the specified keys, if they are in the cache. For each key
+     * that is in the cache, that key and its corresponding value will be
+     * placed in the map that is returned by this method. The absence of
+     * a key in the returned map indicates that it was not in the cache,
+     * which may imply (for caches that can load behind the scenes) that
+     * the requested data could not be loaded.
+     * 
+     * @returns A Promise that will eventually to a Map<K, V> containing
+     *          the mappings for the specified keys. The absence of
+     *          a key in the returned map indicates that it was not in 
+     *          the cache, which may imply (for caches that can load 
+     *          behind the scenes) that the requested data could not be 
+     *          loaded.
+     */
+    getAll(keys: Iterable<K>): Promise<Map<K, V>> {
+        const self = this;
+        const result: Map<K, V> = new Map<K, V>();
+        const call = self.client.getAll(self.requests.getAll(keys));
+        return new Promise((resolve, reject) => {
+            call.on('data', function (e: Entry) {
+                const key = Serializer.deserialize(e.getKey_asU8());
+                const value = Serializer.deserialize(e.getValue_asU8());
+                result.set(key, value);
+            });
+            call.on('end', () => {
+                resolve(result);
+            });
+            call.on('error', (e) => {
+                console.log("*** getAll ERROR: " + e)
+                reject(e)
+            });
+        });
+    }
+
+    /**
      * Returns the value to which the specified key is mapped, or
      * the specified defaultValue if this map contains no mapping for the key.
      */

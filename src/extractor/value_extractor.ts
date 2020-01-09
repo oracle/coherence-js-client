@@ -146,6 +146,7 @@ export class ChainedExtractor<T=any, E=any>
         return arr;
     }
 }
+
 export class IdentityExtractor<T=any>
     extends ValueExtractor<T, T> {
 

@@ -1,7 +1,12 @@
 import { BaseProcessor } from './base_processor';
 import { Filter } from '../filter/filter';
 
-export class ConditionalPutProcessor<K, V>
+/**
+ * ConditionalRemove is an entry processor that performs a remove
+ * operation if the specified condition is satisfied.
+ *
+ */
+export class ConditionalRemoveProcessor<K, V>
     extends BaseProcessor<K, V, V> {
 
     /**
@@ -10,14 +15,9 @@ export class ConditionalPutProcessor<K, V>
     filter: Filter<V>;
 
     /**
-     * Specifies the new value to update an entry with.
-     */
-    value: V;
-
-    /**
      * Specifies whether or not a return value is required.
      */
-    'return': boolean = false;
+    'return'?: boolean;
 
     /**
      * Construct a ConditionalPut that updates an entry with a new value if
@@ -26,27 +26,18 @@ export class ConditionalPutProcessor<K, V>
      * result.
      *
      * @param filter  the filter to evaluate an entry
-     * @param value   a value to update an entry with
      */
-    constructor(filter: Filter<V>, value: V, returnValue?: boolean) {
-        super('ConditionalPut');
+    constructor(filter: Filter<V>, returnValue?: boolean) {
+        super('ConditionalRemove');
 
         this.filter = filter;
-        this.value = value;
-        this['return'] = returnValue ? returnValue : false;
+        this['return'] = returnValue;
     }
 
-    returnCurrent(): this {
-        this['return'] = true;
+    returnCurrent(returnCurrent: boolean = true): this {
+        this['return'] = returnCurrent ;
+        console.log("** Setting returnCurrent: " + this['return']);
         return this;
-    }
-    
-    doesReturnValue(): boolean {
-        return this['return'];
-    }
-
-    getValue(): V {
-        return this.value;
     }
 
 }

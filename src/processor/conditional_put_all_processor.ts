@@ -1,6 +1,6 @@
 import { BaseProcessor } from './base_processor';
 import { Filter } from '../filter/filter';
-import { MapEntry } from '../cache/query_map';
+import { MapHolder } from './base_processor';
 
 export class ConditionalPutAllProcessor<K, V>
     extends BaseProcessor<K, V, V> {
@@ -33,13 +33,3 @@ export class ConditionalPutAllProcessor<K, V>
 
 }
 
-class MapHolder<K, V> {
-    entries: Array<{key: any, value: any}>;
-
-    constructor(entries: Map<K, V>) {
-        this.entries = new Array<{key: any, value: any}>();
-        for (let [k, v] of entries) {
-            this.entries.push({key: k, value: v})
-        }
-    }
-}
