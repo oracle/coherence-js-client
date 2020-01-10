@@ -22,6 +22,8 @@ import { TouchProcessor } from "./touch_processor";
 import { PreloadRequestProcessor } from "./preload_request_processor";
 import { MethodInvocationProcessor } from "./method_invocation_processor";
 import { ValueUpdater } from "./value_updater";
+import { NumberMultiplier } from "./number_multiplier";
+import { NumberIncrementor } from "./number_incrementor";
 
 export class Processors {
 
@@ -50,6 +52,22 @@ export class Processors {
         return new GetOrDefaultProcessor();
     }
    
+    static increment<K, V>(property: string, value: number, returnOldValue: boolean = true): NumberIncrementor<K, V> {
+        return new NumberIncrementor(property, value, returnOldValue);
+    }
+
+    static invokeAccessor<K, V, R>(method: string, ...args: any[]): EntryProcessor<K, V, R> {
+        return new MethodInvocationProcessor(method, false, args);
+    }
+
+    static invokeMutator<K, V, R>(method: string, ...args: any[]): EntryProcessor<K, V, R> {
+        return new MethodInvocationProcessor(method, true, args);
+    }
+
+    static multiply<K, V>(property: string, value: number, returnOldValue: boolean = true): NumberMultiplier<K, V> {
+        return new NumberMultiplier(property, value, returnOldValue);
+    }
+
     static nop<K, V>(): EntryProcessor<K, V> {
         return new NullProcessor();
     }

@@ -21,17 +21,13 @@ export abstract class PropertyProcessor<K, V, R>
     constructor(typeName: string, propertyName: string);
     constructor(typeName: string, propertyName: string, useIs: boolean);
     constructor(typeName: string, manipulator: ValueManipulator<V, R>);
-    constructor(typeName: string, manipulatorOrPropertyName: ValueManipulator<V, R> | string, useIs?: boolean) {
+    constructor(typeName: string, manipulatorOrPropertyName: ValueManipulator<V, R> | string, useIs: boolean = false) {
         super(typeName);
         if (typeof manipulatorOrPropertyName === 'string') {
             this.manipulator = new PropertyManipulator(manipulatorOrPropertyName, useIs);
         } else {
             this.manipulator = manipulatorOrPropertyName;
         }
-    }
-
-    static isValueManipulatorType<V, U>(arg: any): boolean {
-        return arg['getExtractor'] && arg['getUpdater'];
     }
 }
 

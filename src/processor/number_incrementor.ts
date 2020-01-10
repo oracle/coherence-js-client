@@ -7,51 +7,51 @@ import { PropertyManipulator } from './property_manipulator';
 import { CompositeUpdater } from '../extractor/composite_updater';
 
 /**
- * NumberMultiplier entry processor.
+ * NumberIncrementor entry processor.
  *
  * @param <K> the type of the Map entry key
  * @param <V> the type of the Map entry value
  */
-export class NumberMultiplier<K, V>
+export class NumberIncrementor<K, V>
     extends PropertyProcessor<K, V, number> {
 
     /**
       The number to multiply by.
      */
-    multiplier: number;
+    increment: number;
 
     /**
      * Whether to return the value before it was multiplied ("post-factor") or
      * after it is multiplied ("pre-factor").
      */
-    postMultiplication: boolean;
+    postIncrement: boolean;
 
     /**
-     * Construct a NumberMultiplier EntryProcessor.
+     * Construct a NumberIncrementor EntryProcessor.
      *
      * @param filter  The number to multiply by.
      * @param value   a value to update an entry with
      */
-    constructor(manipulator: ValueManipulator<V, number>, multiplier: number, postMultiplication?: boolean);
-    constructor(propertyName: string, multiplier: number, postMultiplication?: boolean);
-    constructor(nameOrManipulator: ValueManipulator<V, number> | string, multiplier: number, postMultiplication: boolean = false) {
+    constructor(manipulator: ValueManipulator<V, number>, increment: number, postIncrement?: boolean);
+    constructor(propertyName: string, increment: number, postIncrement?: boolean);
+    constructor(nameOrManipulator: ValueManipulator<V, number> | string, increment: number, postIncrement: boolean = false) {
         if (typeof nameOrManipulator === 'string') {
             // Need to create a ValueManipulator
-            super('NumberMultiplier', NumberMultiplier.createCustomManipulator<V>(nameOrManipulator));
+            super('NumberIncrementor', NumberIncrementor.createCustomManipulator<V>(nameOrManipulator));
         } else {
-            super('NumberMultiplier', nameOrManipulator);
+            super('NumberIncrementor', nameOrManipulator);
         }
-        this.multiplier = multiplier;
-        this.postMultiplication = postMultiplication;
+        this.increment = increment;
+        this.postIncrement = postIncrement;
     }
 
     returnOldValue(): this {
-        this.postMultiplication = true;
+        this.postIncrement = true;
         return this;
     }
     
     returnNewValue(): this {
-        this.postMultiplication = false;
+        this.postIncrement = false;
         return this;
     }
 

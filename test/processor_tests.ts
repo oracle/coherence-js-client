@@ -381,8 +381,6 @@ class VersionedPutAllProcessorTestsSuite
     }
 }
 
-
-
 // UpdaterProcessor
 @suite(timeout(3000))
 class UpdaterProcessorTestsSuite
@@ -434,5 +432,94 @@ class UpdaterProcessorTestsSuite
         expect(Array.from(value.keys())).to.have.deep.members(keys);
         const expectedValues = [[123, '123'], [123000, '123000'], [123000, '123000'], [456, '456']];
         expect(Array.from(value.values())).to.have.deep.members(expectedValues);
+    }
+}
+
+// UpdaterProcessor
+@suite(timeout(3000))
+class MethodInvocationProcessorTestsSuite
+    extends AbstractNamedCacheTestsSuite {
+        
+    @test
+    testTypeNameOf() {
+        const ep = Processors.invokeAccessor('ival');
+        expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'MethodInvocationProcessor');
+    }
+    @test
+    async testAgainstSingleKey() {
+        const ep = Processors.invokeAccessor('get', 'ival');
+
+        const value = await this.cache.invoke('123', ep);
+        expect(value).to.equal(123)   
+    }
+    @test
+    async testMutatorAgainstSingleKey() {
+        const ep = Processors.invokeMutator('remove', 'ival')
+            .andThen(Processors.invokeMutator('remove', 'iarr'));
+        
+        const status = await this.cache.invoke('123', ep);
+        const value = await this.cache.get('123');
+
+        //Check removed values
+        expect(status).to.have.deep.members([123, [1, 2, 3]]);
+
+        // Ensure that remaining attributes are still intact.
+        expect(value).to.eql({"id":123,"str":"123","fval":12.3})
+    }
+}
+
+// NumberMultiplier
+@suite(timeout(3000))
+class NumberMultiplierTestsSuite
+    extends AbstractNamedCacheTestsSuite {
+        
+    @test
+    testTypeNameOf() {
+        const ep: any = Processors.multiply('ival', 2);
+        console.log("** EP: " + JSON.stringify(ep))
+        expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberMultiplier');
+        expect(ep['manipulator']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater');
+        expect(ep['manipulator']['extractor']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor');
+        expect(ep['manipulator']['updater']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater');
+    }
+    @test
+    async testAgainstSingleKey() {
+        expect(await this.cache.get('123')).to.eql(val123);
+        const value1 = await this.cache.invoke('123', Processors.multiply('ival', 2).returnNewValue());
+        expect(value1).to.equal(246);
+        let current = await this.cache.get('123');
+        expect(current['ival']).to.equal(246);
+        const value2 = await this.cache.invoke('123', Processors.multiply('ival', 0.5).returnNewValue());
+        expect(value2).to.equal(123);
+        current = await this.cache.get('123');
+        expect(current['ival']).to.equal(123);
+    }
+}
+
+// NumberIncrementor
+@suite(timeout(3000))
+class NumberIncrementorTestsSuite
+    extends AbstractNamedCacheTestsSuite {
+        
+    @test
+    testTypeNameOf() {
+        const ep: any = Processors.increment('ival', 2);
+        console.log("** EP: " + JSON.stringify(ep))
+        expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberIncrementor');
+        expect(ep['manipulator']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater');
+        expect(ep['manipulator']['extractor']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor');
+        expect(ep['manipulator']['updater']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater');
+    }
+    @test
+    async testAgainstSingleKey() {
+        expect(await this.cache.get('123')).to.eql(val123);
+        const value1 = await this.cache.invoke('123', Processors.increment('ival', 2).returnNewValue());
+        expect(value1).to.equal(125);
+        let current = await this.cache.get('123');
+        expect(current['ival']).to.equal(125);
+        const value2 = await this.cache.invoke('123', Processors.increment('ival', -25).returnNewValue());
+        expect(value2).to.equal(100);
+        current = await this.cache.get('123');
+        expect(current['ival']).to.equal(100);
     }
 }

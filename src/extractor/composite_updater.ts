@@ -7,6 +7,8 @@ import { UniversalUpdater } from "./universal_updater";
 export class CompositeUpdater
     implements ValueUpdater, ValueManipulator {
 
+    '@class': string = Util.EXTRACTOR_PACKAGE + 'CompositeUpdater';
+
     extractor: ValueExtractor;
 
     updater: ValueUpdater;

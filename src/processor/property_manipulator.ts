@@ -10,8 +10,8 @@ export class PropertyManipulator<T, V>
 
     name: string;
 
-    useIsPrefix: boolean;                           
-
+    useIsPrefix: boolean;
+    
     /**
      * Construct a PropertyManipulator for the specified property name.
      * <p>
@@ -28,7 +28,6 @@ export class PropertyManipulator<T, V>
         this.name = propertyName;
         this.useIsPrefix = useIs;
     }
-
 
     getExtractor(): ValueExtractor<T, V> {
         throw new Error("Method not implemented.");

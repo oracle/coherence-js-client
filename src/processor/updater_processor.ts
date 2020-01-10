@@ -31,7 +31,6 @@ export class UpdaterProcessor<K=any, V=any, T=any>
             const methodName = updaterOrPropertyName;
             this.updater = (methodName.indexOf('.') < 0)
                 ? new UniversalUpdater(methodName)     //? new ReflectionUpdater(methodName)
-
                 : new CompositeUpdater(methodName);
         } else {
             this.updater = updaterOrPropertyName;

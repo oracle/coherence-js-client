@@ -5,8 +5,8 @@ import { BaseProcessor } from './base_processor';
  * of a cache entry and optionally updates the entry with a 
  * modified value.
  */
-export class MethodInvocationProcessor<K, V>
-    extends BaseProcessor<K, V, V> {
+export class MethodInvocationProcessor<K, V, R>
+    extends BaseProcessor<K, V, R> {
 
     /**
      * The Method name.
@@ -16,7 +16,7 @@ export class MethodInvocationProcessor<K, V>
     /**
      * The args for the MethodInvocation.
      */
-    args: any[];
+    args: Array<any>;
 
     /**
      * A flag specifying whether the method mutates the state of a target object.
@@ -28,7 +28,7 @@ export class MethodInvocationProcessor<K, V>
      *
      * @param args  The args for the MethodInvocation.
      */
-    constructor(methodName: string, mutator: boolean, ...args: any[]) {
+    constructor(methodName: string, mutator: boolean, args: any[]) {
         super('MethodInvocationProcessor');
         this.methodName = methodName;
         this.mutator = mutator;
