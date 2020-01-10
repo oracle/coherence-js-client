@@ -15,11 +15,13 @@ import { RemoveValueProcessor } from "./remove_value_processor";
 import { ReplaceValueProcessor } from "./replace_value_processor";
 import { ReplaceProcessor } from "./replace_processor";
 import { ConditionalRemoveProcessor } from "./conditional_remove_processor";
+import { UpdaterProcessor } from './updater_processor';
 import { VersionedPutProcessor } from "./versioned_put_processor";
 import { VersionedPutAllProcessor } from "./versioned_put_all_processor";
 import { TouchProcessor } from "./touch_processor";
 import { PreloadRequestProcessor } from "./preload_request_processor";
 import { MethodInvocationProcessor } from "./method_invocation_processor";
+import { ValueUpdater } from "./value_updater";
 
 export class Processors {
 
@@ -78,6 +80,16 @@ export class Processors {
     static replace<K, V>(oldValue: V, newValue: V): EntryProcessor<K, V>;
     static replace<K, V>(value: V, newValue?: V): EntryProcessor<K, V> {
         return newValue ? new ReplaceValueProcessor(value, newValue) : new ReplaceProcessor(value);
+    }
+
+    static update<K, V, T>(property: string, value: T): UpdaterProcessor<K, V, T>;
+    static update<K, V, T>(updater: ValueUpdater<V, T>, value: T): UpdaterProcessor<K, V, T>;
+    static update<K, V, T>(propertyOrUpdater: string | ValueUpdater<V, T>, value: T): UpdaterProcessor<K, V, T> {
+        if (typeof propertyOrUpdater === 'string') {
+            return new UpdaterProcessor<K, V, T>(propertyOrUpdater, value);
+        } else {
+            return new UpdaterProcessor<K, V, T>(propertyOrUpdater, value);
+        }
     }
 
     static versionedPut<K, V>(value: V): VersionedPutProcessor<K, V>;

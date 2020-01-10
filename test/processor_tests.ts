@@ -275,15 +275,10 @@ class ConditionalPutAllProcessorTestsSuite
         values.set('234567', newVal2);
 
         const ep = Processors.conditionalPutAll(Filters.not(Filters.present()), values);
-        await this.cache.invokeAll(['123', '234', '345', '456', '123456', '234567'], ep);
+        const keys = ['123', '234', '345', '456', '123456', '234567'];
+        await this.cache.invokeAll(keys, ep);
 
-        expect(await this.cache.size()).to.equal(6);
-        expect(await this.cache.get('123')).to.eql(val123);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
-        expect(await this.cache.get('123456')).to.eql(newVal1);
-        expect(await this.cache.get('234567')).to.eql(newVal2);
+        await this.validate(this.cache, keys, [val123, val234, val345, val456, newVal1, newVal2]);
     }
 }
 
@@ -292,7 +287,6 @@ class ConditionalPutAllProcessorTestsSuite
 class ConditionalRemoveProcessorTestsSuite
     extends AbstractNamedCacheTestsSuite {
 
-        
     @test
     testTypeNameOf() {
         const ep = Processors.conditionalRemove(Filters.always());
@@ -378,17 +372,67 @@ class VersionedPutAllProcessorTestsSuite
         const ep = Processors.versionedPutAll(entries, true);
 
         const result = await this.versioned.invokeAll(['123', '456'], ep);
-        console.log("** VersionedPutAllProcessor result size: " + result.size);
 
         const expected123 = {'@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
         const expected456 = {'@version': 5, id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], nullIfOdd: 'non-null'};
         
-        expect(await this.versioned.get('123')).to.eql(expected123);
-        expect(await this.versioned.get('234')).to.eql(versioned234);
-        expect(await this.versioned.get('345')).to.eql(versioned345);
-        expect(await this.versioned.get('456')).to.eql(expected456);
+        super.validate(this.versioned, ['123', '234', '345', '456'],
+            [expected123, versioned234, versioned345, expected456])
+    }
+}
 
-        console.log("**Versioned456: " + JSON.stringify(await this.versioned.get('456')));
 
+
+// UpdaterProcessor
+@suite(timeout(3000))
+class UpdaterProcessorTestsSuite
+    extends AbstractNamedCacheTestsSuite {
+        
+    @test
+    testTypeNameOf() {
+        const ep = Processors.update('a.b.ival', 12300);
+        expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'UpdaterProcessor');
+    }
+    @test
+    async testUpdateForAgainstSingleKey() {
+        const ep1 = Processors.update('str', "123000")
+                .andThen(Processors.update('ival', 123000));
+
+        await this.cache.invoke('123', ep1);
+
+        const processor = Processors.extract('ival').andThen(Processors.extract('str'));
+        const value = await this.cache.invoke('123', processor);
+        expect(value.length).to.equal(2)
+        expect(value).to.have.deep.members([123000, "123000"]);
+    }
+    @test
+    async testUpdateForAgainstMultipleKeys() {
+        const ep1 = Processors.update('str', "123000")
+                .andThen(Processors.update('ival', 123000));
+
+        const keys = ['123', '234', '345'];
+        await this.cache.invokeAll(keys, ep1);
+
+        const processor = Processors.extract('ival').andThen(Processors.extract('str'));
+        const value = await this.cache.invokeAll(keys, processor);
+
+        expect(Array.from(value.keys())).to.have.deep.members(keys);
+        const val = [123000, '123000'];
+        expect(Array.from(value.values())).to.have.deep.members([val, val, val]);
+    }
+    @test
+    async testUpdateWithFilter() {
+        const ep1 = Processors.update('str', "123000")
+                .andThen(Processors.update('ival', 123000));
+
+        const keys = ['123', '234', '345', '456'];
+        await this.cache.invokeAll(Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4]), ep1);
+
+        const processor = Processors.extract('ival').andThen(Processors.extract('str'));
+        const value = await this.cache.invokeAll(keys, processor);
+
+        expect(Array.from(value.keys())).to.have.deep.members(keys);
+        const expectedValues = [[123, '123'], [123000, '123000'], [123000, '123000'], [456, '456']];
+        expect(Array.from(value.values())).to.have.deep.members(expectedValues);
     }
 }

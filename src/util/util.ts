@@ -20,6 +20,12 @@ export class Util {
         }
     }
 
+    static ensureNonEmptyString(property: string | null | undefined, message: string) {
+        if (!property || property.trim().length == 0) {
+            throw new Error(message);
+        }
+    }
+
     static ensureNotEmpty(arr: any[] | undefined | null, message: string) {
         if (arr == null || arr.length == 0) {
             throw new Error(message);

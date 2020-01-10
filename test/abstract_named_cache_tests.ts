@@ -2,6 +2,7 @@
 /// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
+import { expect } from 'chai';
 
 export const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
 export const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null'};
@@ -88,19 +89,11 @@ export class AbstractNamedCacheTestsSuite {
         return {keys, values};
     }
 
-    // async checkFilter(filter: Filter, expectedKeys: Array<any>, expectedValues: Array<any>) {
-    //     const keys = await this.cache.keySet(filter);
-    //     expect(keys.size).to.equal(expectedKeys.length);
-    //     expect(Array.from(keys)).to.have.deep.members(expectedKeys);
-
-    //     const entries = await this.cache.entrySet(filter);
-    //     expect(entries.size).to.equal(expectedValues.length);
-    //     expect(this.entriesToKeys(entries)).to.have.deep.members(expectedKeys);
-    //     expect(this.entriesToValues(entries)).to.have.deep.members(expectedValues);  
-        
-    //     const values = await this.cache.values(filter);
-    //     expect(values.size).to.equal(expectedValues.length);
-    //     expect(Array.from(values)).to.have.deep.members(expectedValues);
-    // }
+    protected async validate(namedCache: NamedCacheClient<any, any>,
+        expectedKeys: Array<any>, expectedValues: Array<any>) {
+        for (let index = 0; index < expectedKeys.length; index++) {
+            expect(await namedCache.get(expectedKeys[index])).to.eql(expectedValues[index]);
+        }
+    }
 }
 

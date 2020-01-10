@@ -36,7 +36,6 @@ export class ConditionalRemoveProcessor<K, V>
 
     returnCurrent(returnCurrent: boolean = true): this {
         this['return'] = returnCurrent ;
-        console.log("** Setting returnCurrent: " + this['return']);
         return this;
     }
 

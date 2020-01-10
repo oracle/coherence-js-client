@@ -1,5 +1,6 @@
 
-import { ValueExtractor } from './value_extractor';
+import { AbstractValueUpdater } from '../util/abstract_value_updater';
+import { Util } from '../util/util';
 
 /**
   * Universal ValueUpdater implementation.
@@ -11,25 +12,25 @@ import { ValueExtractor } from './value_extractor';
   * 
   */
 export class UniversalUpdater<T, E>
-    extends ValueExtractor<T, E> {
+    extends AbstractValueUpdater<T, E> {
 
     name: string;
 
     /**
      * Construct a UniversalUpdater for the provided name.
-     * If <code>sName</code> ends in a '()',
+     * If <code>method</code> ends in a '()',
      * then the name is a method name. This implementation assumes that a
      * target's class will have one and only one method with the
      * specified name and this method will have exactly one parameter;
-     * if the name is a property name, there should be a corresponding
+     * if the method is a property name, there should be a corresponding
      * JavaBean property modifier method or it will be used as a 
      * key in a {@link Map}.
      *
-     * @param name a method or property name
+     * @param method a method or property name
      */
-    constructor(name: string) {
-        super('UniversalUpdater');
-        this.name = name;
+    constructor(method: string) {
+        super(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater');
+        this.name = method;
     }
 
 }
