@@ -10,13 +10,11 @@ export abstract class ValueExtractor<T=any, E=any> {
 
     public '@class': string;
 
-    protected target?: Target;
+    protected target: Target;
 
-    constructor(clz: string, target?: Target) {
+    constructor(clz: string, target: Target = Target.VALUE) {
         this['@class'] = Util.toExtractorName(clz);
-        if (target) {
-            this.target = target;
-        }
+        this.target = target;
     }
     
     getTarget(): Target {

@@ -27,7 +27,7 @@ class ExtractorProcessorTestsSuite
     @test
     async testInvoke() {
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
-        const value = await this.cache.invoke('123', processor);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', processor);
 
         expect(value.length).to.equal(2)
         expect(value).to.have.deep.members([123, '123']);
@@ -35,7 +35,7 @@ class ExtractorProcessorTestsSuite
     @test
     async testInvokeAllWithKeys() {
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
-        const result = await this.cache.invokeAll(new Set(['123', '234']), processor);
+        const result = await AbstractNamedCacheTestsSuite.cache.invokeAll(new Set(['123', '234']), processor);
 
         expect(result.size).to.equal(2)
         expect(Array.from(result.keys())).to.have.deep.members(['123', '234']);
@@ -44,7 +44,7 @@ class ExtractorProcessorTestsSuite
     @test
     async testInvokeAllWithFilter() {
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
-        const result = await this.cache.invokeAll(Filters.always(), processor);
+        const result = await AbstractNamedCacheTestsSuite.cache.invokeAll(Filters.always(), processor);
 
         expect(result.size).to.equal(4)
         expect(Array.from(result.keys())).to.have.deep.members(['123', '234', '345', '456']);
@@ -58,7 +58,7 @@ class ExtractorProcessorTestsSuite
         const f1 = Filters.equal(Extractors.chained('j.a.v.word'), "JavaScript")
             .or(Filters.equal(Extractors.chained('j.a.d.word'), "Jade"));
 
-        const result = await this.nested.invokeAll(f1, processor);
+        const result = await AbstractNamedCacheTestsSuite.nested.invokeAll(f1, processor);
         expect(Array.from(result.keys()).length).to.equal(2);
         expect(Array.from(result.values()).length).to.equal(2);
         expect(Array.from(result.keys())).to.have.deep.members(['JavaScript', 'Jade']);
@@ -83,7 +83,7 @@ class CompositeProcessorTestsSuite
     @test
     async testInvoke() {
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
-        const value = await this.cache.invoke('123', processor);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', processor);
 
         expect(value.length).to.equal(2)
         expect(value).to.have.deep.members([123, '123']);
@@ -93,7 +93,7 @@ class CompositeProcessorTestsSuite
         const filter = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2])
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
 
-        const result = await this.cache.invokeAll(filter, processor);
+        const result = await AbstractNamedCacheTestsSuite.cache.invokeAll(filter, processor);
         //        expect(Array.from(result.keys())).to.have.deep.members(['123', '234', '345', '456']);       
 
         expect(Array.from(result).length).to.equal(2);
@@ -105,7 +105,7 @@ class CompositeProcessorTestsSuite
         const filter = Filters.arrayContainsAll(Extractors.extract('iarr'), [2, 4])
         const processor = Processors.extract('id').andThen(Processors.extract('str'));
 
-        const result = await this.cache.invokeAll(filter, processor);
+        const result = await AbstractNamedCacheTestsSuite.cache.invokeAll(filter, processor);
         expect(Array.from(result).length).to.equal(1);
         expect(Array.from(result.keys())).to.have.deep.members(['234']);
         expect(Array.from(result.values())).to.have.deep.members([[234, '234']]);
@@ -129,7 +129,7 @@ class ConditionalProcessorTestsSuite
         const ep = Processors.extract('str')
             .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]));
 
-        const value = await this.cache.invoke('123', ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
         expect(value).to.equal('123');
     }
     @test
@@ -137,7 +137,7 @@ class ConditionalProcessorTestsSuite
         const ep = Processors.extract('str')
             .when(Filters.arrayContainsAny(Extractors.extract('iarr'), [2, 3]));
 
-        const value = await this.cache.invokeAll(new Set(['234', '345', '456']), ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.invokeAll(new Set(['234', '345', '456']), ep);
         expect(Array.from(value.keys())).to.have.deep.members(['234', '345']);
         expect(Array.from(value.values())).to.have.deep.members(['234', '345']);
     }
@@ -146,7 +146,7 @@ class ConditionalProcessorTestsSuite
         const ep = Processors.extract('str')
             .when(Filters.arrayContainsAny(Extractors.extract('iarr'), [2, 3]));
 
-        const value = await this.cache.invokeAll(new Set(['234', '345', '456']), ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.invokeAll(new Set(['234', '345', '456']), ep);
         expect(Array.from(value.keys())).to.have.deep.members(['234', '345']);
         expect(Array.from(value.values())).to.have.deep.members(['234', '345']);
     }
@@ -168,24 +168,24 @@ class ConditionalPutProcessorTestsSuite
     async testInvoke() {
         const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]);
         const ep = Processors.conditionalPut(f1, val234).returnCurrent();
-        const value = await this.cache.invoke('123', ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
 
-        expect(await this.cache.get('123')).to.eql(val234);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val345);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
     }
     @test
     async testInvokeAllWithFilter() {
         const f1 = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2]);
         const ep = Processors.conditionalPut(Filters.always(), val234).returnCurrent();
 
-        await this.cache.invokeAll(f1, ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(f1, ep);
 
-        expect(await this.cache.get('123')).to.eql(val234);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val345);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
     }
 }
 
@@ -206,12 +206,12 @@ class ConditionalPutAllProcessorTestsSuite
         values.set('345', val456);
         const ep = Processors.conditionalPutAll(Filters.always(), values);
 
-        await this.cache.invokeAll(ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(ep);
 
-        expect(await this.cache.get('123')).to.eql(val234);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val456);
-        expect(await this.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
     }
     @test
     async testInvokeAllWithFilter() {
@@ -220,12 +220,12 @@ class ConditionalPutAllProcessorTestsSuite
         values.set('345', val456);
         const ep = Processors.conditionalPutAll(Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2]), values);
 
-        await this.cache.invokeAll(Filters.always(), ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(Filters.always(), ep);
 
-        expect(await this.cache.get('123')).to.eql(val234);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val345);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
     }
     @test
     async testInvokeAllWithKeys() {
@@ -235,12 +235,12 @@ class ConditionalPutAllProcessorTestsSuite
         const filter = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2])
         const ep = Processors.conditionalPutAll(filter, values);
 
-        await this.cache.invokeAll(['123', '234', '345', '456'], ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(['123', '234', '345', '456'], ep);
 
-        expect(await this.cache.get('123')).to.eql(val234);
-        expect(await this.cache.get('234')).to.eql(val234);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(val234);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val345);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
     }
     @test
     async testIfExistingEntriesCanBeUpdated() {
@@ -254,14 +254,14 @@ class ConditionalPutAllProcessorTestsSuite
         values.set('2-234', newVal2);
         const ep = Processors.conditionalPutAll(Filters.present(), values);
 
-        await this.cache.invokeAll(ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(ep);
 
-        expect(await this.cache.get('123')).to.eql(newVal1);
-        expect(await this.cache.get('234')).to.eql(newVal2);
-        expect(await this.cache.get('345')).to.eql(val345);
-        expect(await this.cache.get('456')).to.eql(val456);
-        expect(await this.cache.get('2-123')).to.equal(null);
-        expect(await this.cache.get('2-234')).to.equal(null);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(newVal1);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('234')).to.eql(newVal2);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('345')).to.eql(val345);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('456')).to.eql(val456);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('2-123')).to.equal(null);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('2-234')).to.equal(null);
     }
     @test
     async testIfMissingEntriesCanBeInserted() {
@@ -276,9 +276,9 @@ class ConditionalPutAllProcessorTestsSuite
 
         const ep = Processors.conditionalPutAll(Filters.not(Filters.present()), values);
         const keys = ['123', '234', '345', '456', '123456', '234567'];
-        await this.cache.invokeAll(keys, ep);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(keys, ep);
 
-        await this.validate(this.cache, keys, [val123, val234, val345, val456, newVal1, newVal2]);
+        await this.validate(AbstractNamedCacheTestsSuite.cache, keys, [val123, val234, val345, val456, newVal1, newVal2]);
     }
 }
 
@@ -294,27 +294,27 @@ class ConditionalRemoveProcessorTestsSuite
     }
     @test
     async testRemovalOfOneExistingKey() {
-        expect(await this.cache.size()).to.equal(4);
-        expect(await this.cache.get('123')).to.eql(val123);
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(4);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val123);
 
         const ep = Processors.conditionalRemove(Filters.present());
-        const removedValue = await this.cache.invoke('123', ep);
+        const removedValue = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
         expect(removedValue).to.equal(null);
 
-        expect(await this.cache.size()).to.equal(3);
-        expect(await this.cache.get('123')).to.equal(null);
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(3);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.equal(null);
     }
     @test
     async testRemovalWithNeverFilter() {
-        expect(await this.cache.size()).to.equal(4);
-        expect(await this.cache.get('123')).to.eql(val123);
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(4);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val123);
 
         const ep = Processors.conditionalRemove(Filters.never()).returnCurrent();
-        const removedValue = await this.cache.invoke('123', ep);
+        const removedValue = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
         expect(removedValue).to.eql(val123);
 
-        expect(await this.cache.size()).to.equal(4);
-        expect(await this.cache.get('123')).to.eql(val123);
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(4);
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val123);
     }
 }
 
@@ -331,24 +331,24 @@ class VersionedPutProcessorTestsSuite
     @test
     async testForExistingEntry() {
         const ep = Processors.versionedPut(versioned123);
-        await this.versioned.invoke('123', ep);
+        await AbstractNamedCacheTestsSuite.versioned.invoke('123', ep);
 
         const expected = {'@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
-        expect(await this.versioned.get('123')).to.eql(expected);
+        expect(await AbstractNamedCacheTestsSuite.versioned.get('123')).to.eql(expected);
     }
     @test
     async testForNonExistentMatch() {
         const ep = Processors.versionedPut(versioned123);
-        await this.versioned.invoke('456', ep);
+        await AbstractNamedCacheTestsSuite.versioned.invoke('456', ep);
 
-        expect(await this.versioned.get('456')).to.eql(versioned456);
+        expect(await AbstractNamedCacheTestsSuite.versioned.get('456')).to.eql(versioned456);
     }
     @test
     async testForMultipleUpdates() {
         const ep = Processors.versionedPut(versioned123);
-        await this.versioned.invoke('456', ep);
+        await AbstractNamedCacheTestsSuite.versioned.invoke('456', ep);
 
-        expect(await this.versioned.get('456')).to.eql(versioned456);
+        expect(await AbstractNamedCacheTestsSuite.versioned.get('456')).to.eql(versioned456);
     }
 }
 
@@ -371,12 +371,12 @@ class VersionedPutAllProcessorTestsSuite
         entries.set('456', versioned456);
         const ep = Processors.versionedPutAll(entries, true);
 
-        const result = await this.versioned.invokeAll(['123', '456'], ep);
+        const result = await AbstractNamedCacheTestsSuite.versioned.invokeAll(['123', '456'], ep);
 
         const expected123 = {'@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
         const expected456 = {'@version': 5, id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], nullIfOdd: 'non-null'};
         
-        super.validate(this.versioned, ['123', '234', '345', '456'],
+        super.validate(AbstractNamedCacheTestsSuite.versioned, ['123', '234', '345', '456'],
             [expected123, versioned234, versioned345, expected456])
     }
 }
@@ -396,10 +396,10 @@ class UpdaterProcessorTestsSuite
         const ep1 = Processors.update('str', "123000")
                 .andThen(Processors.update('ival', 123000));
 
-        await this.cache.invoke('123', ep1);
+        await AbstractNamedCacheTestsSuite.cache.invoke('123', ep1);
 
         const processor = Processors.extract('ival').andThen(Processors.extract('str'));
-        const value = await this.cache.invoke('123', processor);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', processor);
         expect(value.length).to.equal(2)
         expect(value).to.have.deep.members([123000, "123000"]);
     }
@@ -409,10 +409,10 @@ class UpdaterProcessorTestsSuite
                 .andThen(Processors.update('ival', 123000));
 
         const keys = ['123', '234', '345'];
-        await this.cache.invokeAll(keys, ep1);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(keys, ep1);
 
         const processor = Processors.extract('ival').andThen(Processors.extract('str'));
-        const value = await this.cache.invokeAll(keys, processor);
+        const value = await AbstractNamedCacheTestsSuite.cache.invokeAll(keys, processor);
 
         expect(Array.from(value.keys())).to.have.deep.members(keys);
         const val = [123000, '123000'];
@@ -424,10 +424,10 @@ class UpdaterProcessorTestsSuite
                 .andThen(Processors.update('ival', 123000));
 
         const keys = ['123', '234', '345', '456'];
-        await this.cache.invokeAll(Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4]), ep1);
+        await AbstractNamedCacheTestsSuite.cache.invokeAll(Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4]), ep1);
 
         const processor = Processors.extract('ival').andThen(Processors.extract('str'));
-        const value = await this.cache.invokeAll(keys, processor);
+        const value = await AbstractNamedCacheTestsSuite.cache.invokeAll(keys, processor);
 
         expect(Array.from(value.keys())).to.have.deep.members(keys);
         const expectedValues = [[123, '123'], [123000, '123000'], [123000, '123000'], [456, '456']];
@@ -449,7 +449,7 @@ class MethodInvocationProcessorTestsSuite
     async testAgainstSingleKey() {
         const ep = Processors.invokeAccessor('get', 'ival');
 
-        const value = await this.cache.invoke('123', ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
         expect(value).to.equal(123)   
     }
     @test
@@ -457,8 +457,8 @@ class MethodInvocationProcessorTestsSuite
         const ep = Processors.invokeMutator('remove', 'ival')
             .andThen(Processors.invokeMutator('remove', 'iarr'));
         
-        const status = await this.cache.invoke('123', ep);
-        const value = await this.cache.get('123');
+        const status = await AbstractNamedCacheTestsSuite.cache.invoke('123', ep);
+        const value = await AbstractNamedCacheTestsSuite.cache.get('123');
 
         //Check removed values
         expect(status).to.have.deep.members([123, [1, 2, 3]]);
@@ -476,7 +476,7 @@ class NumberMultiplierTestsSuite
     @test
     testTypeNameOf() {
         const ep: any = Processors.multiply('ival', 2);
-        console.log("** EP: " + JSON.stringify(ep))
+
         expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberMultiplier');
         expect(ep['manipulator']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater');
         expect(ep['manipulator']['extractor']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor');
@@ -484,14 +484,14 @@ class NumberMultiplierTestsSuite
     }
     @test
     async testAgainstSingleKey() {
-        expect(await this.cache.get('123')).to.eql(val123);
-        const value1 = await this.cache.invoke('123', Processors.multiply('ival', 2).returnNewValue());
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val123);
+        const value1 = await AbstractNamedCacheTestsSuite.cache.invoke('123', Processors.multiply('ival', 2).returnNewValue());
         expect(value1).to.equal(246);
-        let current = await this.cache.get('123');
+        let current = await AbstractNamedCacheTestsSuite.cache.get('123');
         expect(current['ival']).to.equal(246);
-        const value2 = await this.cache.invoke('123', Processors.multiply('ival', 0.5).returnNewValue());
+        const value2 = await AbstractNamedCacheTestsSuite.cache.invoke('123', Processors.multiply('ival', 0.5).returnNewValue());
         expect(value2).to.equal(123);
-        current = await this.cache.get('123');
+        current = await AbstractNamedCacheTestsSuite.cache.get('123');
         expect(current['ival']).to.equal(123);
     }
 }
@@ -504,7 +504,7 @@ class NumberIncrementorTestsSuite
     @test
     testTypeNameOf() {
         const ep: any = Processors.increment('ival', 2);
-        console.log("** EP: " + JSON.stringify(ep))
+        
         expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberIncrementor');
         expect(ep['manipulator']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater');
         expect(ep['manipulator']['extractor']['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor');
@@ -512,14 +512,14 @@ class NumberIncrementorTestsSuite
     }
     @test
     async testAgainstSingleKey() {
-        expect(await this.cache.get('123')).to.eql(val123);
-        const value1 = await this.cache.invoke('123', Processors.increment('ival', 2).returnNewValue());
+        expect(await AbstractNamedCacheTestsSuite.cache.get('123')).to.eql(val123);
+        const value1 = await AbstractNamedCacheTestsSuite.cache.invoke('123', Processors.increment('ival', 2).returnNewValue());
         expect(value1).to.equal(125);
-        let current = await this.cache.get('123');
+        let current = await AbstractNamedCacheTestsSuite.cache.get('123');
         expect(current['ival']).to.equal(125);
-        const value2 = await this.cache.invoke('123', Processors.increment('ival', -25).returnNewValue());
+        const value2 = await AbstractNamedCacheTestsSuite.cache.invoke('123', Processors.increment('ival', -25).returnNewValue());
         expect(value2).to.equal(100);
-        current = await this.cache.get('123');
+        current = await AbstractNamedCacheTestsSuite.cache.get('123');
         expect(current['ival']).to.equal(100);
     }
 }

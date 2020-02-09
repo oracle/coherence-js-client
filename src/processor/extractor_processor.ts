@@ -1,5 +1,4 @@
 import { BaseProcessor } from './base_processor';
-import { Util } from '../util/util';
 import { IdentityExtractor, ValueExtractor, ReflectionExtractor, ChainedExtractor } from '../extractor/value_extractor';
 import { UniversalExtractor } from '../extractor/universal_extractor';
 

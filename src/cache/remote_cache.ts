@@ -8,6 +8,8 @@ export interface RemoteCache<K, V> {
      */
     clear(): Promise<void>;
 
+    destroy(): Promise<void>;
+    
     /**
      * Returns true if the specified key is mapped to some value in the cache.
      *

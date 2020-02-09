@@ -3,6 +3,7 @@
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { expect } from 'chai';
+import { Filters } from '../src/filter/filters';
 
 export const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
 export const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null'};
@@ -22,35 +23,45 @@ export const versioned456 = {'@version': 4, id: 456, str: '456', ival: 456, fval
 
 export class AbstractNamedCacheTestsSuite {
 
-    cache: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientCache');
-    nested: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientNestedCache');
-    versioned: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientVersionedCache');
+    static cache: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientCache');
+    static nested: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientNestedCache');
+    static versioned: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientVersionedCache');
 
     // constructor() {
     //     let cacheNamePrefix = this.constructor.name + "-";
-    //     this.cache = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientCache');
-    //     this.nested = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientNestedCache');
+    //     AbstractNamedCacheTestsSuite.cache = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientCache');
+    //     AbstractNamedCacheTestsSuite.nested = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientNestedCache');
     // }
 
+    
     async before() {
 
-        await this.cache.clear();
-        
-        await this.cache.put("123", val123)
-        await this.cache.put("234", val234)
-        await this.cache.put("345", val345)
-        await this.cache.put("456", val456)
+        // AbstractNamedCacheTestsSuite.cache.registerKeyListener('123');
+        // AbstractNamedCacheTestsSuite.cache.registerKeyListener('456');
+        // AbstractNamedCacheTestsSuite.cache.registerListener(Filters.equal('str', '456'));
 
-        await this.nested.put('To', toObj);
-        await this.nested.put('TypeScript', tscObj);
-        await this.nested.put('Trie', trieObj);
-        await this.nested.put('Jade', jadeObj);
-        await this.nested.put('JavaScript', javascriptObj);
+        await AbstractNamedCacheTestsSuite.cache.clear();
         
-        await this.versioned.put("123", versioned123)
-        await this.versioned.put("234", versioned234)
-        await this.versioned.put("345", versioned345)
-        await this.versioned.put("456", versioned456)
+        await this.populateCache(AbstractNamedCacheTestsSuite.cache);
+
+        await AbstractNamedCacheTestsSuite.nested.put('To', toObj);
+        await AbstractNamedCacheTestsSuite.nested.put('TypeScript', tscObj);
+        await AbstractNamedCacheTestsSuite.nested.put('Trie', trieObj);
+        await AbstractNamedCacheTestsSuite.nested.put('Jade', jadeObj);
+        await AbstractNamedCacheTestsSuite.nested.put('JavaScript', javascriptObj);
+        
+        await AbstractNamedCacheTestsSuite.versioned.put("123", versioned123)
+        await AbstractNamedCacheTestsSuite.versioned.put("234", versioned234)
+        await AbstractNamedCacheTestsSuite.versioned.put("345", versioned345)
+        await AbstractNamedCacheTestsSuite.versioned.put("456", versioned456)
+    }
+
+    protected async populateCache(cache: NamedCacheClient<any, any>) {
+        
+        await cache.put("123", val123)
+        await cache.put("234", val234)
+        await cache.put("345", val345)
+        await cache.put("456", val456)
     }
 
     protected toArrayUsing<K>(entries: Set<any>, fn: (e: any) => K): Array<K> {
@@ -96,4 +107,3 @@ export class AbstractNamedCacheTestsSuite {
         }
     }
 }
-

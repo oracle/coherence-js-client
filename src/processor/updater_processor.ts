@@ -1,5 +1,5 @@
 import { BaseProcessor } from "./base_processor";
-import { ValueUpdater } from "./value_updater";
+import { ValueUpdater } from "../util/value_updater";
 import { CompositeUpdater } from "../extractor/composite_updater";
 import { ReflectionUpdater } from "../extractor/reflection_updater";
 import { UniversalUpdater } from "../extractor/universal_updater";

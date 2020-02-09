@@ -21,7 +21,7 @@ import { VersionedPutAllProcessor } from "./versioned_put_all_processor";
 import { TouchProcessor } from "./touch_processor";
 import { PreloadRequestProcessor } from "./preload_request_processor";
 import { MethodInvocationProcessor } from "./method_invocation_processor";
-import { ValueUpdater } from "./value_updater";
+import { ValueUpdater } from "../util/value_updater";
 import { NumberMultiplier } from "./number_multiplier";
 import { NumberIncrementor } from "./number_incrementor";
 

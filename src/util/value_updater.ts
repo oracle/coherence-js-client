@@ -4,7 +4,7 @@
  * @param <T>  the type of object
  * @param <U>  the type of value used to update the object
  */
-export interface ValueUpdater<T, U> {
+export interface ValueUpdater<T=any, U=any> {
     /**
      * Update the state of the passed target object using the passed value.
      * For intrinsic types, the specified value is expected to be a standard

@@ -1,19 +1,18 @@
-// @ts-check
 /*
-* Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2019 Oracle and/or its affiliates. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import * as grpc from 'grpc';
 
@@ -22,7 +21,8 @@ import {
     EntryResult,
     IsEmptyRequest,
     SizeRequest,
-    Entry
+    Entry,
+    TruncateRequest
 } from './proto/messages_pb';
 import { Entry as GrpcEntry} from './proto/messages_pb';
 
@@ -37,6 +37,10 @@ import { ValueExtractor } from '../extractor/value_extractor';
 import { Serializer } from '../util/serializer';
 import { Filters } from '../filter/filters';
 import { Util } from '../util/util';
+import { MapEventsManager } from '../util/map_events_manager';
+import { MapEventFilter } from '../filter/map_event_filter';
+import { MapListener, MapLifecycleListener } from '../util/map_listener';
+import { EventEmitter } from 'events';
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -45,8 +49,15 @@ import { Util } from '../util/util';
  * All methods in this class return a Promise that eventually either
  * resolves to a value (as described in the NamedCache) or an error
  * if any exception occurs during the method invocation.
+ * 
+ * This class also extends EventEmitter and emits the following
+ * events:
+ * 1. 'truncated': When the underlying cache is truncated.
+ * 2. 'destroyed': When the underlying cache is destroyed.
+ * 
  */
 export class NamedCacheClient<K, V>
+    extends EventEmitter
     implements NamedCache<K, V> {
 
     lock(key: any, cWait?: number | undefined): boolean {
@@ -76,6 +87,8 @@ export class NamedCacheClient<K, V>
      */
     requests: RequestFactory<K, V>;
 
+    mapEventsHandler: MapEventsManager<K, V>;
+
     /**
      * Create a new NamedCacheClient with the specified address and cache name.
      * The optional NamedCacheOptions can be used to specify additional 
@@ -87,13 +100,61 @@ export class NamedCacheClient<K, V>
      *                additional properties.
      */
     constructor(cacheName: string, address?: string, options?: NamedCacheOptions) {
+        super();
         this.cacheName = cacheName;
         this.options = options;
         this.client = new NamedCacheServiceClient(address || 'localhost:1408',
             grpc.credentials.createInsecure());
         this.requests = new RequestFactory(this.cacheName);
+        this.mapEventsHandler = new MapEventsManager(this.cacheName, this.client, this);
     }
 
+    setMapEventsDebugLevel(level: number) {
+        this.mapEventsHandler.setMapEventsDebugLevel(level);
+    }
+
+    getName(): string {
+        return this.cacheName;
+    }    
+
+    addMapListener(listener: MapListener<K, V>, isLite?: boolean): Promise<void>;
+    addMapListener(listener: MapListener<K, V>, key: K, isLite?: boolean): Promise<void>;
+    addMapListener(listener: MapListener<K, V>, filter: MapEventFilter, isLite?: boolean): Promise<void>;
+    addMapListener(listener: MapListener<K, V>, keyOrFilterOrLite?: MapEventFilter | K | boolean, isLite?: boolean): Promise<void> {
+        let lite = false;
+
+        if (isLite) {
+            // three args invocation
+            lite = isLite;
+        }
+        if (keyOrFilterOrLite) {
+            if (keyOrFilterOrLite instanceof MapEventFilter) {
+                return this.mapEventsHandler.registerFilterListener(listener, keyOrFilterOrLite, lite);
+            } else if (typeof keyOrFilterOrLite === 'boolean') {
+                // Two arg invocation.
+                isLite = keyOrFilterOrLite;
+                return this.mapEventsHandler.registerFilterListener(listener, null, lite);
+            } else {
+                return this.mapEventsHandler.registerKeyListener(listener, keyOrFilterOrLite, lite);
+            }
+        }
+        
+        // One arg invocation.
+        return this.mapEventsHandler.registerFilterListener(listener, null, lite);
+    }
+
+    removeMapListener(listener: MapListener<K, V>): Promise<void>;
+    removeMapListener(listener: MapListener<K, V>, key: K): Promise<void>;
+    removeMapListener(listener: MapListener<K, V>, filter: MapEventFilter): Promise<void>;
+    removeMapListener(listener: MapListener<K, V>, keyOrFilter?: MapEventFilter | K | null): Promise<void> {
+        if (keyOrFilter) {
+            return (keyOrFilter instanceof MapEventFilter)
+                ? this.mapEventsHandler.removeFilterListener(listener, keyOrFilter)
+                : this.mapEventsHandler.removeKeyListener(listener, keyOrFilter);
+        } 
+        
+        return this.mapEventsHandler.removeFilterListener(listener, null);
+    }
     /**
      * Internal method to return RequestFactory.
      * 
@@ -137,6 +198,15 @@ export class NamedCacheClient<K, V>
         const self = this;
         return new Promise((resolve, reject) => {
             self.client.clear(self.requests.clear(), (err: grpc.ServiceError | null) => {
+                self.resolveValue(resolve, reject, err);
+            });
+        });
+    }
+
+    destroy(): Promise<void> {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            self.client.destroy(self.requests.destroy(), (err: grpc.ServiceError | null) => {
                 self.resolveValue(resolve, reject, err);
             });
         });
@@ -618,6 +688,22 @@ export class NamedCacheClient<K, V>
             request.setCache(this.cacheName);
             this.client.size(request, (err, resp) => {
                 if (err || !resp) {
+                    reject(err);
+                } else {
+                    resolve(resp.getValue());
+                }
+            });
+        });
+    }
+
+    truncate(): Promise<number> {
+        return new Promise((resolve, reject) => {
+
+            const request = new SizeRequest();
+            request.setCache(this.cacheName);
+            this.client.truncate(request, (err, resp) => {
+                if (err || !resp) {
+                    console.log("Truncate resulted in an error: " + err);
                     reject(err);
                 } else {
                     resolve(resp.getValue());

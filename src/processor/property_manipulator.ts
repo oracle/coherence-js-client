@@ -1,6 +1,6 @@
 import { ValueManipulator } from "./value_manipulator";
 import { ValueExtractor } from "../extractor/value_extractor";
-import { ValueUpdater } from "./value_updater";
+import { ValueUpdater } from "../util/value_updater";
 import { Util } from "../util/util";
 
 export class PropertyManipulator<T, V>
@@ -11,7 +11,7 @@ export class PropertyManipulator<T, V>
     name: string;
 
     useIsPrefix: boolean;
-    
+
     /**
      * Construct a PropertyManipulator for the specified property name.
      * <p>

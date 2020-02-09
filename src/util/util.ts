@@ -1,4 +1,3 @@
-import { Serializer } from "./serializer";
 
 export class Util {
     
@@ -13,6 +12,9 @@ export class Util {
     static BEAN_ACCESSOR_PREFIXES: string[] = ['get', 'set'];
 
     static METHOD_SUFFIX: string = '()';
+
+    static JSON_FORMAT: string = "json";
+
 
     static ensureNotNull(property: any | undefined | null, message: string) {
         if (!property) {

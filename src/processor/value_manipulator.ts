@@ -1,5 +1,5 @@
 import { ValueExtractor } from "../extractor/value_extractor";
-import { ValueUpdater } from "./value_updater";
+import { ValueUpdater } from "../util/value_updater";
 
 /**
  * ValueManipulator represents a composition of {@link ValueExtractor} and

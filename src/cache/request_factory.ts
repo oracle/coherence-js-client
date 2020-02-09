@@ -18,7 +18,9 @@ import {
     ValuesRequest,
     InvokeRequest,
     InvokeAllRequest,
-    GetAllRequest
+    GetAllRequest,
+    MapListenerRequest,
+    DestroyRequest
 } from "./proto/messages_pb";
 
 import { Serializer } from "../util/serializer";
@@ -28,24 +30,37 @@ import { EntrySet } from "./streamed_collection";
 import { EntryProcessor } from "../processor/entry_processor";
 import { Filters } from "../filter/filters";
 import { Util } from "../util/util";
+import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
+import { MapEventFilter } from "../filter/map_event_filter";
 
 export interface Comparator {
     '@class': string;
 }
 
 /**
- * A class to facilitate Request message creation.
+ * A class to facilitate Request objects creation.
+ *
  */
 export class RequestFactory<K, V> {
     static JSON_FORMAT: string = "json";
 
     cacheName: string;
 
+    // Used for unique uid generation for MapListener subscriptions.
+    private uidPrefix: string;
+
+    // The next requestID to be used for subscribe requests.
+    private nextRequestId: number = 0;
+
+    // Thje next filterID to be used for filter subscriptions.
+    private nextFilterId: number = 0;
+
     constructor(cacheName: string) {
         if (!cacheName) {
             throw new Error('cache name cannot be null or undefined');
         }
         this.cacheName = cacheName;
+        this.uidPrefix = '-' + cacheName + '-' + Date.now() + '-';
     }
 
     addIndex(extractor: ValueExtractor<any, any>, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
@@ -360,6 +375,52 @@ export class RequestFactory<K, V> {
         return request;
     }
 
+    mapListenerRequest(isSubscribe: boolean, keyOrFilter: MapEventFilter | K | null, isLite?: boolean): MapListenerRequest {
+        const request = new MapListenerRequest();
+        const filterType = keyOrFilter instanceof MapEventFilter;
+
+        request.setUid(this.generateNextRequestId(filterType ? 'filter' : 'key'));
+        request.setCache(this.cacheName);
+        request.setSubscribe(isSubscribe);
+        request.setFormat(Util.JSON_FORMAT);
+        if (isLite) {
+            request.setLite(isLite);
+        }
+        request.setPriming(false);
+        if (filterType) {
+            request.setType(MapListenerRequest.RequestType.FILTER);
+            request.setFilterid(++this.nextFilterId);
+            request.setFilter(Serializer.serialize(keyOrFilter));
+        } else {
+            request.setType(MapListenerRequest.RequestType.KEY);
+            request.setKey(Serializer.serialize(keyOrFilter));
+        }
+        request.setTrigger(new Uint8Array());
+
+        return request;
+    }
+
+    mapEventSubscribe(): MapListenerRequest {
+        const request = new MapListenerRequest();
+        request.setCache(this.cacheName);
+        request.setUid(this.generateNextRequestId('init'));
+        request.setSubscribe(true);
+        request.setType(MapListenerRequest.RequestType.INIT);
+
+        return request;
+    }
+
+    destroy(): DestroyRequest {
+        const request = new DestroyRequest();
+        request.setCache(this.cacheName);
+
+        return request;
+    }
+
+    private generateNextRequestId(prefix: string): string {
+        return prefix + this.uidPrefix + (++this.nextRequestId);
+    }
+
     values(filter?: Filter<any>, comparator?: any): ValuesRequest {
         const request = new ValuesRequest();
         request.setFormat(RequestFactory.JSON_FORMAT);
@@ -372,15 +433,6 @@ export class RequestFactory<K, V> {
         }
 
         return request;
-    }
-
-    static serialize(obj: any) {
-        const str = JSON.stringify(obj);
-        const buf = new Buffer(str.length + 1);
-        buf.writeInt8(21, 0);
-        buf.write(JSON.stringify(obj), 1);
-
-        return buf;
     }
 
 }

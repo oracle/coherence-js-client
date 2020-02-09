@@ -1,5 +1,5 @@
 import { ValueManipulator } from "../processor/value_manipulator";
-import { ValueUpdater } from "../processor/value_updater";
+import { ValueUpdater } from "../util/value_updater";
 import { ValueExtractor, IdentityExtractor, ChainedExtractor } from "./value_extractor";
 import { Util } from "../util/util";
 import { UniversalUpdater } from "./universal_updater";

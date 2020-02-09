@@ -1,4 +1,4 @@
-import { ValueUpdater } from "../processor/value_updater";
+import { ValueUpdater } from "./value_updater";
 
 /**
  * ValueUpdater is used to update an object's state.

@@ -7,11 +7,18 @@ import { expect } from 'chai';
 import { Serializer } from '../src/util/serializer';
 import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
+import { MapEventFilter } from '../src/filter/map_event_filter';
 import { UniversalExtractor } from '../src/extractor/universal_extractor';
 import { states, StateType } from './states';
+import { AbstractNamedCacheTestsSuite } from './abstract_named_cache_tests';
 
+import { val123, val234, val345, val456 } from './abstract_named_cache_tests';
+import { NamedCacheClient } from '../src/cache/named_cache_client';
+import { MapListenerAdapter, MapLifecycleListener } from '../src/util/map_listener';
+import { MapEvent } from '../src/util/map_event';
 
 const reqFactory = new RequestFactory<string, any>("States");
+
 
 @suite(timeout(3000))
 class RequestStructureSuite {

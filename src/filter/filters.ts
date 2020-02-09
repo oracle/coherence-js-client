@@ -38,6 +38,7 @@ export class Filters {
 
     private static NEVER_INSTANCE = new NeverFilter();
 
+    private static ALWAYS_INSTANCE = new AlwaysFilter();
 
     /**
      * Return a composite filter representing logical AND of all specified
@@ -62,7 +63,7 @@ export class Filters {
      * @link AlwaysFilter
      */
     static always<T>(): Filter<T> {
-        return new AlwaysFilter();
+        return Filters.ALWAYS_INSTANCE;
     }
 
     /**

@@ -12,8 +12,8 @@ class CollectionKeySetSuite
     extends AbstractNamedCacheTestsSuite {
 
     @test async keySet() {
-        expect(await this.cache.size()).to.equal(4);
-        const keys = await this.cache.keySet();
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(4);
+        const keys = await AbstractNamedCacheTestsSuite.cache.keySet();
         const expected = new Set<string>();
         expected.add('123').add('234').add('345').add('456');
 
@@ -30,7 +30,7 @@ class CollectionKeySetSuite
     }
 
     @test async keySetWithEqualsFilter() {
-        const keys = await this.cache.keySet(Filters.equal('str', '234'));
+        const keys = await AbstractNamedCacheTestsSuite.cache.keySet(Filters.equal('str', '234'));
         let count = 0;
         for await (let k of keys) {
             count++;
@@ -42,7 +42,7 @@ class CollectionKeySetSuite
 
     @test async keySetWithEqualsForNumberFilter() {
 
-        const keys = await this.cache.keySet(Filters.greater(Extractors.extract('ival'), 123));
+        const keys = await AbstractNamedCacheTestsSuite.cache.keySet(Filters.greater(Extractors.extract('ival'), 123));
         let count = 0;
         const expected = new Set<string>();
         expected.add('234').add('345').add('456');
@@ -59,7 +59,7 @@ class CollectionKeySetSuite
 
     @test async keySetWithGreaterFilter() {
 
-        const keys = await this.cache.keySet(Filters.greaterEquals('ival', 234));
+        const keys = await AbstractNamedCacheTestsSuite.cache.keySet(Filters.greaterEquals('ival', 234));
         let count = 0;
         const expected = new Set<string>();
         expected.add('234').add('345').add('456');
@@ -81,7 +81,7 @@ class CollectionEntrySetSuite
 extends AbstractNamedCacheTestsSuite {
 
     @test async entrySet() {
-        const entries = await this.cache.entrySet();
+        const entries = await AbstractNamedCacheTestsSuite.cache.entrySet();
         const expected = new Set();
         expected.add(val123).add(val234).add(val345).add(val456);
 
@@ -98,7 +98,7 @@ extends AbstractNamedCacheTestsSuite {
     }
 
     @test async entrySetWithEqualsFilter() {
-        const entries = await this.cache.entrySet(Filters.equal('str', '234'));
+        const entries = await AbstractNamedCacheTestsSuite.cache.entrySet(Filters.equal('str', '234'));
         let count = 0;
         for await (let e of entries) {
             count++;
@@ -110,7 +110,7 @@ extends AbstractNamedCacheTestsSuite {
 
     @test async entrySetWithEqualsForNumberFilter() {
 
-        const entries = await this.cache.entrySet(Filters.equal('ival', 345));
+        const entries = await AbstractNamedCacheTestsSuite.cache.entrySet(Filters.equal('ival', 345));
         let count = 0;
         for await (let e of entries) {
             count++;
@@ -121,7 +121,7 @@ extends AbstractNamedCacheTestsSuite {
 
     @test async entrySetWithGreaterFilter() {
 
-        const entries = await this.cache.entrySet(Filters.greaterEquals('ival', 234));
+        const entries = await AbstractNamedCacheTestsSuite.cache.entrySet(Filters.greaterEquals('ival', 234));
         let count = 0;
         const expected = new Set<any>();
         expected.add(val234).add(val345).add(val456);
@@ -143,8 +143,8 @@ class CollectionValuesSuite
 extends AbstractNamedCacheTestsSuite {
 
     @test async values() {
-        expect(await this.cache.size()).to.equal(4);
-        const values = await this.cache.values();
+        expect(await AbstractNamedCacheTestsSuite.cache.size()).to.equal(4);
+        const values = await AbstractNamedCacheTestsSuite.cache.values();
         const expected = new Set();
         expected.add(val123).add(val234).add(val345).add(val456);
 
@@ -161,7 +161,7 @@ extends AbstractNamedCacheTestsSuite {
     }
 
     @test async valuesWithEqualsFilter() {
-        const values = await this.cache.values(Filters.equal('str', '234'));
+        const values = await AbstractNamedCacheTestsSuite.cache.values(Filters.equal('str', '234'));
         let count = 0;
         for await (let v of values) {
             count++;
@@ -173,7 +173,7 @@ extends AbstractNamedCacheTestsSuite {
 
     @test async valuesWithEqualsForNumberFilter() {
 
-        const values = await this.cache.values(Filters.equal('ival', 345));
+        const values = await AbstractNamedCacheTestsSuite.cache.values(Filters.equal('ival', 345));
         let count = 0;
         for await (let v of values) {
             count++;
@@ -184,7 +184,7 @@ extends AbstractNamedCacheTestsSuite {
 
     @test async valuesWithGreaterFilter() {
 
-        const values = await this.cache.values(Filters.greaterEquals('ival', 234));
+        const values = await AbstractNamedCacheTestsSuite.cache.values(Filters.greaterEquals('ival', 234));
         let count = 0;
         const expected = new Set<any>();
         expected.add(val234).add(val345).add(val456);
