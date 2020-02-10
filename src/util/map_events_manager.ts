@@ -148,7 +148,7 @@ export class MapEventsManager<K, V> {
             bidiStream.on('data', (resp) => self.handleResponse(resp));
             bidiStream.on('end', () => self.onEnd());
             bidiStream.on('error', (err) => self.onError(err));
-            bidiStream.on('cancelled', (resp) => self.onCancel());
+            bidiStream.on('cancelled', () => self.onCancel());
 
             // Create a SubscribeRequest (with RequestType.INIT)
             const request = self.requests.mapEventSubscribe();
@@ -240,7 +240,7 @@ export class MapEventsManager<K, V> {
                             }
                         }
 
-                        const stringifiedKey = this.stringify(mapEvent.getKey());
+                        const stringifiedKey = MapEventsManager.stringify(mapEvent.getKey());
                         const keyGroup = this.keyMap.get(stringifiedKey);
                         if (keyGroup) {
                             keyGroup.notifyListeners(mapEvent);
@@ -251,12 +251,8 @@ export class MapEventsManager<K, V> {
         }
     }
 
-    private serializeAndDeserialize<T>(obj: T): T {
-        return Serializer.deserialize(Serializer.serialize(obj));
-    }
-
     registerKeyListener(listener: MapListener<K, V>, key: K, isLite: boolean = false): Promise<void> {
-        const stringifiedKey = this.stringify(key);
+        const stringifiedKey = MapEventsManager.stringify(key);
         let group = this.keyMap.get(stringifiedKey);
         if (!group) {
             group = new KeyListenerGroup(this, key);
@@ -267,7 +263,7 @@ export class MapEventsManager<K, V> {
     }
 
     removeKeyListener(listener: MapListener<K, V>, key: K): Promise<void> {
-        const stringifiedKey = this.stringify(key);
+        const stringifiedKey = MapEventsManager.stringify(key);
         let group = this.keyMap.get(stringifiedKey);
         if (group) {
             return group.removeListener(listener);
@@ -278,7 +274,7 @@ export class MapEventsManager<K, V> {
 
     registerFilterListener(listener: MapListener<K, V>, mapFilter: MapEventFilter | null, isLite: boolean = false): Promise<void> {
         const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter;
-        const stringifiedFilter = this.stringify(filter);
+        const stringifiedFilter = MapEventsManager.stringify(filter);
 
         let group = this.filterMap.get(stringifiedFilter);
         if (!group) {
@@ -291,7 +287,7 @@ export class MapEventsManager<K, V> {
 
     removeFilterListener(listener: MapListener<K, V>, mapFilter: MapEventFilter | null): Promise<void> {
         const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter;
-        const stringifiedFilter = this.stringify(filter);
+        const stringifiedFilter = MapEventsManager.stringify(filter);
 
         let group = this.filterMap.get(stringifiedFilter);
         if (!group) {
@@ -319,9 +315,7 @@ export class MapEventsManager<K, V> {
             });
     }
 
-    stringify(obj: any): string {
-        return JSON.stringify(obj);
-    }
+    static stringify = (obj: any): string => JSON.stringify(obj);
 
     /**
      * Close this event stream.
@@ -335,7 +329,7 @@ export class MapEventsManager<K, V> {
     }
 
     keyGroupUnsubscribed(key: string): void {
-        this.keyMap.delete(this.stringify(key));
+        this.keyMap.delete(MapEventsManager.stringify(key));
         this.checkAndCloseEventStream();
     }
 
@@ -345,16 +339,13 @@ export class MapEventsManager<K, V> {
 
     filterGroupUnsubscribed(filterId: number, filter: MapEventFilter): void {
         this.filterId2ListenerGroup.delete(filterId);
-        this.filterMap.delete(this.stringify(filter));
+        this.filterMap.delete(MapEventsManager.stringify(filter));
         this.checkAndCloseEventStream();
     }
 
-    checkAndCloseEventStream(): void {
-        console.log("** checkAndCloseEventStream: filterMap.size: " + this.filterMap.size
-            +"; this.keyMap.size: " + this.keyMap.size)
-        if (this.filterMap.size == 0 && this.keyMap.size == 0) {
-            this.close();
-        }
+    checkAndCloseEventStream(): Promise<void> {
+        return (this.filterMap.size == 0 && this.keyMap.size == 0)
+            ? this.close() : MapEventsManager.RESOLVED;
     }
 
 }
@@ -473,7 +464,7 @@ abstract class ListenerGroup<K, V> {
 
         if (this.listeners.size == 0) {
             // This was the last MapListener.
-            return this.doUnsubscribe(true);
+            return await this.doUnsubscribe(true);
         }
 
         if (prevStatus.isLite == false) {
@@ -502,7 +493,7 @@ abstract class ListenerGroup<K, V> {
 
         this.postUnsubscribe(request);
         if (closeStreamIfPossible) {
-            this.helper.checkAndCloseEventStream();
+            await this.helper.checkAndCloseEventStream();
         }
     }
 
