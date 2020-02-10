@@ -14,33 +14,36 @@ import { NamedCacheClient } from "../cache/named_cache_client";
 type SubscriptionCallback = (uid: string, cookie: any, err?: Error | undefined) => void;
 
 /**
- * MapEventsManager handles registration, unregistration of {@link MapListener} and 
+ * MapEventsManager handles registration, unregistration of {@link MapListener} and
  * notification of {@link MapEvent}s to {@link MapListener}. Since multiple
- * MapListeners can be registered for a single key / filter, this class 
- * relies on another internal class called ListenerGroup which maintains the 
- * collection of MapListeners. 
- * 
- * There is a Map of key => ListenerGroup, which is used to identify the 
- * group of MapListeners for a single key.
- * 
- * There is another Map of filter => ListenerGroup that is used to identify
- * the group of MapListeners for a MapEventFilter. 
- * 
- * When a filter is subscribed, the server responds with a unique filterID. 
- * This filterID is what is specified is a MapEvent. So, this class maintains 
- * a third Map of filterID to ListenerGroup for efficiently identifying the 
+ * MapListeners can be registered for a single key / filter, this class
+ * relies on another internal class called ListenerGroup which maintains the
+ * collection of MapListeners.
+ *
+ * There are two maps that are maintained:
+ *
+ * 1. A Map of stringified key => ListenerGroup, which is used to identify the
+ * group of MapListeners for a single key. We stringify the key since Javascript
+ * is not the same as Java's equals().
+ *
+ * 2. A Map of filter => ListenerGroup that is used to identify the group of
+ * MapListeners for a MapEventFilter.
+ *
+ * When a filter is subscribed, the server responds with a unique filterID.
+ * This filterID is what is specified is a MapEvent. So, this class maintains
+ * a third Map of filterID to ListenerGroup for efficiently identifying the
  * ListenerGroup for a filterID.
- * 
+ *
  * This class also lazily creates the "events" stream (a bidi stream). When
  * the first listener is registered, this class calls the "events()" method
  * on the NamedCacheClient and obtains the duplex stream. Similarly, it
  * closes the stream when the last listener is unregistered.
- * 
+ *
  * Note:- Javascript Maps use only the object identity to check for equality
  * of keys in a Map.  This is fine for Maps that use primitive and strings
  * as keys. But for complex key objects, this wont work as a deserialized
  * object's identity wont be the same as the original object. So, this
- * class uses a method called stringify(obj) that converts the specified 
+ * class uses a method called stringify(obj) that converts the specified
  * object into a stringified form. Currently, this is implemented by just
  * using JSON,.stringify() method.
  */
@@ -61,6 +64,10 @@ export class MapEventsManager<K, V> {
      */
     protected client: NamedCacheServiceClient;
 
+    /**
+     * The {@link NamedCacheClient} that will be used as the source
+     * in the {@link MapEvent}.
+     */
     private namedCache: NamedCacheClient<K, V>;
     /**
      * The ObservableMap (or the NamedCacheClient) that will used as
@@ -74,28 +81,32 @@ export class MapEventsManager<K, V> {
     protected requests: RequestFactory<K, V>;
 
     /**
-     * A Promise for lazily creating the duplex stream. The streamPromise 
+     * A Promise for lazily creating the duplex stream. The streamPromise
      * will resolve to a ClientDuplexStream<MapListenerRequest, MapListenerResponse>
-     * that will be used by this class to send subscriptions and to receive all eevnts. 
+     * that will be used by this class to send subscriptions and to receive all eevnts.
      */
     private streamPromise: Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse>> | null = null;
 
+    /**
+     * Used to track if a cancel call was due to this object
+     * initiating a channel close.
+     */
     private markedForClose = false;
 
     /**
      * A Map containing the outstanding subscriptions. When the corresponding
-     * MapListenerResponse is received (for a SubscriptionRequest) then the 
+     * MapListenerResponse is received (for a SubscriptionRequest) then the
      * registered callback is invoked.
      */
     private pendingSubscriptions = new Map<string, SubscriptionCallback>();
 
     /**
-     * The Map of keys => set of listeners (ListenerGroup).
+     * The Map of stringified keys => set of listeners (ListenerGroup).
      */
     private keyMap: Map<string, ListenerGroup<K, V>>;
 
     /**
-     * The Map of keys => set of listeners (ListenerGroup).
+     * The Map of stringified filter => set of listeners (ListenerGroup).
      */
     private filterMap: Map<string, ListenerGroup<K, V>>;
 
@@ -109,8 +120,6 @@ export class MapEventsManager<K, V> {
      */
     private static DEFAULT_FILTER = new MapEventFilter(Filters.always());
 
-    debugLevel = 0;
-
     constructor(cacheName: string, client: NamedCacheServiceClient, namedCache: NamedCacheClient<K, V>) {
         this.cacheName = cacheName;
         this.client = client;
@@ -122,10 +131,6 @@ export class MapEventsManager<K, V> {
         this.filterMap = new Map();
         this.filterId2ListenerGroup = new Map();
         this.requests = new RequestFactory(cacheName);
-    }
-
-    setMapEventsDebugLevel(level: number) {
-        this.debugLevel = level;
     }
 
     getRequestFactory(): RequestFactory<K, V> {
@@ -149,7 +154,7 @@ export class MapEventsManager<K, V> {
             const request = self.requests.mapEventSubscribe();
             const initUid = request.getUid();
             self.streamPromise = new Promise((resolve, reject) => {
-                // Setup pending subscriptions map so that when the 
+                // Setup pending subscriptions map so that when the
                 // subscribe response comes back, or an error occurs
                 // we can resolve or reject the connection.
                 self.pendingSubscriptions.set(initUid, (uid, resp, err) => {
@@ -225,9 +230,7 @@ export class MapEventsManager<K, V> {
                     const event = resp.getEvent();
                     if (event) {
                         const mapEvent = new MapEvent(this.cacheName, this.observableMap, event);
-                        if (this.debugLevel > 0) {
-                            mapEvent.print();
-                        }
+                        // mapEvent.print();
 
                         for (let id of event.getFilteridsList()) {
                             const group = this.filterId2ListenerGroup.get(id);
@@ -305,19 +308,12 @@ export class MapEventsManager<K, V> {
                 return new Promise<void>((resolve, reject) => {
                     self.pendingSubscriptions.set(request.getUid(), (uid, resp, err) => {
                         self.pendingSubscriptions.delete(uid);
-
-                        if (self.debugLevel > 1) {
-                            console.log("Received response for request: " + request.getUid());
-                        }
                         if (err) {
                             reject(err);
                         } else {
                             resolve();
                         }
                     });
-                    if (self.debugLevel > 1) {
-                        console.log("Sending request: " + request.getUid());
-                    }
                     stream.write(request);
                 });
             });
@@ -334,11 +330,11 @@ export class MapEventsManager<K, V> {
         if (this.streamPromise != null) {
             this.markedForClose = true;
             (await this.streamPromise).cancel();
-        } 
+        }
         this.streamPromise = null;
     }
 
-    keyGroupUnsubscribed(key: K): void {
+    keyGroupUnsubscribed(key: string): void {
         this.keyMap.delete(this.stringify(key));
         this.checkAndCloseEventStream();
     }
@@ -354,6 +350,8 @@ export class MapEventsManager<K, V> {
     }
 
     checkAndCloseEventStream(): void {
+        console.log("** checkAndCloseEventStream: filterMap.size: " + this.filterMap.size
+            +"; this.keyMap.size: " + this.keyMap.size)
         if (this.filterMap.size == 0 && this.keyMap.size == 0) {
             this.close();
         }
@@ -369,7 +367,7 @@ export class MapEventsManager<K, V> {
 abstract class ListenerGroup<K, V> {
 
     /**
-     * Active status will be true if the subscribe request has been sent. 
+     * Active status will be true if the subscribe request has been sent.
      * It will be false if a unsubscribe request has been sent.
      */
     isActive: boolean = true;   // Initially active.
@@ -384,16 +382,16 @@ abstract class ListenerGroup<K, V> {
      * The current value of isLite that is registered with the cache.
      * If a new listener is added to the group that requires isLite == false
      * but if the registeredIsLite is true, then a re-registration occurs.
-     * 
-     * Similarly if a listener is removed whose isLite == false but if all the 
-     * remaining listeners are interested in only isLite == true, then a 
+     *
+     * Similarly if a listener is removed whose isLite == false but if all the
+     * remaining listeners are interested in only isLite == true, then a
      * re-registration occurs.
      */
     registeredIsLite: boolean = true;
 
     /**
      * A map of all listeners in this group. Each listener has a isLite
-     * flag. 
+     * flag.
      */
     listeners: Map<MapListener<K, V>, { isLite: boolean }> = new Map();
 
@@ -418,11 +416,11 @@ abstract class ListenerGroup<K, V> {
 
     /**
      * Add a MapListener to this group. This causes a subscription message
-     * to be sent through the stream if (a) either this is the first 
+     * to be sent through the stream if (a) either this is the first
      * listener, or (b) the isLite param is false but all the previous
      * listeners have isLite == true.
-     * 
-     * @param listener The MapListener to add. 
+     *
+     * @param listener The MapListener to add.
      * @param isLite  The isLite flag.
      */
     async addListener(listener: MapListener<K, V>, isLite: boolean): Promise<void> {
@@ -440,12 +438,13 @@ abstract class ListenerGroup<K, V> {
             this.isLiteFalseCount++;
         }
 
-        // We need registration request only if the current 
+        // We need registration request only if the current
         // set of listeners are all using isLite == true, but
         // the new listener is requesting isLite = false. So we need to
         // send a new registration request with the new isLite flag.
         let requireRegistrationRequest = this.listeners.size == 1 || this.registeredIsLite == true && isLite == false;
         const self = this;
+
         if (requireRegistrationRequest) {
             this.registeredIsLite = isLite;
             if (this.listeners.size > 1) {
@@ -460,7 +459,7 @@ abstract class ListenerGroup<K, V> {
 
     /**
      * Remove the specified MapListener from this group.
-     * 
+     *
      * @param listener The MapListener to be removed.
      */
     async removeListener(listener: MapListener<K, V>): Promise<void> {
@@ -471,7 +470,7 @@ abstract class ListenerGroup<K, V> {
         }
 
         this.listeners.delete(listener);
-        
+
         if (this.listeners.size == 0) {
             // This was the last MapListener.
             return this.doUnsubscribe(true);

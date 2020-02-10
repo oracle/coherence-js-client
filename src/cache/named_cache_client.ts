@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-import * as grpc from 'grpc';
-
-import { NamedCacheServiceClient, NamedCacheServiceService } from './proto/services_grpc_pb';
-import {
-    EntryResult,
-    IsEmptyRequest,
-    SizeRequest,
-    Entry,
-    TruncateRequest
-} from './proto/messages_pb';
-import { Entry as GrpcEntry} from './proto/messages_pb';
-
-import { RequestFactory, Comparator } from './request_factory';
-import { NamedCache } from './named_cache';
-import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
-import { MapEntry } from './query_map';
-import { KeySet, EntrySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
-import { Filter } from '../filter/filter';
-import { EntryProcessor } from '../processor/entry_processor';
-import { ValueExtractor } from '../extractor/value_extractor';
-import { Serializer } from '../util/serializer';
-import { Filters } from '../filter/filters';
-import { Util } from '../util/util';
-import { MapEventsManager } from '../util/map_events_manager';
-import { MapEventFilter } from '../filter/map_event_filter';
-import { MapListener, MapLifecycleListener } from '../util/map_listener';
 import { EventEmitter } from 'events';
+import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb';
+import * as grpc from 'grpc';
+import { ValueExtractor } from '../extractor/value_extractor';
+import { Filter } from '../filter/filter';
+import { Filters } from '../filter/filters';
+import { MapEventFilter } from '../filter/map_event_filter';
+import { EntryProcessor } from '../processor/entry_processor';
+import { MapEventsManager } from '../util/map_events_manager';
+import { MapListener } from '../util/map_listener';
+import { Serializer } from '../util/serializer';
+import { Util } from '../util/util';
+import { NamedCache } from './named_cache';
+import { Entry, Entry as GrpcEntry, EntryResult, IsEmptyRequest, SizeRequest } from './proto/messages_pb';
+import { NamedCacheServiceClient } from './proto/services_grpc_pb';
+import { MapEntry } from './query_map';
+import { Comparator, RequestFactory } from './request_factory';
+import { EntrySet, KeySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
+
+
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -107,10 +100,6 @@ export class NamedCacheClient<K, V>
             grpc.credentials.createInsecure());
         this.requests = new RequestFactory(this.cacheName);
         this.mapEventsHandler = new MapEventsManager(this.cacheName, this.client, this);
-    }
-
-    setMapEventsDebugLevel(level: number) {
-        this.mapEventsHandler.setMapEventsDebugLevel(level);
     }
 
     getName(): string {

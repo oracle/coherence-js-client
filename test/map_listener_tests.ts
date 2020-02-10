@@ -1,12 +1,11 @@
-import { EventEmitter } from 'events';
-
-import { AbstractNamedCacheTestsSuite } from "./abstract_named_cache_tests";
 import { expect } from "chai";
-import { MapListener } from "../src/util/map_listener";
-import { MapEvent } from "../src/util/map_event";
+import { EventEmitter } from 'events';
 import { NamedCacheClient } from "../src/cache/named_cache_client";
 import { Filters } from '../src/filter/filters';
 import { MapEventFilter } from '../src/filter/map_event_filter';
+import { MapEvent } from "../src/util/map_event";
+import { MapListener } from "../src/util/map_listener";
+import { AbstractNamedCacheTestsSuite } from "./abstract_named_cache_tests";
 
 @suite(timeout(15000))
 class EventListenerTestsSuite
@@ -24,7 +23,7 @@ class EventListenerTestsSuite
     }
 
     @test
-    async shouldNotHaveReceivedAnyEventsWhenUpdatesToCache() {
+    async shouldNotHaveReceivedAnyEventsWhenNoUpdatesToCache() {
         const lcListener = new TestCacheMapLifecycleListener(this.cache);
         const listener = new CountingMapListener("listener-default");
         await this.cache.addMapListener(listener, true);
@@ -41,7 +40,7 @@ class EventListenerTestsSuite
         const lcListener = new TestCacheMapLifecycleListener(this.cache);
         const listener = new CountingMapListener("listener-default");
         await this.cache.addMapListener(listener, true);
-        await this.cache.removeMapListener(listener);     
+        await this.cache.removeMapListener(listener);
 
         await lcListener.waitForChannelClose();
         expect(stringify(listener.counters)).to.equal(stringify({}));
@@ -52,7 +51,7 @@ class EventListenerTestsSuite
         const lcListener = new TestCacheMapLifecycleListener(this.cache);
         const listener = new CountingMapListener("listener-default");
         await this.cache.addMapListener(listener, '123', true);
-        await this.cache.removeMapListener(listener, '123');     
+        await this.cache.removeMapListener(listener, '123');
 
         await lcListener.waitForChannelClose();
         expect(stringify(listener.counters)).to.equal(stringify({}));
@@ -66,6 +65,9 @@ class EventListenerTestsSuite
 
         await this.cache.put('123', {});
         await this.cache.remove('123');
+
+        await listener.waitFor({insert: 1, delete: 1});
+
         this.cache.destroy();
 
         await lcListener.waitForChannelClose();
@@ -105,16 +107,16 @@ class EventListenerTestsSuite
         await this.cache.addMapListener(filterListener, new MapEventFilter(Filters.always()));
 
         const self = this;
-        setTimeout(async () => {
-            await self.cache.put('123', {});
+        setTimeout(() => {
+            self.cache.put('123', {});
         }, 100);
 
-        setTimeout(async () => {
-            await self.cache.remove('123');
+        setTimeout(() => {
+            self.cache.remove('123');
         }, 150);
 
-        setTimeout(async () => {
-            await self.cache.put('345', {});
+        setTimeout(() => {
+            self.cache.put('345', {});
         }, 200);
 
         await listener.waitFor({insert: 2, delete: 1});
@@ -134,9 +136,9 @@ class EventListenerTestsSuite
         expect(stringify(filterListener.counters)).to.equal(stringify({insert: 3, delete: 2}));
     }
 
-
     @test
     async shouldCloseChannelWhenLastListenerIsUnregistered() {
+        // Use a KeyListener and a FilterListener
         const lcListener = new TestCacheMapLifecycleListener(this.cache);
         const keyListener = new CountingMapListener("key-listener");
         const filterListener = new CountingMapListener("filter-listener");
@@ -145,26 +147,56 @@ class EventListenerTestsSuite
         await this.cache.addMapListener(filterListener, mapEventFilter, false);
         await this.cache.addMapListener(keyListener, '123', false);
 
+        await this.cache.removeMapListener(keyListener, '123');
+        await this.cache.removeMapListener(filterListener, mapEventFilter);
+
+        await lcListener.waitForChannelClose();
+
+        expect(stringify(keyListener.counters)).to.equal(stringify({}));
+        expect(stringify(filterListener.counters)).to.equal(stringify({}));
+    }
+
+    @test
+    async shouldReceiveEventsForRemainingListenersAfterOneListenerIsUnregistered() {
+        // Use 2 KeyListeners and two FilterListeners
+        const lcListener = new TestCacheMapLifecycleListener(this.cache);
+        const keyListener1 = new CountingMapListener("key-listener-1");
+        const keyListener2 = new CountingMapListener("key-listener-2");
+        const filterListener1 = new CountingMapListener("filter-listener-1");
+        const filterListener2 = new CountingMapListener("filter-listener-2");
+
+        const mapEventFilter = new MapEventFilter(Filters.equal('id', '123'));
+        await this.cache.addMapListener(keyListener1, '123', false);
+        await this.cache.addMapListener(filterListener1, mapEventFilter, false);
+        await this.cache.addMapListener(filterListener2, mapEventFilter, false);
+        await this.cache.addMapListener(keyListener2, '123', false);
+
         await this.cache.put('123', {'id': '123', value: 123, insCount: 1});
         await this.cache.remove('123');
 
-        await keyListener.waitFor({insert: 1, delete: 1});
-        await filterListener.waitFor({insert: 1, delete: 1});
+        await keyListener1.waitFor({insert: 1, delete: 1});
+        await filterListener2.waitFor({insert: 1, delete: 1});
 
-        await this.cache.removeMapListener(keyListener, '123');
+        await this.cache.removeMapListener(keyListener1, '123');
+        await this.cache.removeMapListener(filterListener2, mapEventFilter);
 
         await this.cache.put('123', {'id': '123', value: 456, insCount: 2});
         await this.cache.remove('123');
 
-        await filterListener.waitFor({insert: 2, delete: 2});
-        await this.cache.removeMapListener(filterListener, mapEventFilter);     
+        await keyListener2.waitFor({insert: 2, delete: 2});
+        await filterListener1.waitFor({insert: 2, delete: 2});
+        await this.cache.removeMapListener(filterListener1, mapEventFilter);
+        await this.cache.removeMapListener(keyListener2, '123');
 
         await lcListener.waitForChannelClose();
 
-        expect(stringify(keyListener.counters)).to.equal(stringify({insert: 1, delete: 1}));
-        expect(stringify(filterListener.counters)).to.equal(stringify({insert: 2, delete: 2}));
+        expect(stringify(keyListener1.counters)).to.equal(stringify({insert: 1, delete: 1}));
+        expect(stringify(filterListener2.counters)).to.equal(stringify({insert: 1, delete: 1}));
+
+        expect(stringify(filterListener1.counters)).to.equal(stringify({insert: 2, delete: 2}));
+        expect(stringify(keyListener2.counters)).to.equal(stringify({insert: 2, delete: 2}));
     }
-    
+
 }
 
 type CallbackCounters = {
