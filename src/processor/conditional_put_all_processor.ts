@@ -2,7 +2,7 @@ import { BaseProcessor } from './base_processor';
 import { Filter } from '../filter/filter';
 import { MapHolder } from './base_processor';
 
-export class ConditionalPutAllProcessor<K, V>
+export class ConditionalPutAllProcessor<K=any, V=any>
     extends BaseProcessor<K, V, V> {
 
     /**

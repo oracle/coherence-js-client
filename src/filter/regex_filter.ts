@@ -13,7 +13,7 @@ import { ValueExtractor } from '../extractor/value_extractor';
  *
  * @see com.tangosol.util.InvocableMap.Entry#isPresent()
  */
-export class RegexFilter<T, E>
+export class RegexFilter<T = any, E = any>
     extends ComparisonFilter<T, E, string> {
 
     constructor(extractor: ValueExtractor<T, E>, regex: string);

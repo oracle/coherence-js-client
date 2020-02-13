@@ -6,7 +6,7 @@ import { Filter } from '../filter/filter';
  * operation if the specified condition is satisfied.
  *
  */
-export class ConditionalRemoveProcessor<K, V>
+export class ConditionalRemoveProcessor<K = any, V = any>
     extends BaseProcessor<K, V, V> {
 
     /**
@@ -35,7 +35,7 @@ export class ConditionalRemoveProcessor<K, V>
     }
 
     returnCurrent(returnCurrent: boolean = true): this {
-        this['return'] = returnCurrent ;
+        this['return'] = returnCurrent;
         return this;
     }
 

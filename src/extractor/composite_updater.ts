@@ -21,7 +21,7 @@ export class CompositeUpdater
             this.extractor = methodOrExtractor as ValueExtractor;
             this.updater = updater;
         } else {
-            // One arge with method name
+            // One arg with method name
             const methodName = methodOrExtractor as string;
             Util.ensureNonEmptyString(methodName, "method name has to be non empty");
 

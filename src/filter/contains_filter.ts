@@ -1,7 +1,7 @@
 import { ComparisonFilter } from './filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 
-export class ContainsFilter<T, E>
+export class ContainsFilter<T=any, E=any>
     extends ComparisonFilter<T, E, E> {
 
     values: any;

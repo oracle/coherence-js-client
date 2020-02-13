@@ -1,7 +1,7 @@
 import { ComparisonFilter } from './filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 
-export class LikeFilter<T, E>
+export class LikeFilter<T=any, E=any>
     extends ComparisonFilter<T, E, string> {
 
         escape?: string;

@@ -7,7 +7,7 @@ import { Filter } from '../filter/filter';
  * @param <K> the type of the Map entry key
  * @param <V> the type of the Map entry value
  */
-export class GetOrDefaultProcessor<K, V>
+export class GetOrDefaultProcessor<K=any, V=any>
     extends BaseProcessor<K, V, void> {
 
     /**

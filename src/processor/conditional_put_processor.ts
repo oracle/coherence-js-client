@@ -1,7 +1,7 @@
 import { BaseProcessor } from './base_processor';
 import { Filter } from '../filter/filter';
 
-export class ConditionalPutProcessor<K, V>
+export class ConditionalPutProcessor<K=any, V=any>
     extends BaseProcessor<K, V, V> {
 
     /**

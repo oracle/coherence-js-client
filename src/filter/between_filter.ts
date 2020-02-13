@@ -16,7 +16,7 @@ import { GreaterFilter } from './greater_filter';
  * @param <T> the type of the input argument to the filter
  * @param <E> the type of the extracted attribute to use for comparison
 */
-export class BetweenFilter<T, E>
+export class BetweenFilter<T=any, E=any>
     extends AndFilter {
 
     private from: E;

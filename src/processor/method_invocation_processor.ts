@@ -5,7 +5,7 @@ import { BaseProcessor } from './base_processor';
  * of a cache entry and optionally updates the entry with a 
  * modified value.
  */
-export class MethodInvocationProcessor<K, V, R>
+export class MethodInvocationProcessor<K=any, V=any, R=any>
     extends BaseProcessor<K, V, R> {
 
     /**

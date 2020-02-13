@@ -11,7 +11,7 @@ import { Util } from '../util/util';
  * the property can reference a JavaBean property or {@link Map} key.
  * 
  */
-export class ReflectionUpdater<T, E>
+export class ReflectionUpdater<T=any, E=any>
     extends AbstractValueUpdater<T, E> {
 
     method: string;

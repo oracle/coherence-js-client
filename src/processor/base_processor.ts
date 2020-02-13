@@ -14,7 +14,7 @@ import { Filter } from '../filter/filter';
  * @param <R> the type of value returned by the EntryProcessor.
  * 
  */
-export abstract class BaseProcessor<K, V, R>
+export abstract class BaseProcessor<K=any, V=any, R=any>
     implements EntryProcessor<K, V, R> {
 
     '@class': string;

@@ -1,6 +1,6 @@
 import { Filter } from './filter';
 
-export class NotFilter<T>
+export class NotFilter<T=any>
     extends Filter<T> {
 
     filter: Filter<T>;

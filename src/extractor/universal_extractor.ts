@@ -1,7 +1,7 @@
 
 import { ValueExtractor } from './value_extractor';
 
-export class UniversalExtractor<T, E>
+export class UniversalExtractor<T = any, E = any>
     extends ValueExtractor<T, E> {
 
     name: string;

@@ -13,7 +13,7 @@ import { UniversalExtractor } from '../extractor/universal_extractor';
  * @param <R> the type of value returned by the EntryProcessor.
  * 
  */
-export class ExtractorProcessor<K, V, T, E>
+export class ExtractorProcessor<K=any, V=any, T=any, E=any>
     extends BaseProcessor<K, V, T> {
 
     name?: string

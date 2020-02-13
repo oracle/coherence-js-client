@@ -20,7 +20,7 @@ import { Filter } from "./filter";
  * });
  * ```
  */
-export class KeyAssociatedFilter<T>
+export class KeyAssociatedFilter<T=any>
     extends Filter<T>  {
 
     filter: Filter<T>;

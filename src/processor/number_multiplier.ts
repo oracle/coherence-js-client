@@ -12,7 +12,7 @@ import { CompositeUpdater } from '../extractor/composite_updater';
  * @param <K> the type of the Map entry key
  * @param <V> the type of the Map entry value
  */
-export class NumberMultiplier<K, V>
+export class NumberMultiplier<K=any, V=any>
     extends PropertyProcessor<K, V, number> {
 
     /**

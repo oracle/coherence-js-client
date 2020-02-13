@@ -13,7 +13,7 @@ import { ValueExtractor } from '../extractor/value_extractor';
  *
  * @see com.tangosol.util.InvocableMap.Entry#isPresent()
  */
-export class PresentFilter<T = any>
+export class PresentFilter<T=any>
     extends Filter<T> {
 
     public static INSTANCE = new PresentFilter();

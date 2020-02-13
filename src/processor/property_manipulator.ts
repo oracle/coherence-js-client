@@ -3,7 +3,7 @@ import { ValueExtractor } from "../extractor/value_extractor";
 import { ValueUpdater } from "../util/value_updater";
 import { Util } from "../util/util";
 
-export class PropertyManipulator<T, V>
+export class PropertyManipulator<T = any, V = any>
     implements ValueManipulator<T, V> {
 
     '@class': string;

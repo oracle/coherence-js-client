@@ -5,6 +5,7 @@ import { ClientReadableStream } from "grpc";
 import { Serializer } from '../util/serializer';
 import { RemoteSet, MapEntry } from '../cache/query_map';
 
+// This needs some cleanup
 class PagedSet<K, V, T>
     implements RemoteSet<T> {
 
@@ -315,7 +316,7 @@ interface IStreamedDataHelper<R, T> {
 // }
 
 
-class NamedCacheEntry<K, V> 
+class NamedCacheEntry<K, V>
     implements MapEntry<K, V> {
 
     private key!: K;
@@ -342,7 +343,7 @@ class NamedCacheEntry<K, V>
         if (!this.value) {
             this.value = Serializer.deserialize(this.valueBytes);
         }
-        return this.value;    
+        return this.value;
     }
 }
 

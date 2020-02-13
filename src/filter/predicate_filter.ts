@@ -4,7 +4,7 @@ import { ValueExtractor } from '../extractor/value_extractor';
 /**
  * A {@code java.util.function.Predicate} based {@link ExtractorFilter}.
  */
-export class PredicateFilter<T, E>
+export class PredicateFilter<T=any, E=any>
     extends ExtractorFilter<T, E> {
 
     /**
