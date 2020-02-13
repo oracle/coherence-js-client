@@ -28,11 +28,10 @@ import { RegexFilter } from './regex_filter';
  * Simple Filter DSL.
  * 
  * @remarks
- * The methods in this class are for the most part simple factory methods for
- * various {@link Filter} classes, but in some cases provide additional type
- * safety. They also tend to make the code more readable, especially if imported
- * statically, so their use is strongly encouraged in lieu of direct construction
- * of {@link Filter} classes.
+ * The methods in this class are simple factory methods for various 
+ * {@link Filter} classes. The use of these methods is strongly
+ * encouraged in lieu of direct construction of {@link Filter} classes as
+ * it makes the code more readable.
  */
 export class Filters {
 
@@ -276,7 +275,7 @@ export class Filters {
         return new GreaterFilter(arg, value);
     }
 
-        /**
+    /**
      * Return a filter that tests if the extracted value is greater than or equal
      * to the specified value.
      *

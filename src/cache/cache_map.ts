@@ -1,3 +1,6 @@
+import { RemoteCache } from "./remote_cache";
+import { ObservableMap } from "../util/observable_map";
+
 /**
  * Get all the specified keys, if they are in the cache. For each key
  * that is in the cache, that key and its corresponding value will be
@@ -6,7 +9,8 @@
  * which may imply (for caches that can load behind the scenes) that
  * the requested data could not be loaded.
  */
-export interface CacheMap<K, V> {
+export interface CacheMap<K, V>
+    extends RemoteCache<K, V>, ObservableMap<K, V> {
         
     /**
      * Get all the specified keys, if they are in the cache. For each key

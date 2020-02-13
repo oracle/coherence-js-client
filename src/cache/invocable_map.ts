@@ -1,7 +1,9 @@
 import { Filter } from "../filter/filter";
 import { EntryProcessor } from '../processor/entry_processor';
+import { RemoteCache } from "./remote_cache";
 
-export interface InvocableMap<K, V> {
+export interface InvocableMap<K = any, V = any>
+    extends RemoteCache<K, V> {
 
     /**
      * Invoke the passed EntryProcessor against the Entry specified by the

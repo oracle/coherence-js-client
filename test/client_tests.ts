@@ -82,7 +82,7 @@ class ContainsEntrySuite
     }
 
     @test async containsEntryWithComplexKey() {
-        const cache2 = new NamedCacheClient<any, any>('States');
+        const cache2 = AbstractNamedCacheTestsSuite.session.getCache<any, any>('States');
         await cache2.put(val123, val234);
         expect(await cache2.containsEntry(val123, val234)).to.equal(true);    
     }
@@ -106,7 +106,7 @@ class ContainsKeySuite
     }
 
     @test async containsKeyWithComplexKey() {
-        const cache2 = new NamedCacheClient<any, any>('States');
+        const cache2 = AbstractNamedCacheTestsSuite.session.getCache<any, any>('States');
         await cache2.put(val123, val234);
         expect(await cache2.containsKey(val123)).to.equal(true);    
     }

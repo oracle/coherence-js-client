@@ -1,5 +1,5 @@
 
-export interface RemoteCache<K, V> {
+export interface RemoteCache<K = any, V = any> {
 
     /**
      * Clears all the mappings in the cache.
@@ -8,8 +8,6 @@ export interface RemoteCache<K, V> {
      */
     clear(): Promise<void>;
 
-    destroy(): Promise<void>;
-    
     /**
      * Returns true if the specified key is mapped to some value in the cache.
      *

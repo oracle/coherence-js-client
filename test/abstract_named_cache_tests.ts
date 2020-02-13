@@ -4,6 +4,7 @@
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { expect } from 'chai';
 import { Filters } from '../src/filter/filters';
+import { Session, SessionBuilder } from '../src/cache/session';
 
 export const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
 export const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null'};
@@ -23,15 +24,19 @@ export const versioned456 = {'@version': 4, id: 456, str: '456', ival: 456, fval
 
 export class AbstractNamedCacheTestsSuite {
 
-    static cache: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientCache');
-    static nested: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientNestedCache');
-    static versioned: NamedCacheClient<any, any> = new NamedCacheClient<any, any>('JSClientVersionedCache');
+    static cache: NamedCacheClient<any, any>;
+    static nested: NamedCacheClient<any, any>;
+    static versioned: NamedCacheClient<any, any>;
 
-    // constructor() {
-    //     let cacheNamePrefix = this.constructor.name + "-";
-    //     AbstractNamedCacheTestsSuite.cache = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientCache');
-    //     AbstractNamedCacheTestsSuite.nested = new NamedCacheClient<any, any>(cacheNamePrefix + 'JSClientNestedCache');
-    // }
+    static session: Session = new SessionBuilder().build();
+
+    constructor() {
+        let cacheNamePrefix = this.constructor.name + "-";
+
+        AbstractNamedCacheTestsSuite.cache = AbstractNamedCacheTestsSuite.session.getCache(cacheNamePrefix + 'JSClientCache');
+        AbstractNamedCacheTestsSuite.nested = AbstractNamedCacheTestsSuite.session.getCache(cacheNamePrefix + 'JSClientNestedCache');
+        AbstractNamedCacheTestsSuite.versioned = AbstractNamedCacheTestsSuite.session.getCache('JSClientVersionedCache');
+    }
 
     
     async before() {

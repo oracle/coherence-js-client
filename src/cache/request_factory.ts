@@ -26,11 +26,8 @@ import {
 import { Serializer } from "../util/serializer";
 import { Filter } from "../filter/filter";
 import { ValueExtractor } from "../extractor/value_extractor";
-import { EntrySet } from "./streamed_collection";
 import { EntryProcessor } from "../processor/entry_processor";
-import { Filters } from "../filter/filters";
 import { Util } from "../util/util";
-import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
 import { MapEventFilter } from "../filter/map_event_filter";
 
 export interface Comparator {

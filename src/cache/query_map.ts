@@ -2,9 +2,10 @@ import { ValueExtractor } from '../extractor/value_extractor';
 import { ContainsAnyFilter } from '../filter/contains_any_filter';
 import { Filter } from '../filter/filter';
 import { Comparator } from './request_factory';
+import { RemoteCache } from './remote_cache';
 
 export interface MapEntry<K, V> {
-     
+
     /**
      * Returns the key corresponding to this entry.    
      */
@@ -25,7 +26,8 @@ export interface RemoteSet<T> {
 }
 
 
-export interface QueryMap<K, V> {
+export interface QueryMap<K = any, V = any>
+    extends RemoteCache<K, V> {
 
     /**
      * Add an index to this QueryMap.
@@ -68,7 +70,7 @@ export interface QueryMap<K, V> {
      * @return a set view of the keys contained in this map
      */
     keySet(): RemoteSet<K>;
-        
+
     /**
      * Return a set view of the keys contained in this map for entries that
      * satisfy the criteria expressed by the filter.
@@ -89,6 +91,10 @@ export interface QueryMap<K, V> {
      * @return a set of keys for entries that satisfy the specified criteria
      */
     keySet(filter: Filter<any>, comparator?: Comparator): Promise<Set<K>>;
+
+    entrySet(): RemoteSet<MapEntry<K, V>>;
+
+    entrySet(filter: Filter<any>, comp?: Comparator): Promise<Set<MapEntry<K, V>>>;
 
     /**
      * Remove an index from this QueryMap.

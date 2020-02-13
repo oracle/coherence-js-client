@@ -11,10 +11,11 @@ import { AbstractNamedCacheTestsSuite } from "./abstract_named_cache_tests";
 class EventListenerTestsSuite
     extends AbstractNamedCacheTestsSuite {
 
-    private cache = new NamedCacheClient<any, any>('temp-cache');
+    private cache: NamedCacheClient;//<any, any>('temp-cache');
 
     constructor() {
         super();
+        this.cache = AbstractNamedCacheTestsSuite.session.getCache<any, any>('temp-cache');
     }
 
     async before() {
@@ -66,12 +67,12 @@ class EventListenerTestsSuite
         await this.cache.put('123', {});
         await this.cache.remove('123');
 
-        await listener.waitFor({insert: 1, delete: 1});
+        await listener.waitFor({ insert: 1, delete: 1 });
 
         this.cache.destroy();
 
         await lcListener.waitForChannelClose();
-        expect(stringify(listener.counters)).to.equal(stringify({insert: 1, delete: 1}));
+        expect(stringify(listener.counters)).to.equal(stringify({ insert: 1, delete: 1 }));
     }
 
     @test
@@ -83,19 +84,19 @@ class EventListenerTestsSuite
         await this.cache.put('123', {});
         await this.cache.remove('123');
 
-        await listener.waitFor({insert: 1, delete: 1});
+        await listener.waitFor({ insert: 1, delete: 1 });
         const listener2 = new CountingMapListener("listener-2");
         await this.cache.addMapListener(listener2);
 
-        await this.cache.put('123', {a: 2});
+        await this.cache.put('123', { a: 2 });
         await this.cache.remove('123');
 
         this.cache.destroy();
 
         await lcListener.waitForChannelClose();
 
-        expect(stringify(listener.counters)).to.equal(stringify({insert: 2, delete: 2}));
-        expect(stringify(listener2.counters)).to.equal(stringify({insert: 1, delete: 1}));
+        expect(stringify(listener.counters)).to.equal(stringify({ insert: 2, delete: 2 }));
+        expect(stringify(listener2.counters)).to.equal(stringify({ insert: 1, delete: 1 }));
     }
 
     @test
@@ -119,21 +120,21 @@ class EventListenerTestsSuite
             self.cache.put('345', {});
         }, 200);
 
-        await listener.waitFor({insert: 2, delete: 1});
+        await listener.waitFor({ insert: 2, delete: 1 });
 
         await this.cache.removeMapListener(listener);
 
-        await this.cache.put('k2', {a: 2});
+        await this.cache.put('k2', { a: 2 });
         await this.cache.remove('k2');
 
-        await filterListener.waitFor({insert: 3, delete: 2});
+        await filterListener.waitFor({ insert: 3, delete: 2 });
 
         this.cache.destroy();
 
         await lcListener.waitForChannelClose();
 
-        expect(stringify(listener.counters)).to.equal(stringify({insert: 2, delete: 1}));
-        expect(stringify(filterListener.counters)).to.equal(stringify({insert: 3, delete: 2}));
+        expect(stringify(listener.counters)).to.equal(stringify({ insert: 2, delete: 1 }));
+        expect(stringify(filterListener.counters)).to.equal(stringify({ insert: 3, delete: 2 }));
     }
 
     @test
@@ -171,42 +172,42 @@ class EventListenerTestsSuite
         await this.cache.addMapListener(filterListener2, mapEventFilter, false);
         await this.cache.addMapListener(keyListener2, '123', false);
 
-        await this.cache.put('123', {'id': '123', value: 123, insCount: 1});
+        await this.cache.put('123', { 'id': '123', value: 123, insCount: 1 });
         await this.cache.remove('123');
 
-        await keyListener1.waitFor({insert: 1, delete: 1});
-        await filterListener2.waitFor({insert: 1, delete: 1});
+        await keyListener1.waitFor({ insert: 1, delete: 1 });
+        await filterListener2.waitFor({ insert: 1, delete: 1 });
 
         await this.cache.removeMapListener(keyListener1, '123');
         await this.cache.removeMapListener(filterListener2, mapEventFilter);
 
-        await this.cache.put('123', {'id': '123', value: 456, insCount: 2});
+        await this.cache.put('123', { 'id': '123', value: 456, insCount: 2 });
         await this.cache.remove('123');
 
-        await keyListener2.waitFor({insert: 2, delete: 2});
-        await filterListener1.waitFor({insert: 2, delete: 2});
+        await keyListener2.waitFor({ insert: 2, delete: 2 });
+        await filterListener1.waitFor({ insert: 2, delete: 2 });
         await this.cache.removeMapListener(filterListener1, mapEventFilter);
         await this.cache.removeMapListener(keyListener2, '123');
 
         await lcListener.waitForChannelClose();
 
-        expect(stringify(keyListener1.counters)).to.equal(stringify({insert: 1, delete: 1}));
-        expect(stringify(filterListener2.counters)).to.equal(stringify({insert: 1, delete: 1}));
+        expect(stringify(keyListener1.counters)).to.equal(stringify({ insert: 1, delete: 1 }));
+        expect(stringify(filterListener2.counters)).to.equal(stringify({ insert: 1, delete: 1 }));
 
-        expect(stringify(filterListener1.counters)).to.equal(stringify({insert: 2, delete: 2}));
-        expect(stringify(keyListener2.counters)).to.equal(stringify({insert: 2, delete: 2}));
+        expect(stringify(filterListener1.counters)).to.equal(stringify({ insert: 2, delete: 2 }));
+        expect(stringify(keyListener2.counters)).to.equal(stringify({ insert: 2, delete: 2 }));
     }
 
 }
 
 type CallbackCounters = {
-    insert? : number,
-    update? : number,
-    delete? : number,
-    truncate? : number,
-    destroy? : number,
-    open? : number,
-    close? : number
+    insert?: number,
+    update?: number,
+    delete?: number,
+    truncate?: number,
+    destroy?: number,
+    open?: number,
+    close?: number
 };
 
 class CountingMapListener<K = any, V = any>
@@ -251,7 +252,7 @@ class CountingMapListener<K = any, V = any>
 
     entryInserted(event: MapEvent<K, V>): void {
         this.counters.insert = this.counters.insert ? this.counters.insert + 1 : 1;
-        super.emit('event','insert');
+        super.emit('event', 'insert');
     }
 
     entryUpdated(event: MapEvent<K, V>): void {
@@ -278,7 +279,7 @@ class TestCacheMapLifecycleListener<K = any, V = any>
     constructor(cache: NamedCacheClient<K, V>) {
         super();
         this.cache = cache;
-        this.name = cache.getName();
+        this.name = cache.getCacheName();
         this.counters = createNewCounter();
 
         const self = this;
