@@ -7,11 +7,11 @@ import { ObservableMap } from "../util/observable_map";
 
 export interface NamedCache<K, V>
     extends CacheMap<K, V>,
-    ConcurrentMap<K, V>,
-    InvocableMap<K, V>,
-    ObservableMap<K, V>,
-    RemoteCache<K, V>,
-    QueryMap<K, V> {
+            ConcurrentMap<K, V>,
+            InvocableMap<K, V>,
+            ObservableMap<K, V>,
+            RemoteCache<K, V>,
+            QueryMap<K, V> {
 
     /**
      * Release and destroy this instance of NamedCache.

@@ -22,10 +22,8 @@
     "typescript": "^3.7.4"
   },
   "scripts": {
-    "pretest": "tsc",
+    "compile": "tsc",
     "test": "mocha",
-    "coverage": "nyc mocha",
-    "watch": "mocha-typescript-watch",
-    "prepare": "tsc"
+    "coverage": "nyc mocha"
   }
 }

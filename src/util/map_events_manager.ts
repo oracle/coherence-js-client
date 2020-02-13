@@ -1,5 +1,5 @@
 import { NamedCacheServiceClient } from "../cache/proto/services_grpc_pb";
-import { ClientDuplexStream } from "grpc";
+import { ClientDuplexStream, Metadata } from "grpc";
 import { MapListenerRequest, MapListenerResponse } from "../cache/proto/messages_pb";
 
 import { RequestFactory } from "../cache/request_factory";

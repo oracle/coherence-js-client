@@ -87,15 +87,16 @@ export class NamedCacheClient<K = any, V = any>
      */
     constructor(cacheName: string, session: Session) {
         super();
+        
         this.cacheName = cacheName;
         this.session = session;
         this.sessOpts = this.session.getSessionOptions();
+        this.requestFactory = new RequestFactory(this.cacheName);
         this.client = new NamedCacheServiceClient(
-            '', /* address wont be used since channelOverride is mentioned below */
+            session.getAddress(),
             session.getChannelCredentials(),
             { 'channelOverride': session.getChannel() });
-        this.requestFactory = new RequestFactory(this.cacheName);
-        this.mapEventsHandler = new MapEventsManager(this.cacheName, this.client, this);
+        this.mapEventsHandler = new MapEventsManager(cacheName, this.client, this);
     }
 
     getCacheName(): string {
@@ -137,7 +138,6 @@ export class NamedCacheClient<K = any, V = any>
                 ? this.mapEventsHandler.removeFilterListener(listener, keyOrFilter)
                 : this.mapEventsHandler.removeKeyListener(listener, keyOrFilter);
         }
-
         return this.mapEventsHandler.removeFilterListener(listener, null);
     }
 

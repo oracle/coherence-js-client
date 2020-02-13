@@ -112,30 +112,6 @@ export class SessionBuilder {
         return new Session(this.sessionOptions.makeCopy());
     }
 
-    address(): string {
-        return this.sessionOptions.address;
-    }
-
-    requestTimeout(): number {
-        return this.sessionOptions.requestTimeoutInMillis;
-    }
-
-    isTlsEnabled(): boolean {
-        return this.sessionOptions.tlsEnabled;
-    }
-
-    caCert(): fs.PathLike | undefined {
-        return this.sessionOptions.caCertPath;
-    }
-
-    clientCert(): fs.PathLike | undefined {
-        return this.sessionOptions.clientCertPath;
-    }
-
-    clientKey(): fs.PathLike | undefined {
-        return this.sessionOptions.clientKeyPath;
-    }
-
     getSessionOptions(): SessionOptions {
         return this.sessionOptions.makeCopy();
     }
@@ -289,6 +265,10 @@ export class Session {
 
     getSessionOptions(): SessionOptions {
         return this.sessionOptions.makeCopy();
+    }
+
+    getAddress(): string {
+        return this.sessionOptions.address;
     }
 
     getChannelCredentials(): ChannelCredentials {

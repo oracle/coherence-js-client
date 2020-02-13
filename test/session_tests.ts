@@ -7,7 +7,6 @@ class SessionTestsSuite {
     @test
     async shouldBeDefaultAddressWithDefaultSessionBuilder() {
         const builder = new SessionBuilder();
-        expect(builder.address()).to.equal(SessionBuilder.DEFAULT_ADDRESS);
         expect(builder.getSessionOptions().address).to.equal(SessionBuilder.DEFAULT_ADDRESS);
         expect(builder.getSessionOptions().tlsEnabled).to.equal(false);
     }
