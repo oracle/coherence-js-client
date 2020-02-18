@@ -160,7 +160,7 @@ class EntrySetHelper<K, V>
     }
 
     handleEntry(e: EntryResult): NamedCacheEntry<K, V> {
-        return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8());
+        return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8(), this.namedCache.getRequestFactory().getSerializer());
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -183,7 +183,7 @@ class ValueSetHelper<K, V>
     }
 
     handleEntry(e: EntryResult): V {
-        return Serializer.deserialize(e.getValue_asU8())
+        return this.namedCache.getRequestFactory().getSerializer().deserialize(e.getValue_asU8())
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -206,7 +206,7 @@ class KeySetHelper<K, V>
     }
 
     handleEntry(e: BytesValue): K {
-        return Serializer.deserialize(e.getValue_asU8())
+        return this.namedCache.getRequestFactory().getSerializer().deserialize(e.getValue_asU8())
     }
 
     loadNextPage(cookie: Cookie): ClientReadableStream<EntryResult> {
@@ -327,21 +327,24 @@ class NamedCacheEntry<K, V>
 
     private valueBytes: Uint8Array;
 
-    constructor(keyBytes: Uint8Array, valueBytes: Uint8Array) {
+    private serialzer: Serializer;
+
+    constructor(keyBytes: Uint8Array, valueBytes: Uint8Array, serialzer: Serializer) {
         this.keyBytes = keyBytes;
         this.valueBytes = valueBytes;
+        this.serialzer = serialzer;
     }
 
     getKey(): K {
         if (!this.key) {
-            this.key = Serializer.deserialize(this.keyBytes);
+            this.key = this.serialzer.deserialize(this.keyBytes);
         }
         return this.key;
     }
 
     getValue(): V {
         if (!this.value) {
-            this.value = Serializer.deserialize(this.valueBytes);
+            this.value = this.serialzer.deserialize(this.valueBytes);
         }
         return this.value;
     }

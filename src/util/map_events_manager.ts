@@ -1,5 +1,5 @@
 import { NamedCacheServiceClient } from "../cache/proto/services_grpc_pb";
-import { ClientDuplexStream, Metadata } from "grpc";
+import { ClientDuplexStream } from "grpc";
 import { MapListenerRequest, MapListenerResponse } from "../cache/proto/messages_pb";
 
 import { RequestFactory } from "../cache/request_factory";
@@ -78,7 +78,7 @@ export class MapEventsManager<K, V> {
     /**
      * Internal: Request feactory.
      */
-    protected requests: RequestFactory<K, V>;
+    protected reqFactory: RequestFactory<K, V>;
 
     /**
      * A Promise for lazily creating the duplex stream. The streamPromise
@@ -130,11 +130,12 @@ export class MapEventsManager<K, V> {
         this.keyMap = new Map();
         this.filterMap = new Map();
         this.filterId2ListenerGroup = new Map();
-        this.requests = new RequestFactory(cacheName);
+        this.reqFactory = new RequestFactory(cacheName, namedCache.getSerializer());
+        this.streamPromise = this.ensureStream();
     }
 
     getRequestFactory(): RequestFactory<K, V> {
-        return this.requests;
+        return this.reqFactory;
     }
 
     /**
@@ -149,9 +150,10 @@ export class MapEventsManager<K, V> {
             bidiStream.on('end', () => self.onEnd());
             bidiStream.on('error', (err) => self.onError(err));
             bidiStream.on('cancelled', () => self.onCancel());
+            bidiStream.on('STATUS', () => () => { console.log("** onStatus Called....ß") });
 
             // Create a SubscribeRequest (with RequestType.INIT)
-            const request = self.requests.mapEventSubscribe();
+            const request = self.reqFactory.mapEventSubscribe();
             const initUid = request.getUid();
             self.streamPromise = new Promise((resolve, reject) => {
                 // Setup pending subscriptions map so that when the
@@ -180,7 +182,6 @@ export class MapEventsManager<K, V> {
 
     private onError(err: Error) {
         if (this.markedForClose) {
-            this.markedForClose = false;
             this.namedCache.emit('closed', this.cacheName, true);
         } else {
             this.namedCache.emit('error', this.cacheName, err);
@@ -188,6 +189,7 @@ export class MapEventsManager<K, V> {
     }
 
     private onEnd() {
+        this.markedForClose = true;
         this.namedCache.emit('closed', this.cacheName);
     }
 
@@ -218,7 +220,7 @@ export class MapEventsManager<K, V> {
                 break;
 
             case MapListenerResponse.ResponseTypeCase.DESTROYED:
-                this.namedCache.emit('destroyed', this.cacheName);
+                this.namedCache.emit('destroyed', resp.getDestroyed()?.getCache());
                 break;
 
             case MapListenerResponse.ResponseTypeCase.TRUNCATED:
@@ -229,7 +231,7 @@ export class MapEventsManager<K, V> {
                 if (resp.hasEvent()) {
                     const event = resp.getEvent();
                     if (event) {
-                        const mapEvent = new MapEvent(this.cacheName, this.observableMap, event);
+                        const mapEvent = new MapEvent(this.cacheName, this.observableMap, event, this.reqFactory.getSerializer());
                         // mapEvent.print();
 
                         for (let id of event.getFilteridsList()) {
@@ -330,7 +332,6 @@ export class MapEventsManager<K, V> {
 
     keyGroupUnsubscribed(key: string): void {
         this.keyMap.delete(MapEventsManager.stringify(key));
-        this.checkAndCloseEventStream();
     }
 
     filterGroupSubscribed(filterId: number, group: ListenerGroup<K, V>): void {
@@ -340,12 +341,6 @@ export class MapEventsManager<K, V> {
     filterGroupUnsubscribed(filterId: number, filter: MapEventFilter): void {
         this.filterId2ListenerGroup.delete(filterId);
         this.filterMap.delete(MapEventsManager.stringify(filter));
-        this.checkAndCloseEventStream();
-    }
-
-    checkAndCloseEventStream(): Promise<void> {
-        return (this.filterMap.size == 0 && this.keyMap.size == 0)
-            ? this.close() : MapEventsManager.RESOLVED;
     }
 
 }
@@ -440,7 +435,7 @@ abstract class ListenerGroup<K, V> {
             this.registeredIsLite = isLite;
             if (this.listeners.size > 1) {
                 // A change in isLite; So need to do re-registration
-                await self.doUnsubscribe(false);
+                await self.doUnsubscribe();
             }
             await self.doSubscribe(isLite);
         }
@@ -464,7 +459,7 @@ abstract class ListenerGroup<K, V> {
 
         if (this.listeners.size == 0) {
             // This was the last MapListener.
-            return await this.doUnsubscribe(true);
+            return await this.doUnsubscribe();
         }
 
         if (prevStatus.isLite == false) {
@@ -472,7 +467,7 @@ abstract class ListenerGroup<K, V> {
             this.isLiteFalseCount--;
 
             if (this.isLiteFalseCount == 0) {
-                await this.doUnsubscribe(false);
+                await this.doUnsubscribe();
                 await this.doSubscribe(true /* isLite is true */);
             }
         }
@@ -486,15 +481,12 @@ abstract class ListenerGroup<K, V> {
         this.postSubscribe(request);
     }
 
-    async doUnsubscribe(closeStreamIfPossible: boolean): Promise<void> {
+    async doUnsubscribe(): Promise<void> {
 
         const request = this.helper.getRequestFactory().mapListenerRequest(false, this.keyOrFilter);
         await this.helper.writeRequest(request);
 
         this.postUnsubscribe(request);
-        if (closeStreamIfPossible) {
-            await this.helper.checkAndCloseEventStream();
-        }
     }
 
     notifyListeners(mapEvent: MapEvent): void {
@@ -530,7 +522,7 @@ class KeyListenerGroup<K, V>
     }
 
     postUnsubscribe(request: MapListenerRequest): void {
-        const key = Serializer.deserialize(request.getKey());
+        const key = this.helper.getRequestFactory().getSerializer().deserialize(request.getKey());
         this.helper.keyGroupUnsubscribed(key);
     }
 

@@ -1,4 +1,3 @@
---ui mocha-typescript
+mocha-typescript
 --require source-map-support/register
 target/test/**.js
-

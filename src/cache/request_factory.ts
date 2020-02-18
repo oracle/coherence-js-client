@@ -39,9 +39,10 @@ export interface Comparator {
  *
  */
 export class RequestFactory<K, V> {
-    static JSON_FORMAT: string = "json";
 
-    cacheName: string;
+    private cacheName: string;
+
+    private serializer: Serializer;
 
     // Used for unique uid generation for MapListener subscriptions.
     private uidPrefix: string;
@@ -52,25 +53,30 @@ export class RequestFactory<K, V> {
     // Thje next filterID to be used for filter subscriptions.
     private nextFilterId: number = 0;
 
-    constructor(cacheName: string) {
+    constructor(cacheName: string, serializer: Serializer) {
         if (!cacheName) {
             throw new Error('cache name cannot be null or undefined');
         }
         this.cacheName = cacheName;
+        this.serializer = serializer;
         this.uidPrefix = '-' + cacheName + '-' + Date.now() + '-';
+    }
+
+    getSerializer(): Serializer {
+        return this.serializer;
     }
 
     addIndex(extractor: ValueExtractor<any, any>, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
         const request = new AddIndexRequest();
 
         request.setCache(this.cacheName);
-        request.setFormat(RequestFactory.JSON_FORMAT);
-        request.setExtractor(Serializer.serialize(extractor));
+        request.setFormat(this.serializer.format());
+        request.setExtractor(this.serializer.serialize(extractor));
         if (sorted) {
             request.setSorted(sorted);
         }
         if (comparator) {
-            request.setComparator(Serializer.serialize(comparator));
+            request.setComparator(this.serializer.serialize(comparator));
         }
 
         return request;
@@ -80,8 +86,8 @@ export class RequestFactory<K, V> {
         const request = new RemoveIndexRequest();
 
         request.setCache(this.cacheName);
-        request.setFormat(RequestFactory.JSON_FORMAT);
-        request.setExtractor(Serializer.serialize(extractor));
+        request.setFormat(this.serializer.format());
+        request.setExtractor(this.serializer.serialize(extractor));
 
         return request;
     }
@@ -108,10 +114,10 @@ export class RequestFactory<K, V> {
     containsEntry(key: K, value: V): ContainsEntryRequest {
         const request = new ContainsEntryRequest();
         request.setCache(this.cacheName);
-        request.setFormat(RequestFactory.JSON_FORMAT);
-        request.setKey(Serializer.serialize(key));
+        request.setFormat(this.serializer.format());
+        request.setKey(this.serializer.serialize(key));
         if (value) {
-            request.setValue(Serializer.serialize(value));
+            request.setValue(this.serializer.serialize(value));
         }
 
         return request;
@@ -126,9 +132,9 @@ export class RequestFactory<K, V> {
      */
     containsKey(key: K): ContainsKeyRequest {
         const request = new ContainsKeyRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
 
         return request;
     }
@@ -142,10 +148,10 @@ export class RequestFactory<K, V> {
      */
     containsValue(value: V): ContainsValueRequest {
         const request = new ContainsValueRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         if (value) {
-            request.setValue(Serializer.serialize(value));
+            request.setValue(this.serializer.serialize(value));
         }
 
         return request;
@@ -160,19 +166,19 @@ export class RequestFactory<K, V> {
      */
     get(key: K): GetRequest {
         const request = new GetRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
 
         return request;
     }
 
     getAll(keys: Iterable<K>): GetAllRequest {
         const request = new GetAllRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         for (let key of keys) {
-           request.addKey(Serializer.serialize(key));
+           request.addKey(this.serializer.serialize(key));
         }
 
         return request;
@@ -180,13 +186,13 @@ export class RequestFactory<K, V> {
 
     entrySet(filter?: Filter<any>, comparator?: any): EntrySetRequest {
         const request = new EntrySetRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         if (filter) {
-            request.setFilter(Serializer.serialize(filter));
+            request.setFilter(this.serializer.serialize(filter));
         }
         if (comparator) {
-            request.setComparator(Serializer.serialize(comparator));
+            request.setComparator(this.serializer.serialize(comparator));
         }
 
         return request;
@@ -194,35 +200,35 @@ export class RequestFactory<K, V> {
 
     invoke<R>(key: K, processor: EntryProcessor<K, V, R>): InvokeRequest {
         const request = new InvokeRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
-        request.setProcessor(Serializer.serialize(processor));
+        request.setKey(this.serializer.serialize(key));
+        request.setProcessor(this.serializer.serialize(processor));
 
         return request;
     }
 
     invokeAll<R>(keysOrFilter: Iterable<K> | Filter<V>, processor?: EntryProcessor<K, V, R>): InvokeAllRequest {
         const request = new InvokeAllRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         if (Util.isIterableType(keysOrFilter)) {
             for (let key of keysOrFilter) {
-                request.addKeys(Serializer.serialize(key))
+                request.addKeys(this.serializer.serialize(key))
             }
         } else {
-            request.setFilter(Serializer.serialize(keysOrFilter));
+            request.setFilter(this.serializer.serialize(keysOrFilter));
         }
-        request.setProcessor(Serializer.serialize(processor));
+        request.setProcessor(this.serializer.serialize(processor));
         return request;
     }
 
     keySet<T>(filter?: Filter<T>): KeySetRequest {
         const request = new KeySetRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         if (filter) {
-            request.setFilter(Serializer.serialize(filter));
+            request.setFilter(this.serializer.serialize(filter));
         }
         return request;
     }
@@ -237,11 +243,11 @@ export class RequestFactory<K, V> {
      */
     put(key: K, value: V, ttl?: number): PutRequest {
         const request = new PutRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
         if (value) {
-            request.setValue(Serializer.serialize(value));
+            request.setValue(this.serializer.serialize(value));
         }
         if (ttl) {
             request.setTtl(ttl);
@@ -252,7 +258,7 @@ export class RequestFactory<K, V> {
 
     page(cookie: Uint8Array | string): PageRequest {
         const request = new PageRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         request.setCookie(cookie);
 
@@ -270,11 +276,11 @@ export class RequestFactory<K, V> {
      */
     putIfAbsent(key: K, value: V, ttl?: number): PutIfAbsentRequest {
         const request = new PutIfAbsentRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
         if (value) {
-            request.setValue(Serializer.serialize(value));
+            request.setValue(this.serializer.serialize(value));
         }
         if (ttl) {
             request.setTtl(ttl);
@@ -292,9 +298,9 @@ export class RequestFactory<K, V> {
      */
     remove(key: K): RemoveRequest {
         const request = new RemoveRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
 
         return request;
     }
@@ -309,11 +315,11 @@ export class RequestFactory<K, V> {
      */
     removeMapping(key: K, value: V): RemoveMappingRequest {
         const request = new RemoveMappingRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
         if (value) {
-            request.setValue(Serializer.serialize(value));
+            request.setValue(this.serializer.serialize(value));
         }
 
         return request;
@@ -328,10 +334,10 @@ export class RequestFactory<K, V> {
      */
     replace(key: K, value: V): ReplaceRequest {
         const request = new ReplaceRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key)); if (value) {
-            request.setValue(Serializer.serialize(value));
+        request.setKey(this.serializer.serialize(key)); if (value) {
+            request.setValue(this.serializer.serialize(value));
         }
 
         return request;
@@ -348,14 +354,14 @@ export class RequestFactory<K, V> {
      */
     replaceMapping(key: K, value: V, newValue: V): ReplaceMappingRequest {
         const request = new ReplaceMappingRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
-        request.setKey(Serializer.serialize(key));
+        request.setKey(this.serializer.serialize(key));
         if (value) {
-            request.setPreviousvalue(Serializer.serialize(value));
+            request.setPreviousvalue(this.serializer.serialize(value));
         }
         if (value) {
-            request.setNewvalue(Serializer.serialize(newValue));
+            request.setNewvalue(this.serializer.serialize(newValue));
         }
 
         return request;
@@ -364,7 +370,7 @@ export class RequestFactory<K, V> {
     pageRequest(cookie: Uint8Array | string | undefined): PageRequest {
         const request = new PageRequest();
         request.setCache(this.cacheName);
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         if (cookie) {
             request.setCookie(cookie);
         }
@@ -379,7 +385,7 @@ export class RequestFactory<K, V> {
         request.setUid(this.generateNextRequestId(filterType ? 'filter' : 'key'));
         request.setCache(this.cacheName);
         request.setSubscribe(isSubscribe);
-        request.setFormat(Util.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         if (isLite) {
             request.setLite(isLite);
         }
@@ -387,10 +393,10 @@ export class RequestFactory<K, V> {
         if (filterType) {
             request.setType(MapListenerRequest.RequestType.FILTER);
             request.setFilterid(++this.nextFilterId);
-            request.setFilter(Serializer.serialize(keyOrFilter));
+            request.setFilter(this.serializer.serialize(keyOrFilter));
         } else {
             request.setType(MapListenerRequest.RequestType.KEY);
-            request.setKey(Serializer.serialize(keyOrFilter));
+            request.setKey(this.serializer.serialize(keyOrFilter));
         }
         request.setTrigger(new Uint8Array());
 
@@ -420,13 +426,13 @@ export class RequestFactory<K, V> {
 
     values(filter?: Filter<any>, comparator?: any): ValuesRequest {
         const request = new ValuesRequest();
-        request.setFormat(RequestFactory.JSON_FORMAT);
+        request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         if (filter) {
-            request.setFilter(Serializer.serialize(filter));
+            request.setFilter(this.serializer.serialize(filter));
         }
         if (comparator) {
-            request.setComparator(Serializer.serialize(comparator));
+            request.setComparator(this.serializer.serialize(comparator));
         }
 
         return request;

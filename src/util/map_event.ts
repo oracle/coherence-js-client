@@ -39,9 +39,12 @@ export class MapEvent<K = any, V = any> {
 
     private filterIDs: Array<number>;
 
-    constructor(cacheName: string, source: ObservableMap<K, V>, mapEvent: MapEventResponse) {        
+    private serializer: Serializer;
+
+    constructor(cacheName: string, source: ObservableMap<K, V>, mapEvent: MapEventResponse, serializer: Serializer) {        
         this.cacheName = cacheName;
         this.source = source;
+        this.serializer = serializer;
         this.id = mapEvent.getId();
         this.keyBytes = mapEvent.getKey_asU8();
         this.newValueBytes = mapEvent.getNewvalue_asU8();
@@ -67,21 +70,24 @@ export class MapEvent<K = any, V = any> {
 
     getKey(): K {
         if (!this.key) {
-            this.key = Serializer.deserialize(this.keyBytes);
+            this.key = this.serializer.deserialize(this.keyBytes);
         }
-        return Serializer.deserialize(this.keyBytes);
+        if (!this.key) {
+            throw new Error('unable to deserialize key using format: ' + this.serializer.format());
+        }
+        return this.key;
     }
 
     getOldValue(): V | undefined {
         if (!this.oldValue && this.oldValueBytes) {
-            this.oldValue = Serializer.deserialize(this.oldValueBytes);
+            this.oldValue = this.serializer.deserialize(this.oldValueBytes);
         }
         return this.oldValue;
     }
 
     getNewValue(): V | undefined {
         if (!this.newValue && this.newValueBytes) {
-            this.newValue = Serializer.deserialize(this.newValueBytes);
+            this.newValue = this.serializer.deserialize(this.newValueBytes);
         }
         return this.newValue;
     }

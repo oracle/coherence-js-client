@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as grpc from 'grpc';
 
 import { NamedCacheClient } from './named_cache_client';
-import { ChannelCredentials, CallCredentials } from 'grpc';
+import { ChannelCredentials } from 'grpc';
 
 /**
  * A class that uses Builder pattern to create the
@@ -103,6 +103,10 @@ export class SessionBuilder {
         return this;
     }
 
+    withFormat(format: string): this {
+        this.sessionOptions.format = format;
+        return this;
+    }
     /**
      * Build a new Session with the options that are set.
      *
@@ -157,6 +161,8 @@ export class SessionOptions {
      */
     clientKeyPath?: fs.PathLike;
 
+    format: string = 'json';
+
     constructor() {
     }
 
@@ -173,6 +179,7 @@ export class SessionOptions {
         opts.caCertPath = this.caCertPath;
         opts.clientCertPath = this.clientCertPath;
         opts.clientKeyPath = this.clientKeyPath;
+        opts.format = this.format;
 
         return opts;
     }
@@ -279,6 +286,17 @@ export class Session {
         return this.channel;
     }
 
+    getActiveCacheCount(): number {
+        return this.caches.size;
+    }
+
+    getActiveCacheNames(): Array<string> {
+        const array = new Array<string>();
+        for (let name of this.caches.keys()) {
+            array.push(name);
+        }
+        return array;
+    }
     /**
      * An internal method to read a cert file given its path.
      *
@@ -310,13 +328,23 @@ export class Session {
 
         let namedCache = this.caches.get(name);
         if (!namedCache) {
-            namedCache = new NamedCacheClient(name, this);
+            const namedCache = new NamedCacheClient(name, this);
             this.caches.set(name, namedCache);
             const self = this;
             namedCache.on('destroyed', (cacheName: string) => {
+                const cache = self.caches.get(cacheName);
+                self.caches.delete(cacheName);
+                if (cache) {
+                    cache.destroy();
+                }
+            });
+            namedCache.on('released', (cacheName: string) => {
                 self.caches.delete(cacheName);
             });
+
+            return namedCache;
         }
+        
         return namedCache;
     }
 
@@ -330,8 +358,10 @@ export class Session {
 
         this.closed = true;
         for (let entry of this.caches.entries()) {
-            // What should we do here?
+            entry[1].release();
         }
+
+        this.channel.close();
     }
 
     isClosed(): boolean {

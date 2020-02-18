@@ -32,7 +32,7 @@ export interface NamedCache<K, V>
     /**
      * Returns if the cache is active or not.
      */
-    isActive(): Promise<boolean>;
+    isActive(): boolean;
 
     /**
      * Release local resources associated with this instance of NamedCache.

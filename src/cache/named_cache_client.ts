@@ -24,7 +24,7 @@ import { MapEventFilter } from '../filter/map_event_filter';
 import { EntryProcessor } from '../processor/entry_processor';
 import { MapEventsManager } from '../util/map_events_manager';
 import { MapListener } from '../util/map_listener';
-import { Serializer } from '../util/serializer';
+import { Serializer, SerializerRegistry } from '../util/serializer';
 import { Util } from '../util/util';
 import { NamedCache } from './named_cache';
 import { Entry, Entry as GrpcEntry, EntryResult, IsEmptyRequest, SizeRequest } from './proto/messages_pb';
@@ -61,6 +61,8 @@ export class NamedCacheClient<K = any, V = any>
      */
     private cacheName: string;
 
+    private serializer: Serializer;
+
     /**
      * The gRPC service client.
      */
@@ -75,6 +77,8 @@ export class NamedCacheClient<K = any, V = any>
 
     private sessOpts: SessionOptions;
 
+    private active = true;
+
     /**
      * Create a new NamedCacheClient with the specified address and cache name.
      * The optional NamedCacheOptions can be used to specify additional 
@@ -85,22 +89,32 @@ export class NamedCacheClient<K = any, V = any>
      * @param options The optional NamedCacheOptions can be used to specify 
      *                additional properties.
      */
-    constructor(cacheName: string, session: Session) {
+    constructor(cacheName: string, session: Session, serializer?: Serializer) {
         super();
-        
+
         this.cacheName = cacheName;
         this.session = session;
         this.sessOpts = this.session.getSessionOptions();
-        this.requestFactory = new RequestFactory(this.cacheName);
+        this.serializer = serializer ? serializer : SerializerRegistry.instance().serializer(session.getSessionOptions().format);
+        this.requestFactory = new RequestFactory(this.cacheName, this.serializer);
         this.client = new NamedCacheServiceClient(
-            session.getAddress(),
+            session.getAddress(),   // Ignored since we are using a shared Channel
             session.getChannelCredentials(),
             { 'channelOverride': session.getChannel() });
         this.mapEventsHandler = new MapEventsManager(cacheName, this.client, this);
     }
 
+    async ensureEventEmitter(): Promise<EventEmitter> {
+        await this.mapEventsHandler.ensureStream();
+        return this;
+    }
+
     getCacheName(): string {
         return this.cacheName;
+    }
+
+    getSerializer(): Serializer {
+        return this.serializer;
     }
 
     addMapListener(listener: MapListener<K, V>, isLite?: boolean): Promise<void>;
@@ -192,7 +206,12 @@ export class NamedCacheClient<K = any, V = any>
     }
 
     destroy(): Promise<void> {
+        if (!this.active) {
+            return Promise.resolve();
+        }
+
         const self = this;
+        this.active = false;
         return new Promise((resolve, reject) => {
             self.client.destroy(self.requestFactory.destroy(), this.callOptions(), (err: grpc.ServiceError | null) => {
                 self.resolveValue(resolve, reject, err);
@@ -287,7 +306,7 @@ export class NamedCacheClient<K = any, V = any>
 
         return new Promise((resolve, reject) => {
             call.on('data', function (e: GrpcEntry) {
-                const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8());
+                const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8(), self.getRequestFactory().getSerializer());
                 set.add(entry);
             });
             call.on('end', () => resolve(set));
@@ -332,15 +351,14 @@ export class NamedCacheClient<K = any, V = any>
         const call = self.client.getAll(self.requestFactory.getAll(keys), this.callOptions());
         return new Promise((resolve, reject) => {
             call.on('data', function (e: Entry) {
-                const key = Serializer.deserialize(e.getKey_asU8());
-                const value = Serializer.deserialize(e.getValue_asU8());
+                const key = self.getRequestFactory().getSerializer().deserialize(e.getKey_asU8());
+                const value = self.getRequestFactory().getSerializer().deserialize(e.getValue_asU8());
                 result.set(key, value);
             });
             call.on('end', () => {
                 resolve(result);
             });
             call.on('error', (e) => {
-                console.log("*** getAll ERROR: " + e)
                 reject(e)
             });
         });
@@ -355,7 +373,7 @@ export class NamedCacheClient<K = any, V = any>
         return new Promise((resolve, reject) => {
             self.client.get(self.requestFactory.get(key), this.callOptions(), (err, resp) => {
                 if (resp && resp.getPresent()) {
-                    self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                    self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
                 } else {
                     resolve(defaultValue);
                 }
@@ -379,10 +397,9 @@ export class NamedCacheClient<K = any, V = any>
         return new Promise((resolve, reject) => {
             self.client.invoke(self.requestFactory.invoke(key, processor), (err, resp) => {
                 if (err) {
-                    console.log("** INVOKE ERR: " + err)
                     reject(err);
                 } else {
-                    self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                    self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
                 }
             });
         });
@@ -425,13 +442,12 @@ export class NamedCacheClient<K = any, V = any>
         const result: Map<K, R> = new Map<K, R>();
         return new Promise((resolve, reject) => {
             call.on('data', function (e: Entry) {
-                const key = Serializer.deserialize(e.getKey_asU8());
-                const value = Serializer.deserialize(e.getValue_asU8());
+                const key = self.getRequestFactory().getSerializer().deserialize(e.getKey_asU8());
+                const value = self.getRequestFactory().getSerializer().deserialize(e.getValue_asU8());
                 result.set(key, value);
             });
             call.on('end', () => resolve(result));
             call.on('error', (e) => {
-                console.log("*** invokeAll ERROR: " + e)
                 reject(e)
             });
         });
@@ -483,14 +499,13 @@ export class NamedCacheClient<K = any, V = any>
 
         return new Promise((resolve, reject) => {
             call.on('data', function (r: BytesValue) {
-                const k = Serializer.deserialize(r.getValue_asU8());
+                const k = self.getRequestFactory().getSerializer().deserialize(r.getValue_asU8());
                 if (k) {
                     set.add(k);
                 }
             });
             call.on('end', () => resolve(set));
             call.on('error', (e) => {
-                console.log("*** ERROR: " + e)
                 reject(e)
             });
         });
@@ -511,7 +526,7 @@ export class NamedCacheClient<K = any, V = any>
         const self = this;
         return new Promise((resolve, reject) => {
             self.client.put(self.requestFactory.put(key, value, ttl), this.callOptions(), (err, resp) => {
-                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -532,7 +547,7 @@ export class NamedCacheClient<K = any, V = any>
         const request = self.requestFactory.putIfAbsent(key, value, ttl);
         return new Promise((resolve, reject) => {
             self.client.putIfAbsent(request, this.callOptions(), (err, resp) => {
-                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -549,7 +564,7 @@ export class NamedCacheClient<K = any, V = any>
         const self = this;
         return new Promise((resolve, reject) => {
             self.client.remove(this.requestFactory.remove(key), this.callOptions(), (err, resp) => {
-                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -590,7 +605,7 @@ export class NamedCacheClient<K = any, V = any>
         const request = this.requestFactory.replace(key, value);
         return new Promise((resolve, reject) => {
             self.client.replace(request, this.callOptions(), (err, resp) => {
-                self.resolveValue(resolve, reject, err, () => resp ? NamedCacheClient.toValue(resp.getValue_asU8()) : resp);
+                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
             });
         });
     }
@@ -640,11 +655,10 @@ export class NamedCacheClient<K = any, V = any>
 
         return new Promise((resolve, reject) => {
             call.on('data', function (b: BytesValue) {
-                set.add(Serializer.deserialize(b.getValue_asU8()));
+                set.add(self.getRequestFactory().getSerializer().deserialize(b.getValue_asU8()));
             });
             call.on('end', () => resolve(set));
             call.on('error', (e) => {
-                console.log("*** ERROR: " + e)
                 reject(e)
             });
         });
@@ -697,12 +711,19 @@ export class NamedCacheClient<K = any, V = any>
         });
     }
 
-    isActive(): Promise<boolean> {
-        throw new Error("Method not implemented in services.proto");
+    isActive(): boolean {
+        return this.active;
     }
 
-    release(): Promise<void> {
-        throw new Error("Method not implemented in services.proto");
+    async release(): Promise<void> {
+        if (this.active) {
+            this.active = false;
+            super.emit('released', this.cacheName);
+            await this.mapEventsHandler.close();
+        }
+
+        return Promise.resolve();
+        // release() not yet defined in services.proto
     }
 
     lock(key: any, cWait?: number | undefined): boolean {
@@ -721,9 +742,9 @@ export class NamedCacheClient<K = any, V = any>
         return options;
     }
 
-    static toValue<V>(value: Uint8Array): V {
+    private toValue<V>(value: Uint8Array): V {
         return (value && value.length > 0)
-            ? Serializer.deserialize(value)
+            ? this.getRequestFactory().getSerializer().deserialize(value)
             : null;
     }
 }
