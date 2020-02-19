@@ -322,7 +322,7 @@ export class MapEventsManager<K, V> {
     /**
      * Close this event stream.
      */
-    async close(): Promise<void> {
+    async closeEventStream(): Promise<void> {
         const self = this;
         if (!self.markedForClose && self.streamPromise != null) {
             const bidiStream = await self.streamPromise;
@@ -332,7 +332,6 @@ export class MapEventsManager<K, V> {
                 // the bidi stream will result in a CANCELLED sttaus.
                 bidiStream.on('error', (err) => {
                     if (err.toString().indexOf('CANCELLED')) {
-                        self.emitter.emit('cache_closed', self.cacheName, self.serializer.format());
                         self.streamPromise = null;
                         resolve();
                     }

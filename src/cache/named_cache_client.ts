@@ -769,7 +769,8 @@ export class NamedCacheClient<K = any, V = any>
             throw new Error('internal error. cache state is still active');
         }
 
-        await this.mapEventsHandler.close();
+        await this.mapEventsHandler.closeEventStream();
+        this.internalEmitter.emit('cache_released', this.cacheName, this.serializer.format());
         this.setStateAndEmitEvent(newState);
     }
 
