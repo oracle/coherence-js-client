@@ -13,9 +13,10 @@ import {
     val123, val234, val345, val456,
 } from './abstract_named_cache_tests';
 
-import { session } from "./abstract_named_cache_tests";
 import { NamedCacheClient } from "../src/cache/named_cache_client";
+import { SessionBuilder } from '../src/cache/session';
 
+export const session = new SessionBuilder().build();
 
 describe("Filter IT Test Suite", () => {
 

@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import { NamedCacheServiceClient } from "../cache/proto/services_grpc_pb";
 import { ClientDuplexStream } from "grpc";
 import { MapListenerRequest, MapListenerResponse } from "../cache/proto/messages_pb";
@@ -65,11 +66,6 @@ export class MapEventsManager<K, V> {
     protected client: NamedCacheServiceClient;
 
     /**
-     * The {@link NamedCacheClient} that will be used as the source
-     * in the {@link MapEvent}.
-     */
-    private namedCache: NamedCacheClient<K, V>;
-    /**
      * The ObservableMap (or the NamedCacheClient) that will used as
      * the 'source' of the events. This is typically a NamedCacheClient.
      */
@@ -120,17 +116,22 @@ export class MapEventsManager<K, V> {
      */
     private static DEFAULT_FILTER = new MapEventFilter(Filters.always());
 
-    constructor(cacheName: string, client: NamedCacheServiceClient, namedCache: NamedCacheClient<K, V>) {
+    private serializer: Serializer;
+
+    private emitter: EventEmitter;
+
+    constructor(cacheName: string, client: NamedCacheServiceClient, observableMap: ObservableMap<K, V>, serialzer: Serializer, emitter: EventEmitter) {
         this.cacheName = cacheName;
         this.client = client;
-        this.namedCache = namedCache;
-        this.observableMap = namedCache;
+        this.observableMap = observableMap;
+        this.serializer = serialzer;
+        this.emitter = emitter;
 
         // Initialize internal data structures.
         this.keyMap = new Map();
         this.filterMap = new Map();
         this.filterId2ListenerGroup = new Map();
-        this.reqFactory = new RequestFactory(cacheName, namedCache.getSerializer());
+        this.reqFactory = new RequestFactory(cacheName, serialzer);
         this.streamPromise = this.ensureStream();
     }
 
@@ -150,7 +151,6 @@ export class MapEventsManager<K, V> {
             bidiStream.on('end', () => self.onEnd());
             bidiStream.on('error', (err) => self.onError(err));
             bidiStream.on('cancelled', () => self.onCancel());
-            bidiStream.on('STATUS', () => () => { console.log("** onStatus Called....ß") });
 
             // Create a SubscribeRequest (with RequestType.INIT)
             const request = self.reqFactory.mapEventSubscribe();
@@ -181,24 +181,20 @@ export class MapEventsManager<K, V> {
     }
 
     private onError(err: Error) {
-        if (this.markedForClose) {
-            this.namedCache.emit('closed', this.cacheName, true);
-        } else {
-            this.namedCache.emit('error', this.cacheName, err);
+        if (!this.markedForClose) {
+            this.emitter.emit('error', this.cacheName + ": Received onError", err);
         }
     }
 
     private onEnd() {
-        this.markedForClose = true;
-        this.namedCache.emit('closed', this.cacheName);
+        if (!this.markedForClose) {
+            this.emitter.emit('error', this.cacheName + ": Received onEnd");
+        }
     }
 
     private onCancel() {
-        if (this.markedForClose) {
-            this.markedForClose = false;
-            this.namedCache.emit('closed', this.cacheName, true);
-        } else {
-            this.namedCache.emit('cancel', "** Received onCancel");
+        if (!this.markedForClose) {
+            this.emitter.emit('error', "** Received onCancel");
         }
     }
 
@@ -220,18 +216,22 @@ export class MapEventsManager<K, V> {
                 break;
 
             case MapListenerResponse.ResponseTypeCase.DESTROYED:
-                this.namedCache.emit('destroyed', resp.getDestroyed()?.getCache());
+                if (resp.hasDestroyed() && resp.getDestroyed()?.getCache() == this.cacheName) {
+                    this.emitter.emit('cache_destroyed', this.cacheName);
+                }
                 break;
 
             case MapListenerResponse.ResponseTypeCase.TRUNCATED:
-                this.namedCache.emit('truncated', this.cacheName);
+                if (resp.hasTruncated() && resp.getTruncated()?.getCache() == this.cacheName) {
+                    this.emitter.emit('cache_truncated', this.cacheName);
+                }
                 break;
 
             case MapListenerResponse.ResponseTypeCase.EVENT:
                 if (resp.hasEvent()) {
                     const event = resp.getEvent();
                     if (event) {
-                        const mapEvent = new MapEvent(this.cacheName, this.observableMap, event, this.reqFactory.getSerializer());
+                        const mapEvent = new MapEvent(this.cacheName, this.observableMap, event, this.serializer);
                         // mapEvent.print();
 
                         for (let id of event.getFilteridsList()) {
@@ -323,11 +323,24 @@ export class MapEventsManager<K, V> {
      * Close this event stream.
      */
     async close(): Promise<void> {
-        if (this.streamPromise != null) {
-            this.markedForClose = true;
-            (await this.streamPromise).cancel();
+        const self = this;
+        if (!self.markedForClose && self.streamPromise != null) {
+            const bidiStream = await self.streamPromise;
+            self.markedForClose = true;
+            await new Promise(async (resolve, reject) => {
+                // Setup an event handler for 'error' as calling cancel() on
+                // the bidi stream will result in a CANCELLED sttaus.
+                bidiStream.on('error', (err) => {
+                    if (err.toString().indexOf('CANCELLED')) {
+                        self.emitter.emit('cache_closed', self.cacheName, self.serializer.format());
+                        self.streamPromise = null;
+                        resolve();
+                    }
+                });
+                bidiStream.cancel();
+            });
         }
-        this.streamPromise = null;
+        return Promise.resolve();
     }
 
     keyGroupUnsubscribed(key: string): void {

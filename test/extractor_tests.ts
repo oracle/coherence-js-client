@@ -7,9 +7,10 @@ import { expect } from 'chai'; import { suite, test, slow, timeout } from "mocha
 import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
 
-import { session } from './abstract_named_cache_tests';
 import { NamedCacheClient } from "../src/cache/named_cache_client";
+import { SessionBuilder } from '../src/cache/session';
 
+export const session = new SessionBuilder().build();
 describe("Extractor IT Test Suite", () => {
 
     let nested: NamedCacheClient;

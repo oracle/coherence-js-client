@@ -1,9 +1,11 @@
 
 import * as fs from 'fs';
 import * as grpc from 'grpc';
+import { EventEmitter } from 'events';
 
 import { NamedCacheClient } from './named_cache_client';
 import { ChannelCredentials } from 'grpc';
+import { SerializerRegistry } from '../util/serializer';
 
 /**
  * A class that uses Builder pattern to create the
@@ -19,6 +21,11 @@ export class SessionBuilder {
      * The default target address to connect to Coherence gRPC server.
      */
     public static DEFAULT_ADDRESS = 'localhost:1408';
+
+    /**
+     * The default serialization format.
+     */
+    public static DEFAULT_FORMAT = 'json';
 
     /**
      * The {@link SessionOptions} to use when creating a Session.
@@ -190,15 +197,16 @@ export class SessionOptions {
 }
 
 
-export class Session {
+export class Session
+    extends EventEmitter {
 
     /**
-     * A flag to indicate if the Session has been closed.
-     * Note: Not sure, what should be the effect of calling
-     * {@link Session.close()}. Should any calls on
-     * the {@link NamedCacheClient} that were created from
-     * this session throw errors?
+     * A flag to indicate if Session.close() has been invoked.
+     * @see waitForClosed() 
+     * @see isClosed()
      */
+    private markedForClose: boolean = false;
+
     private closed: boolean = false;
 
     /**
@@ -239,7 +247,10 @@ export class Session {
      */
     private clientOptions: object = {};
 
+    private sessionClosedPromise: Promise<boolean>;
+
     constructor(sessionOptions: SessionOptions) {
+        super();
         this.sessionOptions = sessionOptions;
 
         // If TLS is enabled then create a SSL channel credentials object.
@@ -268,6 +279,16 @@ export class Session {
         this.clientOptions = {
             'channelOverride': this.channel
         }
+
+        const self = this;
+        this.sessionClosedPromise = new Promise((resolve, reject) => {
+            self.on('event', (eventName: string, cacheName: string) => {
+                if (self.markedForClose && self.caches.size == 0) {
+                    self.closed = true;
+                    resolve(true);
+                }
+            })
+        })
     }
 
     getSessionOptions(): SessionOptions {
@@ -290,13 +311,26 @@ export class Session {
         return this.caches.size;
     }
 
-    getActiveCacheNames(): Array<string> {
-        const array = new Array<string>();
-        for (let name of this.caches.keys()) {
-            array.push(name);
+    getActiveCaches(): Array<NamedCacheClient> {
+        const array = new Array<NamedCacheClient>();
+        for (let cache of this.caches.values()) {
+            array.push(cache);
         }
         return array;
     }
+
+    getActiveCacheNames(): Set<string> {
+        const set = new Set<string>();
+        for (let cache of this.caches.values()) {
+            set.add(cache.getCacheName());
+        }
+        return set;
+    }
+
+    getClientOptions(): object {
+        return this.clientOptions;
+    }
+
     /**
      * An internal method to read a cert file given its path.
      *
@@ -321,44 +355,70 @@ export class Session {
      *
      * @param name Returns a {@link NamedCacheClient} for the specified name.
      */
-    getCache<K, V>(name: string): NamedCacheClient<K, V> {
-        if (this.closed) {
+    getCache<K, V>(name: string, format?: string): NamedCacheClient<K, V> {
+        if (this.markedForClose) {
             throw new Error('Session already closed');
         }
 
-        let namedCache = this.caches.get(name);
-        if (!namedCache) {
-            const namedCache = new NamedCacheClient(name, this);
-            this.caches.set(name, namedCache);
-            const self = this;
-            namedCache.on('destroyed', (cacheName: string) => {
-                const cache = self.caches.get(cacheName);
-                self.caches.delete(cacheName);
-                if (cache) {
-                    cache.destroy();
-                }
-            });
-            namedCache.on('released', (cacheName: string) => {
-                self.caches.delete(cacheName);
-            });
+        format = format ? format : SessionBuilder.DEFAULT_FORMAT;
+        const cacheKey = Session.makeCacheKey(name, format);
+        const serializer = SerializerRegistry.instance().serializer(format);
 
-            return namedCache;
+        let namedCache = this.caches.get(cacheKey);
+        if (!namedCache) {
+            namedCache = new NamedCacheClient(name, this, serializer, this.setupEventHandlers);
+            this.caches.set(cacheKey, namedCache);
         }
-        
+
         return namedCache;
+    }
+
+    private static makeCacheKey(cacheName: string, format: string): string {
+        return cacheName + ':' + format;
+    }
+
+    private static isKeyForCacheName(key: string, cacheName: string): boolean {
+        return key.startsWith(cacheName + ':');
+    }
+
+    private setupEventHandlers(sess: Session, emitter: EventEmitter) {
+        const self = sess;
+        emitter.on('cache_destroyed', (cacheName: string) => {
+            // Our keys in caches Map are of the form cacheName:format.
+            // We will destroy all  cache destroy event is co
+            for (let key of self.caches.keys()) {
+                if (Session.isKeyForCacheName(key, cacheName)) {
+                    self.caches.delete(key);
+                    self.emit('cache_destroyed', cacheName);
+                    self.emit('event', 'cache_destroyed', cacheName);
+                }
+            }
+        });
+
+        emitter.on('cache_released', (cacheName: string, format: string) => {
+            self.caches.delete(Session.makeCacheKey(cacheName, format));
+            self.emit('cache_released', cacheName, format);
+            self.emit('event', 'cache_released', cacheName, format);
+        });
+
+        emitter.on('cache_closed', (cacheName: string, format: string) => {
+            self.caches.delete(Session.makeCacheKey(cacheName, format));
+            self.emit('cache_closed', cacheName, format);
+            self.emit('event', 'cache_closed', cacheName, format);
+        });
     }
 
     /**
      * Close the {@link Session}.
      */
     async close(): Promise<void> {
-        if (this.closed) {
+        if (this.markedForClose) {
             return;
         }
 
-        this.closed = true;
+        this.markedForClose = true;
         for (let entry of this.caches.entries()) {
-            entry[1].release();
+            await entry[1].release();
         }
 
         this.channel.close();
@@ -366,6 +426,10 @@ export class Session {
 
     isClosed(): boolean {
         return this.closed;
+    }
+
+    waitUntilClosed(): Promise<boolean> {
+        return this.sessionClosedPromise;
     }
 
 }

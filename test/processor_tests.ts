@@ -8,16 +8,17 @@ import { Extractors } from '../src/extractor/extractors';
 import { Filters } from '../src/filter/filters';
 import { Processors } from '../src/processor/processors';
 import { Util } from '../src/util/util';
-import { session } from "./abstract_named_cache_tests";
 import { NamedCacheClient } from "../src/cache/named_cache_client";
+import { SessionBuilder } from '../src/cache/session';
 
+export const session = new SessionBuilder().build();
 import {
     TestUtil,
     val123, val234, val345, val456,
     toObj, tscObj, trieObj, jadeObj, javascriptObj
 } from './abstract_named_cache_tests';
 
-describe("NamedCacheClient IT Test Suite", () => {
+describe("Processors IT Test Suite", () => {
 
     const versioned123 = { '@version': 1, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3] };
     const versioned234 = { '@version': 2, id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null' };
@@ -42,10 +43,10 @@ describe("NamedCacheClient IT Test Suite", () => {
             await ExtractorProcessorTestsSuiteBase.populateNestedCache(cache);
         }
 
-        public static after() {
-            cache.release();
-            nested.release();
-            versioned.release();
+        public static async after() {
+            await cache.release();
+            await nested.release();
+            await versioned.release();
         }
 
         protected static async populateNestedCache(cache: NamedCacheClient) {

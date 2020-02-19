@@ -7,10 +7,10 @@ import { suite, test, slow, timeout } from "mocha-typescript";
 
 import { Filters } from '../src/filter/filters';
 import { Extractors } from '../src/extractor/extractors';
-import { session } from './abstract_named_cache_tests';
 import { NamedCacheClient } from "../src/cache/named_cache_client";
+import { SessionBuilder } from '../src/cache/session';
 
-
+export const session = new SessionBuilder().build();
 describe("Collection IT Test Suite", () => {
 
     let cache: NamedCacheClient;
