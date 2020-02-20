@@ -31,14 +31,13 @@ Note that TypeScript compiler doesn't allow circular imports
 - package.json
 - tsconfig.json
 - src/
-  _ cache/
-  _ filter/
-  _ filters.ts
-  _ extractor/
-  _ processor/
-  _ util/
-  _ serializer.ts
-  _ map_listener.ts
+  - aggregator/
+  - cache/
+  - filter/
+  - filters.ts
+  - extractor/
+  - processor/
+  - util/
 
 target/
 

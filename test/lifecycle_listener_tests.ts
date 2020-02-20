@@ -4,145 +4,185 @@ import { NamedCacheClient } from "../src/cache/named_cache_client";
 import { SessionBuilder } from '../src/cache/session';
 import { expect } from "chai";
 
-export const session = new SessionBuilder().build();
-
 describe("LifecycleListener IT Test Suite", () => {
 
     const CACHE_NAME = 'lifecycle-listener-cache';
 
-    let cache: NamedCacheClient;
-
     @suite(timeout(15000))
     class LifecycleListenerTestSuite {
 
-        public async before() {
-            cache = session.getCache(CACHE_NAME);
-            await cache.clear();
-        }
-
-        public async after() {
-            await cache.release();
-        }
-
         @test
         async testCacheLifecycleListenerForRelease() {
+            let sess = new SessionBuilder().build();
+            const cache = sess.getCache(CACHE_NAME);
+
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_released', (cacheName: string) => {
                     if (cacheName == CACHE_NAME) {
                         resolve();
                     }
                 });
+
+                cache.release();
             });
 
-            cache.release();
             await prom;
+            await sess.close();
+            await sess.waitUntilClosed();
         }
 
         @test
         async testCacheLifecycleListenerForDestroy() {
+
+            let sess = new SessionBuilder().build();
+            const cache = sess.getCache(CACHE_NAME);
+
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_destroyed', (cacheName: string) => {
                     if (cacheName == CACHE_NAME) {
                         resolve();
                     }
                 });
+
+                setTimeout(() => {
+                    cache.destroy();
+                }, 100);
             });
 
-            cache.destroy();
             await prom;
+            await sess.close();
+            await sess.waitUntilClosed();
         }
 
         @test
         async testCacheLifecycleListenerForMultipleCaches() {
+
+            let sess = new SessionBuilder().build();
+            const cache = sess.getCache(CACHE_NAME);
+
             const prom1 = new Promise((resolve, reject) => {
                 cache.on('cache_released', (cacheName: string) => {
                     if (cacheName == CACHE_NAME) {
                         resolve();
                     }
                 });
+                setTimeout(() => {
+                    cache.release();
+                }, 100);
             });
 
 
-            const cache2 = session.getCache('test-cache');
+            const cache2 = sess.getCache('test-cache');
             const prom2 = new Promise((resolve, reject) => {
                 cache2.on('cache_destroyed', (cacheName: string) => {
                     if (cacheName == 'test-cache') {
                         resolve();
                     }
                 });
+                setTimeout(() => {
+                    cache2.destroy();
+                }, 100);
             });
-
-            cache.release();
-            cache2.destroy();
 
             await prom1;
             await prom2;
+            await sess.close();
+            await sess.waitUntilClosed();
         }
 
         @test
         async testSessionLifecycleListenerForCacheDestroy() {
+            let sess = new SessionBuilder().build();
+            const cache = sess.getCache(CACHE_NAME);
             const prom = new Promise((resolve, reject) => {
-                session.on('cache_destroyed', (cacheName: string, arg?: string) => {
+                sess.on('cache_destroyed', (cacheName: string, arg?: string) => {
                     if (cacheName == CACHE_NAME) {
                         resolve();
                     }
                 });
+
+                setTimeout(() => {
+                    cache.destroy();
+                }, 100);
             });
 
-            cache.destroy();
             await prom;
+            await sess.close();
+            await sess.waitUntilClosed();
         }
 
         @test
         async testSessionLifecycleListenerForMultipleCaches() {
+            let sess = new SessionBuilder().build();
+            const cache = sess.getCache(CACHE_NAME);
             const prom1 = new Promise((resolve, reject) => {
-                session.on('cache_released', (cacheName: string) => {
+                sess.on('cache_released', (cacheName: string) => {
                     if (cacheName == CACHE_NAME) {
                         resolve();
                     }
                 });
+                setTimeout(() => {
+                    cache.release();
+                }, 100);
             });
 
 
-            const cache2 = session.getCache('test-cache');
+            const cache2 = sess.getCache('test-cache');
             const prom2 = new Promise((resolve, reject) => {
-                session.on('cache_destroyed', (cacheName: string) => {
+                sess.on('cache_destroyed', (cacheName: string) => {
                     if (cacheName == 'test-cache') {
                         resolve();
                     }
                 });
+                setTimeout(() => {
+                    cache2.destroy();
+                }, 100);
             });
 
-            cache.release();
-            cache2.destroy();
 
             await prom1;
             await prom2;
+            await sess.close();
+            await sess.waitUntilClosed();
         }
 
         @test
         async testIfSessionCloseTriggersCacheReleseEvents() {
             let sess = new SessionBuilder().build();
+            const sessPromise = new Promise((resolve, reject) => {
+                let count = 0;
+                sess.on('registered', (name) => {
+                    count++;
+                    if (count == 2) {
+                        sess.close();
+                        resolve();
+                    }
+                });
+            });
             const cache1 = sess.getCache('test-cache-1');
+            const cache2 = sess.getCache('test-cache-2');
+
             const prom1 = new Promise((resolve, reject) => {
                 sess.on('cache_released', (cacheName: string) => {
                     if (cacheName == 'test-cache-1') {
                         resolve();
                     }
                 });
+                sess.emit('registered', 'test-cache-1');
             });
 
 
-            const cache2 = sess.getCache('test-cache-2');
             const prom2 = new Promise((resolve, reject) => {
                 sess.on('cache_released', (cacheName: string) => {
                     if (cacheName == 'test-cache-2') {
                         resolve();
                     }
                 });
+                sess.emit('registered', 'test-cache-2');
             });
 
-            sess.close();
+            // Wait for registration
+            await sessPromise;
 
             await prom1;
             await prom2;

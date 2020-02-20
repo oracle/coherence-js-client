@@ -13,36 +13,29 @@ export const session = new SessionBuilder().build();
 
 describe("MapListener IT Test Suite", () => {
 
-    let cache: NamedCacheClient;
-
     @suite(timeout(15000))
     class MapListenerTestSuite {
 
-        public async before() {
-            cache = session.getCache('map-listener-cache');
-            await cache.clear();
-        }
-
-        public async after() {
-            await cache.release();
-        }
-
         @test
         async shouldNotHaveReceivedAnyEventsWhenNoUpdatesToCache() {
+            const cache = session.getCache('map-list-1');
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_destroyed', (cacheName: string) => {
                     resolve();
                 })
             });
             const listener = new CountingMapListener("listener-default");
-            await cache.addMapListener(listener, true);
-            await cache.destroy();
+            setImmediate(async () => {
+                await cache.addMapListener(listener, true);
+                await cache.destroy();
+            })
             await prom;
             expect(stringify(listener.counters)).to.equal(stringify({}));
         }
 
         @test
         async testAllEventsMapListener() {
+            const cache = session.getCache('map-list-2');
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_destroyed', (cacheName: string) => {
                     resolve();
@@ -50,13 +43,15 @@ describe("MapListener IT Test Suite", () => {
             });
 
             const listener = new CountingMapListener("listener-default");
-            await cache.addMapListener(listener, false);
+            setImmediate(async () => {
+                await cache.addMapListener(listener, false);
 
-            await cache.put('123', { xyz: '123-xyz' });
-            await cache.remove('123');
+                await cache.put('123', { xyz: '123-xyz' });
+                await cache.remove('123');
 
-            await listener.waitFor({ insert: 1, delete: 1 });
-            await cache.destroy();
+                await listener.waitFor({ insert: 1, delete: 1 });
+                await cache.destroy();
+            });
 
             await prom;
             expect(stringify(listener.counters)).to.equal(stringify({ insert: 1, delete: 1 }));
@@ -64,25 +59,30 @@ describe("MapListener IT Test Suite", () => {
 
         @test
         async testMultipleAllEventsMapListener() {
+            const cache = session.getCache('map-list-3');
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_destroyed', (cacheName: string) => {
                     resolve();
                 })
             });
             const listener = new CountingMapListener("listener-default");
-            await cache.addMapListener(listener, true);
-
-            await cache.put('123', {});
-            await cache.remove('123');
-
-            await listener.waitFor({ insert: 1, delete: 1 });
             const listener2 = new CountingMapListener("listener-2");
-            await cache.addMapListener(listener2);
 
-            await cache.put('123', { a: 2 });
-            await cache.remove('123');
+            setImmediate(async () => {
+                await cache.addMapListener(listener, true);
 
-            await cache.destroy();
+                await cache.put('123', {});
+                await cache.remove('123');
+
+                await listener.waitFor({ insert: 1, delete: 1 });
+                await cache.addMapListener(listener2);
+
+                await cache.put('123', { a: 2 });
+                await cache.remove('123');
+
+                await cache.destroy();
+            });
+
             await prom;
 
             expect(stringify(listener.counters)).to.equal(stringify({ insert: 2, delete: 2 }));
@@ -91,38 +91,42 @@ describe("MapListener IT Test Suite", () => {
 
         @test
         async shouldReceiveEventsWithAlwaysFilter() {
+            const cache = session.getCache('map-list-4');
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_destroyed', (cacheName: string) => {
                     resolve();
                 })
             });
             const listener = new CountingMapListener("listener-default");
-            await cache.addMapListener(listener, true);
             const filterListener = new CountingMapListener("filter-listener");
+
+            await cache.addMapListener(listener, true);
             await cache.addMapListener(filterListener, new MapEventFilter(Filters.always()));
 
-            setTimeout(() => {
-                cache.put('123', {});
-            }, 100);
+            setImmediate(async () => {
+                setTimeout(() => {
+                    cache.put('123', {});
+                }, 100);
 
-            setTimeout(() => {
-                cache.remove('123');
-            }, 150);
+                setTimeout(() => {
+                    cache.remove('123');
+                }, 150);
 
-            setTimeout(() => {
-                cache.put('345', {});
-            }, 200);
+                setTimeout(() => {
+                    cache.put('345', {});
+                }, 200);
 
-            await listener.waitFor({ insert: 2, delete: 1 });
+                await listener.waitFor({ insert: 2, delete: 1 });
 
-            await cache.removeMapListener(listener);
+                await cache.removeMapListener(listener);
 
-            await cache.put('k2', { a: 2 });
-            await cache.remove('k2');
+                await cache.put('k2', { a: 2 });
+                await cache.remove('k2');
 
-            await filterListener.waitFor({ insert: 3, delete: 2 });
+                await filterListener.waitFor({ insert: 3, delete: 2 });
 
-            await cache.destroy();
+                await cache.destroy();
+            })
             await prom;
 
             expect(stringify(listener.counters)).to.equal(stringify({ insert: 2, delete: 1 }));
@@ -130,7 +134,8 @@ describe("MapListener IT Test Suite", () => {
         }
 
         @test
-        async shouldCloseChannelReleaseIsCalled() {
+        async shouldCloseChannelIfReleaseIsCalled() {
+            const cache = session.getCache('map-listener-cache');
             // Use a KeyListener and a FilterListener
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_released', (cacheName: string) => {
@@ -144,10 +149,10 @@ describe("MapListener IT Test Suite", () => {
             await cache.addMapListener(filterListener, mapEventFilter, false);
             await cache.addMapListener(keyListener, '123', false);
 
-            await cache.removeMapListener(keyListener, '123');
-            await cache.removeMapListener(filterListener, mapEventFilter);
 
-            await cache.release();
+            setImmediate(async () => {
+                await cache.release();
+            })
             await prom;
 
             expect(stringify(keyListener.counters)).to.equal(stringify({}));
@@ -156,6 +161,7 @@ describe("MapListener IT Test Suite", () => {
 
         @test
         async shouldReceiveEventsForRemainingListenersAfterOneListenerIsUnregistered() {
+            const cache = session.getCache('map-listener-cache');
             // Use 2 KeyListeners and two FilterListeners
             const prom = new Promise((resolve, reject) => {
                 cache.on('cache_released', (cacheName: string) => {
@@ -202,6 +208,7 @@ describe("MapListener IT Test Suite", () => {
 
         @test
         async shouldBeAbleToRegisterCacheLifecycleListenersForCacheDestroy() {
+            const cache = session.getCache('map-list-5');
             let truncateCount = 0;
             let destroyCount = 0;
 
@@ -219,16 +226,19 @@ describe("MapListener IT Test Suite", () => {
                 })
             });
 
-            await cache.put('a', 'b');
-            await cache.truncate();
-            await cache.put('a1', 'b1');
-            await cache.truncate();
-            await cache.destroy();
+            setImmediate(async () => {
+                await cache.put('a', 'b');
+                await cache.truncate();
+                await cache.put('a1', 'b1');
+                await cache.truncate();
+                await cache.destroy();
+            });
 
             await prom;
         }
         @test
         async shouldBeAbleToRegisterCacheLifecycleListenersForCacheRelease() {
+            const cache = session.getCache('map-listener-cache');
             let truncateCount = 0;
             let releasedCount = 0;
 
@@ -237,20 +247,25 @@ describe("MapListener IT Test Suite", () => {
                     truncateCount++;
                 })
                 cache.on('cache_released', (cacheName: string) => {
+                    console.log("Test [shouldBeAbleToRegisterCacheLifecycleListenersForCacheRelease] received cache_released for: " + cacheName);
                     releasedCount++;
 
                     expect(truncateCount).to.equal(2);
                     expect(releasedCount).to.equal(1);
 
                     resolve();
-                })
+                });
+
             });
 
-            await cache.put('a', 'b');
-            await cache.truncate();
-            await cache.put('a1', 'b1');
-            await cache.truncate();
-            await cache.release();
+
+            setImmediate(async () => {
+                await cache.put('a', 'b');
+                await cache.truncate();
+                await cache.put('a1', 'b1');
+                await cache.truncate();
+                await cache.release();
+            })
 
             await prom;
         }

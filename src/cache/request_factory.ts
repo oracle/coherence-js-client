@@ -20,7 +20,8 @@ import {
     InvokeAllRequest,
     GetAllRequest,
     MapListenerRequest,
-    DestroyRequest
+    DestroyRequest,
+    AggregateRequest
 } from "./proto/messages_pb";
 
 import { Serializer } from "../util/serializer";
@@ -29,6 +30,7 @@ import { ValueExtractor } from "../extractor/value_extractor";
 import { EntryProcessor } from "../processor/entry_processor";
 import { Util } from "../util/util";
 import { MapEventFilter } from "../filter/map_event_filter";
+import { EntryAggregator } from "../aggregator/aggregator";
 
 export interface Comparator {
     '@class': string;
@@ -64,6 +66,31 @@ export class RequestFactory<K, V> {
 
     getSerializer(): Serializer {
         return this.serializer;
+    }
+
+    // aggregate<R>(keys: Iterable<K>, aggregator: EntryAggregator<K, V, R>): AggregateRequest;
+    // aggregate<R>(filter: Filter<V>, aggregator: EntryAggregator<K, V, R>): AggregateRequest;
+    // aggregate<R>(aggregator: EntryAggregator<K, V, R>): AggregateRequest;
+    aggregate<R>(kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, R>, aggregator?: EntryAggregator<K, V, R>): AggregateRequest {
+        const request = new AggregateRequest();
+        request.setCache(this.cacheName);
+        request.setFormat(this.serializer.format());
+        if (aggregator) {
+            // Two args invocation
+            request.setAggregator(this.serializer.serialize(aggregator));
+            if (kfa instanceof Filter) {
+                request.setFilter(this.serializer.serialize(kfa));
+            } else {
+                for (let key of (kfa as Iterable<K>)) {
+                    request.addKeys(this.serializer.serialize(key));
+                }
+            }
+        } else {
+            // One arg invocation
+            request.setAggregator(this.serializer.serialize(kfa));
+        }
+
+        return request;
     }
 
     addIndex(extractor: ValueExtractor<any, any>, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
@@ -178,7 +205,7 @@ export class RequestFactory<K, V> {
         request.setFormat(this.serializer.format());
         request.setCache(this.cacheName);
         for (let key of keys) {
-           request.addKey(this.serializer.serialize(key));
+            request.addKey(this.serializer.serialize(key));
         }
 
         return request;

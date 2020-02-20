@@ -46,6 +46,10 @@ export class Util {
         return this.FILTER_PACKAGE + name;
     }
 
+    static toAggregatorName(name: string): string {
+        return this.AGGREGATOR_PACKAGE + name;
+    }
+
     static toExtractorName(name: string): string {
         return this.EXTRACTOR_PACKAGE + name;
     }

@@ -24,7 +24,7 @@ import { MapEventFilter } from '../filter/map_event_filter';
 import { EntryProcessor } from '../processor/entry_processor';
 import { MapEventsManager } from '../util/map_events_manager';
 import { MapListener } from '../util/map_listener';
-import { Serializer, SerializerRegistry } from '../util/serializer';
+import { Serializer } from '../util/serializer';
 import { Util } from '../util/util';
 import { NamedCache } from './named_cache';
 import { Entry, Entry as GrpcEntry, EntryResult, IsEmptyRequest, SizeRequest } from './proto/messages_pb';
@@ -33,9 +33,11 @@ import { MapEntry } from './query_map';
 import { Comparator, RequestFactory } from './request_factory';
 import { EntrySet, KeySet, NamedCacheEntry, RemoteSet, ValueSet } from './streamed_collection';
 import { Session, SessionOptions } from './session';
+import { EntryAggregator } from '../aggregator/aggregator';
 
 
 enum CACHE_STATE { ACTIVE, CLOSING, CLOSED, DESTROYING, DESTROYED, RELEASING, RELEASED }
+
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
  * holds resources shared among members of a cluster.
@@ -109,7 +111,7 @@ export class NamedCacheClient<K = any, V = any>
      * @param options The optional NamedCacheOptions can be used to specify 
      *                additional properties.
      */
-    constructor(cacheName: string, session: Session, serializer: Serializer, callback: (sess: Session, emitter: EventEmitter) => void) {
+    constructor(cacheName: string, session: Session, serializer: Serializer) {
         super();
 
         this.cacheName = cacheName;
@@ -134,7 +136,6 @@ export class NamedCacheClient<K = any, V = any>
         //    allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
         //    to be handled independent of the eventual events seen by the client application.
         this.setupEventHandlers();
-        callback(session, this.internalEmitter);
 
         // Now open the events channel.
         this.mapEventsHandler = new MapEventsManager(cacheName, this.client, this, this.serializer, this.internalEmitter);
@@ -143,17 +144,27 @@ export class NamedCacheClient<K = any, V = any>
     private setupEventHandlers() {
         const self = this;
         self.internalEmitter.on('cache_destroyed', (cacheName: string) => {
-            if (self.cacheName == cacheName) {
-                self.internalClose(CACHE_STATE.DESTROYED);
+            if (cacheName == self.cacheName) {
+                self.mapEventsHandler.closeEventStream();
+                self.state = CACHE_STATE.DESTROYED;
+                self.emit('cache_destroyed', cacheName);            // notify NamedCacheClient level listeners
+
             }
         });
 
-        self.internalEmitter.on('cache_truncated', (cacheName: string, format: string) => {
-            if (self.cacheName == cacheName) {
-                self.emit('cache_truncated', self.cacheName);
+        self.internalEmitter.on('cache_truncated', (cacheName: string) => {
+            if (cacheName == self.cacheName) {
+                self.emit('cache_truncated', cacheName);            // notify NamedCacheClient level listeners
             }
         });
 
+        self.internalEmitter.on('cache_released', (cacheName: string) => {
+            if (cacheName == self.cacheName) {
+                self.mapEventsHandler.closeEventStream();
+                self.state = CACHE_STATE.RELEASED;
+                self.emit('cache_released', cacheName, this.serializer.format());            // notify NamedCacheClient level listeners
+            }
+        });
     }
 
     async ensureEventEmitter(): Promise<EventEmitter> {
@@ -167,6 +178,19 @@ export class NamedCacheClient<K = any, V = any>
 
     getSerializer(): Serializer {
         return this.serializer;
+    }
+
+    aggregate<R>(keys: Iterable<K>, agg: EntryAggregator<K, V, R>): Promise<any>;
+    aggregate<R>(filter: Filter<V>, agg: EntryAggregator<K, V, R>): Promise<any>;
+    aggregate<R>(agg: EntryAggregator<K, V, R>): Promise<any>;
+    aggregate<R>(kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, R>, agg?: EntryAggregator<K, V, R>): Promise<any> {
+        const self = this;
+        const request = this.requestFactory.aggregate(kfa, agg);
+        return new Promise((resolve, reject) => {
+            self.client.aggregate(request, this.callOptions(), (err, resp) => {
+                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
+            });
+        });
     }
 
     addMapListener(listener: MapListener<K, V>, isLite?: boolean): Promise<void>;
@@ -263,7 +287,9 @@ export class NamedCacheClient<K = any, V = any>
         fn?: () => T | undefined) {
 
         if (err) {
-            reject(err);
+            setTimeout(() => {
+                reject(err);
+            }, 15000);
         } else {
             return fn ? resolve(fn()) : resolve();
         }
@@ -297,8 +323,6 @@ export class NamedCacheClient<K = any, V = any>
      *         to some value or false otherwise.
      */
     containsKey(key: K): Promise<boolean> {
-        console.log(">> containsKey(" + this.cacheName + ") current state: " + this.state);
-
         const self = this;
         const request = self.requestFactory.containsKey(key);
         return new Promise((resolve, reject) => {
@@ -317,8 +341,6 @@ export class NamedCacheClient<K = any, V = any>
      *         exists or false otherwise.
      */
     containsValue(value: V): Promise<boolean> {
-        console.log(">> containsValue(" + this.cacheName + ") current state: " + this.state);
-
         const self = this;
         const request = this.requestFactory.containsValue(value);
         return new Promise((resolve, reject) => {
@@ -353,7 +375,6 @@ export class NamedCacheClient<K = any, V = any>
             });
             call.on('end', () => resolve(set));
             call.on('error', (e) => {
-                console.log("*** ERROR: " + e)
                 reject(e)
             });
         });
@@ -741,16 +762,25 @@ export class NamedCacheClient<K = any, V = any>
      * Note: services.proto still uses SizeRequest
      */
     truncate(): Promise<number> {
+        const self = this;
         return new Promise((resolve, reject) => {
+            // Note that this listener will be after the default listeners
+            // that were setup in the constructor. So once this receives
+            // the event, we can be sure that *all other* listeners have
+            // be notified!!
+            self.internalEmitter.once('cache_truncated', () => {
+                resolve()
+            });
 
+            // Now that we have setup our 'once & only once' listener, we
+            // can now send out the 'truncate' request. The handleResponse()
+            // method will generate the appropriate event on the internalEmitter
+            // for which our 'once & only once' listener is setup.
             const request = new SizeRequest();  // FIXME: services.proto still uses SizeRequest
             request.setCache(this.cacheName);
             this.client.truncate(request, this.callOptions(), (err, resp) => {
                 if (err || !resp) {
-                    console.log("Truncate resulted in an error: " + err);
                     reject(err);
-                } else {
-                    resolve(resp.getValue());
                 }
             });
         });
@@ -764,76 +794,49 @@ export class NamedCacheClient<K = any, V = any>
         return this.state == CACHE_STATE.ACTIVE;
     }
 
-    private async internalClose(newState: CACHE_STATE): Promise<void> {
-        if (this.state == CACHE_STATE.ACTIVE) {
-            throw new Error('internal error. cache state is still active');
-        }
-
-        await this.mapEventsHandler.closeEventStream();
-        this.internalEmitter.emit('cache_released', this.cacheName, this.serializer.format());
-        this.setStateAndEmitEvent(newState);
-    }
-
-    private setStateAndEmitEvent(newState: CACHE_STATE) {
-        let eventName: string | undefined;
-        this.state = newState;
-        switch (newState) {
-            case CACHE_STATE.CLOSING:
-                eventName = 'cache_closing';
-                break;
-            case CACHE_STATE.CLOSED:
-                eventName = 'cache_closed';
-                break;
-            case CACHE_STATE.RELEASING:
-                eventName = 'cache_releasing';
-                break;
-            case CACHE_STATE.RELEASED:
-                eventName = 'cache_released';
-                break;
-            case CACHE_STATE.DESTROYING:
-                eventName = 'cache_destroying';
-                break;
-            case CACHE_STATE.DESTROYED:
-                eventName = 'cache_destroyed';
-                break;
-        }
-        if (eventName) {
-            super.emit(eventName, this.cacheName, this.serializer.format());
-        }
-    }
-
     /**
      * Release local resources in the cache. This method does not make
      * any gRPC method invocation. But it generates a 'cache_released'
      * CacheLifecycle event.
      */
-    async release(): Promise<void> {
-        if (this.isActive()) {
-            // This prevents any other calls on this cache.
-            this.setStateAndEmitEvent(CACHE_STATE.RELEASING);
-            return await this.internalClose(CACHE_STATE.RELEASED);
-        }
-        return Promise.resolve();
+    release(): Promise<void> {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            // Note that this listener will be after the default listeners
+            // that were setup in the constructor. So once this receives
+            // the event, we can be sure that *all other* listeners have
+            // be notified!!
+            self.internalEmitter.once('cache_released', () => resolve());
+
+            // Now that we have setup our 'once & only once' listener, we
+            // can emit the 'cache_released' event on the internalEmitter
+            // for which our 'once & only once' listener is setup.
+            self.internalEmitter.emit('cache_released', self.cacheName);
+
+        });
     }
 
     /**
      * Destroys the NamedCache. This method destroys the cache across
      * the cluster and generates a 'cache_destroyed' CacheLifecycle event.
      */
-    async destroy(): Promise<void> {
+    destroy(): Promise<void> {
         const self = this;
-        if (this.isActive()) {
-            // This prevents any other calls on this cache.
-            this.setStateAndEmitEvent(CACHE_STATE.DESTROYING)
-            await new Promise((resolve, reject) => {
-                self.internalEmitter.on('cache_destroyed', (cacheName: string) => {
-                    if (cacheName == self.cacheName) {
-                        this.setStateAndEmitEvent(CACHE_STATE.DESTROYED)
-                        resolve();
-                    }
-                });
 
-                self.client.destroy(self.requestFactory.destroy(), self.callOptions(), (err: grpc.ServiceError | null) => {
+        if (this.isActive()) {
+            return new Promise((resolve, reject) => {
+                // Note that this listener will be after the default listeners
+                // that were setup in the constructor. So once this receives
+                // the event, we can be sure that *all other* listeners have
+                // be notified!!
+                self.internalEmitter.once('cache_destroyed', () => resolve());
+
+                // Now that we have setup our 'once & only once' listener, we
+                // can now send out the 'truncate' request. The handleResponse()
+                // method will generate the appropriate event on the internalEmitter
+                // for which our 'once & only once' listener is setup.
+                const request = self.requestFactory.destroy();
+                self.client.destroy(request, self.callOptions(), (err: grpc.ServiceError | null) => {
                     if (err) {
                         reject(err);
                     }

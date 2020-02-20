@@ -325,8 +325,8 @@ export class MapEventsManager<K, V> {
     async closeEventStream(): Promise<void> {
         const self = this;
         if (!self.markedForClose && self.streamPromise != null) {
-            const bidiStream = await self.streamPromise;
             self.markedForClose = true;
+            const bidiStream = await self.streamPromise;
             await new Promise(async (resolve, reject) => {
                 // Setup an event handler for 'error' as calling cancel() on
                 // the bidi stream will result in a CANCELLED sttaus.

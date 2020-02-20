@@ -282,12 +282,24 @@ export class Session
 
         const self = this;
         this.sessionClosedPromise = new Promise((resolve, reject) => {
-            self.on('event', (eventName: string, cacheName: string) => {
+            self.on('cache_released', (cacheName: string, format: string) => {
                 if (self.markedForClose && self.caches.size == 0) {
                     self.closed = true;
                     resolve(true);
                 }
-            })
+            });
+            self.on('cache_destroyed', (cacheName: string, format: string) => {
+                if (self.markedForClose && self.caches.size == 0) {
+                    self.closed = true;
+                    resolve(true);
+                }
+            });
+            self.on('session_closed', () => {
+                if (self.markedForClose && self.caches.size == 0) {
+                    self.closed = true;
+                    resolve(true);
+                }
+            });
         })
     }
 
@@ -366,7 +378,8 @@ export class Session
 
         let namedCache = this.caches.get(cacheKey);
         if (!namedCache) {
-            namedCache = new NamedCacheClient(name, this, serializer, this.setupEventHandlers);
+            namedCache = new NamedCacheClient(name, this, serializer);
+            this.setupEventHandlers(namedCache, name, format);
             this.caches.set(cacheKey, namedCache);
         }
 
@@ -381,30 +394,22 @@ export class Session
         return key.startsWith(cacheName + ':');
     }
 
-    private setupEventHandlers(sess: Session, emitter: EventEmitter) {
-        const self = sess;
-        emitter.on('cache_destroyed', (cacheName: string) => {
+    private setupEventHandlers(cache: NamedCacheClient, cacheName: string, format: string) {
+        const self = this;
+        cache.on('cache_destroyed', (cacheName: string) => {
             // Our keys in caches Map are of the form cacheName:format.
-            // We will destroy all  cache destroy event is co
+            // We will destroy all caches whose key starts with 'cacheName:' 
             for (let key of self.caches.keys()) {
                 if (Session.isKeyForCacheName(key, cacheName)) {
                     self.caches.delete(key);
                     self.emit('cache_destroyed', cacheName);
-                    self.emit('event', 'cache_destroyed', cacheName);
                 }
             }
         });
 
-        emitter.on('cache_released', (cacheName: string, format: string) => {
+        cache.on('cache_released', (cacheName: string, format: string) => {
             self.caches.delete(Session.makeCacheKey(cacheName, format));
             self.emit('cache_released', cacheName, format);
-            self.emit('event', 'cache_released', cacheName, format);
-        });
-
-        emitter.on('cache_closed', (cacheName: string, format: string) => {
-            self.caches.delete(Session.makeCacheKey(cacheName, format));
-            self.emit('cache_closed', cacheName, format);
-            self.emit('event', 'cache_closed', cacheName, format);
         });
     }
 
@@ -420,8 +425,10 @@ export class Session
         for (let entry of this.caches.entries()) {
             await entry[1].release();
         }
-
         this.channel.close();
+
+        this.emit('session_closed');
+        return Promise.resolve();
     }
 
     isClosed(): boolean {

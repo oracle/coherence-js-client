@@ -12,6 +12,7 @@ import { Processors } from '../src/processor/processors';
 import { val123, val234, val345, val456 } from './abstract_named_cache_tests';
 import { NamedCacheClient } from "../src/cache/named_cache_client";
 import { SessionBuilder } from '../src/cache/session';
+import { Aggregators } from "../src/aggregator/aggregators";
 
 export const session = new SessionBuilder().build();
 describe("NamedCacheClient IT Test Suite", () => {
@@ -89,12 +90,30 @@ describe("NamedCacheClient IT Test Suite", () => {
             expect(Array.from(result)).to.have.deep.members([]);
         }
         @test async getOrDefaultOnEmptyMap() {
-            const value = {valid: 'yes'};
+            const value = { valid: 'yes' };
             expect(await cache.getOrDefault('123abc', value)).to.eql(value);
         }
     }
 
     describe("NamedCacheClient API Test Suite", () => {
+
+        @suite(timeout(30000))
+        class AggregateSuite
+            extends ClientTestSuiteBase {
+
+            @test async checkMinAggregator() {
+                const result = await cache.aggregate(Aggregators.min('id'));
+                expect(result).to.equal(123);
+            }
+            @test async checkMaxAggregator() {
+                const result = await cache.aggregate(Aggregators.max('id'));
+                expect(result).to.equal(456);
+            }
+            @test async checkAvgAggregator() {
+                const result = await cache.aggregate(Aggregators.avg('id'));
+                expect(Number(result)).to.equal(289.5);
+            }
+        }
 
         @suite(timeout(3000))
         class AddIndexSuite
