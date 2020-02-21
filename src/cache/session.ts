@@ -196,7 +196,18 @@ export class SessionOptions {
     }
 }
 
-
+/**
+ * Session represents a logical connection to an endpoint. It also
+ * acts as a factory for creating caches.
+ * 
+ * This class also extends EventEmitter and emits the following
+ * events:
+ * 1. 'cache_released': When the underlying cache is released Or when the
+ *                      Session is closed.
+ * 2. 'cache_truncated': When the underlying cache is truncated.
+ * 3. 'cache_released': When the underlying cache is released.
+ * 
+ */
 export class Session
     extends EventEmitter {
 
@@ -210,7 +221,32 @@ export class Session
     private closed: boolean = false;
 
     /**
-     * An internal cache of cache name to {@link NamedCacheClient}.
+     * An internal cache of cache name to {@link NamedCacheClient}. Note
+     * that the keys are of the form <cache_name>:<serialization_format>.
+     * 
+     * This allows a client to obtain NamedCacheClient for the same
+     * cache but with different formats.
+     * 
+     * Design choices:
+     *  1. All caches from a session ahould use the same format.
+     *      In this case the keys in this map can be just cache names.
+     *      But IMO, expecting all caches from a session to use the 
+     *      same format is too limiting.
+     * 
+     *  2. A cache from a session can have only one format. 
+     *      In this case too the keys in this map can be just cache names.
+     *      We can throw an exception from getCache(name, format), if we
+     *      a subsequent call is made to getCache() but the cache in this
+     *      map uses a different Serializer (i.e. format).
+     * 
+     *  3. The third option is to allow a client to allow different formats
+     *      for the same cache name. There is no extra complexity as the
+     *      server side anyways support pass-through serializer. Also, in
+     *      future when JS client supports different formats, testing this
+     *      should be fairly staright forward.
+     * 
+     *  I chose option 3 from above as it provides the feature at no added
+     *      complexity.
      */
     private caches = new Map<string, NamedCacheClient>();
 

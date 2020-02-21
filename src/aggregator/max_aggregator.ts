@@ -1,6 +1,6 @@
 import { AbstractAggregator } from "./aggregator";
 import { ValueExtractor } from "../extractor/value_extractor";
-import { AbstractDoubleAggregator } from "./abstract_double_aggregator";
+import { AbstractComparableAggregator } from "./abstract_comparable_aggregator";
 
 /**
  * Calculates a maximum of numeric values extracted from a set of
@@ -11,7 +11,7 @@ import { AbstractDoubleAggregator } from "./abstract_double_aggregator";
 * @param <T>  the type of the value to extract from
  */
 export class MaxAggregator<T>
-    extends AbstractDoubleAggregator<T> {
+    extends AbstractComparableAggregator<T, number> {
 
     constructor(extractor: ValueExtractor<T, number>);
     constructor(property: string);

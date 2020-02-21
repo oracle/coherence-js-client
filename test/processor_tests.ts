@@ -504,7 +504,7 @@ describe("Processors IT Test Suite", () => {
             expect(status).to.have.deep.members([123, [1, 2, 3]]);
 
             // Ensure that remaining attributes are still intact.
-            expect(value).to.eql({ "id": 123, "str": "123", "fval": 12.3 })
+            expect(value).to.eql({ "id": 123, "str": "123", "fval": 12.3, group: 1 })
         }
     }
 

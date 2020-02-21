@@ -16,8 +16,8 @@ import { UniversalExtractor } from "../extractor/universal_extractor";
  * @param <V> the type of the Map entry values
  * @param <R> the type of the value returned by the EntryAggregator
  */
-export interface EntryAggregator<K, V, R> {
-
+export interface EntryAggregator<K = any, V = any, R = any> {
+    andThen(aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R>;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface EntryAggregator<K, V, R> {
  *
  * @see EntryAggregator
  */
-export interface StreamingAggregator<K, V, P, R>
+export interface StreamingAggregator<K = any, V = any, P = any, R = any>
     extends EntryAggregator<K, V, R> {
 
 }
@@ -78,7 +78,7 @@ export abstract class AbstractAggregator<K = any, V = any, T = any, E = any, R =
         throw new Error('aggregate not implemented');
     }
 
-    andThen(aggregator: EntryAggregator<K, V, R>): CompositeAggregator<K, V, R> {
+    andThen(aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R> {
         return new CompositeAggregator(this, aggregator);
     }
 }

@@ -5,7 +5,7 @@ import { AbstractDoubleAggregator } from "./abstract_double_aggregator";
 /**
  * Calculates an average for values of any numeric type extracted from a
  * set of entries in a Map in a form of a numerical value. All the
- * extracted objects will be treated as numericaly values. If the set of
+ * extracted objects will be treated as numerical values. If the set of
  * entries is empty, a null result is returned.
  *
 * @param <T>  the type of the value to extract from

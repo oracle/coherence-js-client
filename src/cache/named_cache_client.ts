@@ -48,8 +48,10 @@ enum CACHE_STATE { ACTIVE, CLOSING, CLOSED, DESTROYING, DESTROYED, RELEASING, RE
  * 
  * This class also extends EventEmitter and emits the following
  * events:
- * 1. 'truncated': When the underlying cache is truncated.
- * 2. 'destroyed': When the underlying cache is destroyed.
+ * 1. 'cache_released': When the underlying cache is released Or when the
+ *                      Session is closed.
+ * 2. 'cache_truncated': When the underlying cache is truncated.
+ * 3. 'cache_released': When the underlying cache is released.
  * 
  */
 export class NamedCacheClient<K = any, V = any>
@@ -188,7 +190,21 @@ export class NamedCacheClient<K = any, V = any>
         const request = this.requestFactory.aggregate(kfa, agg);
         return new Promise((resolve, reject) => {
             self.client.aggregate(request, this.callOptions(), (err, resp) => {
-                self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp);
+                if (err) {
+                    reject(err);
+                } else {
+                    let result: any;
+                    if (resp) {
+                        result = self.toValue(resp.getValue_asU8());
+                        if (result) {
+                            const typeStr = typeof result.entries;
+                            if (typeStr != 'undefined' && typeStr != 'function') {
+                                result = result.entries;
+                            }
+                        }
+                    }
+                    resolve(result);
+                }
             });
         });
     }
@@ -287,9 +303,7 @@ export class NamedCacheClient<K = any, V = any>
         fn?: () => T | undefined) {
 
         if (err) {
-            setTimeout(() => {
-                reject(err);
-            }, 15000);
+            reject(err);
         } else {
             return fn ? resolve(fn()) : resolve();
         }

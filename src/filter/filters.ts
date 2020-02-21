@@ -23,6 +23,7 @@ import { NotFilter } from './not_filter';
 import { PredicateFilter } from './predicate_filter';
 import { PresentFilter } from './present_filter';
 import { RegexFilter } from './regex_filter';
+import { Extractors } from '../extractor/extractors';
 
 /**
  * Simple Filter DSL.
@@ -93,7 +94,7 @@ export class Filters {
      *          specified value.
      *
      * @see ContainsFilter
-     */    
+     */
     static arrayContains<T, E>(extractor: ValueExtractor<T, E[]>, value: E): Filter<T> {
         return new ContainsFilter(extractor, value);
     }
@@ -118,20 +119,20 @@ export class Filters {
         return new ContainsAllFilter(extractor, value);
     }
 
-        /**
-     * Return a filter that tests if the extracted array contains any of
-     * the specified values.
-     *
-     * @param extractor  the ValueExtractor to use.
-     * @param setValues  the values to compare the extracted value with.
-     * @param <T>        the type of the object to extract value from.value
-     * @param <E>        the type of extracted value.
-     *
-     * @return  a filter that tests if the extracted array contains any of
-     *          the specified values.
-     *
-     * @see ContainsAllFilter
-     */
+    /**
+ * Return a filter that tests if the extracted array contains any of
+ * the specified values.
+ *
+ * @param extractor  the ValueExtractor to use.
+ * @param setValues  the values to compare the extracted value with.
+ * @param <T>        the type of the object to extract value from.value
+ * @param <E>        the type of extracted value.
+ *
+ * @return  a filter that tests if the extracted array contains any of
+ *          the specified values.
+ *
+ * @see ContainsAllFilter
+ */
     static arrayContainsAny<T, E>(extractor: ValueExtractor<T, E>, ...value: E[]): Filter<T>;
     static arrayContainsAny<T, E, K extends E>(extractor: ValueExtractor<T, E>, values: Set<K>): Filter<T>;
     static arrayContainsAny<T, E, K>(extractor: ValueExtractor<T, E>, value: E[] | Set<K>): Filter<T> {
@@ -153,9 +154,13 @@ export class Filters {
      *
      * @see BetweenFilter
      */
-    static between<T, E>(extractor: ValueExtractor<T, E>, from: E, to: E): Filter<T> {
-        return new BetweenFilter<T, E>(extractor, from, to);
+    static between<T, E>(extractorOrString: ValueExtractor<T, E> | string, from: E, to: E,
+        includeLowerBound: boolean = false, includeUpperBound: boolean = false): Filter<T> {
+        if (extractorOrString instanceof ValueExtractor) {
+            return new BetweenFilter<T, E>(extractorOrString, from, to, includeLowerBound, includeUpperBound);
         }
+        return new BetweenFilter<T, E>(Extractors.extract(extractorOrString), from, to, includeLowerBound, includeUpperBound);
+    }
 
     /**
      * Return a filter that tests if the extracted collection contains the
@@ -231,7 +236,7 @@ export class Filters {
      * @see com.tangosol.util.extractor.UniversalExtractor
      */
     static equal<T, E>(fieldName: string, value: E): EqualsFilter<T, E>;
-    
+
     /**
      * Return a filter that tests for equality.
      *
@@ -265,7 +270,7 @@ export class Filters {
      *          specified value.
      *
      * @see GreaterFilter
-     */   
+     */
     static greater<T, E>(fieldName: string, value: E): GreaterFilter<T, E>;
     static greater<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E>;
     static greater<T, E>(arg: string | ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
@@ -298,7 +303,7 @@ export class Filters {
         return new GreaterEqualsFilter(arg, value);
     }
 
-    
+
     /**
      * Return a filter that tests if the extracted value is contained in the
      * specified array.
@@ -316,7 +321,7 @@ export class Filters {
     static in<T, E>(extractor: ValueExtractor<T, E>, ...values: E[]): Filter<T>;
     static in<T, E>(extractor: ValueExtractor<T, E>, values: Set<E>): Filter<T>;
     static in<T, E>(extractor: ValueExtractor<T, E>, values: E[] | Set<E>): Filter<T> {
-        
+
         return new InFilter(extractor, (values instanceof Set) ? values : new Set(values));
     }
 
@@ -402,8 +407,8 @@ export class Filters {
         return new LikeFilter(extractor, pattern, escape, ignoreCase);
     }
 
-  
-    
+
+
     static greaterEquals<T, E>(property: string, value: E): GreaterEqualsFilter<T, E>;
     static greaterEquals<T, E>(extractor: ValueExtractor<T, E>, value: E): GreaterEqualsFilter<T, E>;
     static greaterEquals<T, E>(arg: any, value: E): GreaterEqualsFilter<T, E> {
@@ -467,7 +472,7 @@ export class Filters {
      * 
      * @see PredicateFilter
      */
-    static predicate<T, E>(predicate: {'@class': string}, extractorOrNull?: ValueExtractor<T, E> | undefined): Filter<T> {
+    static predicate<T, E>(predicate: { '@class': string }, extractorOrNull?: ValueExtractor<T, E> | undefined): Filter<T> {
         return new PredicateFilter(predicate, extractorOrNull);
     }
 
@@ -495,5 +500,5 @@ export class Filters {
     static regex<T, E>(extractor: ValueExtractor<T, E>, regex: string): Filter<T> {
         return new RegexFilter(extractor, regex);
     }
-    
+
 }

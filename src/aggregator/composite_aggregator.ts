@@ -8,20 +8,20 @@ import { Util } from "../util/util";
  * results. The size of the returned list will always be equal to the
  * length of the aggregators' array.
  */
-export class CompositeAggregator<K, V, R>
-    implements StreamingAggregator<K, V, any, any[]> {
+export class CompositeAggregator<K, V>
+    implements StreamingAggregator<K, V, any, Array<any>> {
 
     '@class': string;
 
-    aggregators = new Array<EntryAggregator<K, V, R>>();
+    aggregators: EntryAggregator<K, V, any>[] = [];
 
-    constructor(aggregator1: EntryAggregator<K, V, R>, aggregator2: EntryAggregator<K, V, R>) {
+    constructor(aggregator1: EntryAggregator<K, V, any>, aggregator2: EntryAggregator<K, V, any>) {
         this['@class'] = Util.toAggregatorName('CompositeAggregator');
         this.aggregators.push(aggregator1);
         this.aggregators.push(aggregator2);
     }
 
-    andThen(aggregator: EntryAggregator<K, V, R>): CompositeAggregator<K, V, R> {
+    andThen<R>(aggregator: EntryAggregator<K, V, R>): CompositeAggregator<K, V> {
         this.aggregators.push(aggregator);
         return this;
     }

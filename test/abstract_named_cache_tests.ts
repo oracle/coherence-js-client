@@ -4,10 +4,10 @@
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { expect } from 'chai';
 
-export const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3] };
-export const val234 = { id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null' };
-export const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5] };
-export const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], nullIfOdd: 'non-null' };
+export const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 };
+export const val234 = { id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null' };
+export const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5], group: 2 };
+export const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null' };
 
 export const toObj = { t: { o: { level: 3, word: 'To', tokens: ['t', 'o'] } } };
 export const tscObj = { t: { y: { level: 3, word: 'TypeScript', tokens: ['t', 'y'] } } };

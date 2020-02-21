@@ -110,7 +110,7 @@ describe("NamedCacheClient IT Test Suite", () => {
                 expect(result).to.equal(456);
             }
             @test async checkAvgAggregator() {
-                const result = await cache.aggregate(Aggregators.avg('id'));
+                const result = await cache.aggregate(Aggregators.average('id'));
                 expect(Number(result)).to.equal(289.5);
             }
         }
