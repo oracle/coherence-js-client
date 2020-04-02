@@ -13,7 +13,7 @@ mkdir -p ${PROTO_SRC_DIR} ${GEN_OUT_DIR} ${GEN_SRC_DIR}
 
 protoc --proto_path=${PROTO_SRC_DIR} \
 	--plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts \
-	--plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` \
+	--plugin=protoc-gen-grpc=./node_modules/.bin/grpc_tools_node_protoc_plugin \
 	--js_out=import_style=commonjs:${GEN_OUT_DIR} \
 	--ts_out="service=grpc-node:${GEN_SRC_DIR}" \
 	--grpc_out=${GEN_OUT_DIR} \
