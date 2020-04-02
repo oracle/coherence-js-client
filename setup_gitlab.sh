@@ -11,7 +11,7 @@ curl  --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
       'https://gitlab-odx.oracledx.com/api/v4/projects/2418/repository/files/coherence-grpc-client%2Fsrc%2Fmain%2Fproto%2Fmessages%2Eproto/raw?ref=master' \
       > messages.proto
 curl  --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
-      'https://gitlab-odx.oracledx.com/api/v4/projects/2418/repository/files/coherence-grpc-client%2Fsrc%2Fmain%2Fproto%2Fservices%2Eproto/raw?ref=master'
+      'https://gitlab-odx.oracledx.com/api/v4/projects/2418/repository/files/coherence-grpc-client%2Fsrc%2Fmain%2Fproto%2Fservices%2Eproto/raw?ref=master' \
       > services.proto
 cd ../..
 
