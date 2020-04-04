@@ -29,7 +29,8 @@ function grab-proto-files() {
     cd ${ROOT}
 }
 
-function compile-proto-files() {
+# Generates and compiles the stubs generated from the installed proto files.
+function gen-compile-proto-files() {
     echo $PWD
     declare -r PROTO_SRC_DIR="${PWD}/etc/proto"
     declare -r PROTO_GEN_SRC_DIR="${PWD}/src/cache/proto"
@@ -49,7 +50,7 @@ function compile-proto-files() {
 
 function main() {
     grab-proto-files
-    compile-proto-files
+    gen-compile-proto-files
 }
 
 main
