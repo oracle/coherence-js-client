@@ -14,10 +14,7 @@ function grab-proto-files() {
 
     cd ${ROOT}
 
-    if [[ -z ${SPARSE_GRPC_COPY} ]]; then
-        return 0;
-    fi
-
+    rm -rf ${ETC_DIR} ${SPARSE_GRPC_COPY}
     mkdir ${ETC_DIR} ${SPARSE_GRPC_COPY} && cd ${SPARSE_GRPC_COPY}
 
     git init
@@ -38,6 +35,7 @@ function compile-proto-files() {
     declare -r PROTO_GEN_SRC_DIR="${PWD}/src/cache/proto"
     declare -r PROTO_GEN_OUT_DIR="${PWD}/target/src/cache/proto"
 
+    rm -rf ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}
     mkdir -p ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}
 
     protoc --proto_path=${PROTO_SRC_DIR} \
