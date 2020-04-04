@@ -4,14 +4,15 @@
   "dependencies": {
     "@grpc/proto-loader": "~0.5.3",
     "google-protobuf": "^3.0.0",
-    "grpc": "^1.24.0"
+    "grpc": "^1.24.0",
+    "request": "^2.88.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.7",
     "@types/google-protobuf": "^3.7.2",
     "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
-    "grpc-tools": "^1.8.0",
+    "grpc-tools": "^1.8.1",
     "grpc_tools_node_protoc_ts": "^2.5.8",
     "mocha": "^6.2.2",
     "mocha-typescript": "^1.1.17",
@@ -22,6 +23,8 @@
     "typescript": "^3.7.4"
   },
   "scripts": {
+    "preinstall": "bin/npm-pre-install.sh",
+    "postinstall": "bin/npm-post-install.sh",
     "compile": "tsc",
     "test": "mocha",
     "coverage": "nyc mocha"

@@ -2,3 +2,6 @@ node_modules/**
 .idea
 target
 src/cache/proto
+etc
+.npmrc
+.coherence-grpc-proxy
