@@ -5,62 +5,66 @@ Licensed under the Universal Permissive License v 1.0 as shown at
 http://oss.oracle.com/licenses/upl.
  -->
 
-# Readme
+# Coherence gRPC Javascript Client
 
-## How to build
+Coherence gRPC Javascript Client allows Node applications to act as
+cache clients to a Coherence Cluster using the ubiquitous gRPC framework as
+the network transport.
+
+In addition to supporting most Coherence cache operations, this client provides
+support for cache events allowing developers to add listeners based on a single key
+or based on a filtered set of keys and/or values.
+
+## Usage
+
+To use the Coherence gRPC Javascript Client, simply declare it as a dependency in your
+project's `project.json`:
+```json
+TODO
+```
+
+## Examples
+### Cache Access
+These examples assume a Coherence cluster is already running with gRPC support enabled (TODO reference
+to those docs once they are available).
+
+First, establish a session with the Coherence cluster:
+```typescript
+let session = new SessionBuilder().build();
+```
+
+This assumes a default of `localhost` and `1409` for the host and port the gRPC server proxy
+bound to.
+
+To use values other than the default:
+
+```typescript
+let session = new SessionBuilder().withAddress('<host>:<port>').build();
+```
+
+Once a session has been established, it is possible to start accessing caches.
+
+```typescript
+let cache = session.getCache('<cache-name>')
+cache.put("key", "value");
+cache.get("key")  // value
+```
+
+See the documentation (TODO - add link once docs are ready) for more details on what operations
+can be performed against a cache.
+
+### Events
+
+
+## Build
 
 1. You need to install:
+    - The `protoc` compiler
+    - Node 14.2.0 or later
 
-   1. protoc compiler for your platform. On mac use `brew install protoc`
-   2. node v12.13.0
 
 2. Checkout the `coherence-js` workspace and run `npm install`
-
-   1. Make sure you have the proxy setup properly (check in ~/.npmrc)
-   2. git clone https://gitlab-odx.oracledx.com/coherence/coherence-js.git
-   3. npm install
-
-3. Generate proto source files:
-
-   1. Make sure you have messages.proto and services.proto in `ext/proto` directory. This is yet to
-      be automated. We can use `curl` or `wget` to get these files from:
-      https://gitlab-odx.oracledx.com/coherence/coherence-grpc-proxy/tree/master/coherence-grpc-client/src/main/proto
-   2. Then run: setup.sh (This will generate .ts and .js files from .proto files)
+   - git clone https://gitlab-odx.oracledx.com/coherence/coherence-js.git
+   - npm install
 
 4. Then run: `npm test`
-
-## Project structure
-
-Note that TypeScript compiler doesn't allow circular imports
-(A imports B; B import C; and C imports A is disallowed)
-
-- ext/proto -> contains .proto files (from grpc-proxy project)
-- package.json
-- tsconfig.json
-- src/
-  - aggregator/
-  - cache/
-  - filter/
-  - filters.ts
-  - extractor/
-  - processor/
-  - util/
-
-target/
-
-## What has not been done:
-
-    [ ] Documentation: I am leaning towards TSDoc.
-    	https://github.com/microsoft/tsdoc
-
-    	TSDoc is a proposal to standardize the doc comments
-    	used in TypeScript source files. It allows different
-    	tools to extract content from comments without getting
-    	confused by each other's syntax.
-
-    [ ] Using curl / wget to get the .proto files from grpc-proxy project
-
-    [ ] Continuous integration using gitlab
-    	[ ] packaging .js files in target dir and publishing to artifactory / npm repo
-
-    Most of them are captured here: 	https://jira.oraclecorp.com/jira/browse/COH-18934
