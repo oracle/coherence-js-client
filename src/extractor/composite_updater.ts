@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { ValueManipulator } from "../processor/value_manipulator";
 import { ValueUpdater } from "../util/value_updater";
 import { ValueExtractor, IdentityExtractor, ChainedExtractor } from "./value_extractor";

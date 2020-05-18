@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { NamedCacheClient } from "./named_cache_client";
 import { BytesValue } from "google-protobuf/google/protobuf/wrappers_pb";
 import { EntryResult, PageRequest } from "./proto/messages_pb";

@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 // Reference mocha-typescript's global definitions:
 /// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 

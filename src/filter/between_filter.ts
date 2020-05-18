@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { ComparisonFilter, AndFilter } from './filter';
 import { ValueExtractor } from '../extractor/value_extractor';
 import { GreaterEqualsFilter } from './greater_equals_filter';

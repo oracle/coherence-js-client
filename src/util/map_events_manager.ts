@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { EventEmitter } from 'events';
 import { NamedCacheServiceClient } from "../cache/proto/services_grpc_pb";
 import { ClientDuplexStream } from "grpc";

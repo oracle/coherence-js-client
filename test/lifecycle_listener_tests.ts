@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { suite, test, slow, timeout } from "mocha-typescript";
 
 import { NamedCacheClient } from "../src/cache/named_cache_client";

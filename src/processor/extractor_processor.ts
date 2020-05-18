@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2020 Oracle and/or its affiliates.
+ *
+ * Licensed under the Universal Permissive License v 1.0 as shown at
+ * http://oss.oracle.com/licenses/upl.
+ */
+
 import { BaseProcessor } from './base_processor';
 import { IdentityExtractor, ValueExtractor, ReflectionExtractor, ChainedExtractor } from '../extractor/value_extractor';
 import { UniversalExtractor } from '../extractor/universal_extractor';
