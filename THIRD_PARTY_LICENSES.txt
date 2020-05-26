@@ -345,6 +345,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -------- Dependency
 long
 -------- Copyrights
+* Copyright 2009 The Closure Library Authors.
+* Copyright 2020 Daniel Wirtz / The long.js Contributors.
 
 ======== Dependencies Summary
 long
@@ -356,6 +358,14 @@ SPDX:Apache-2.0
 -------- Dependency
 lodash.camelcase
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 ======== Dependencies Summary
 lodash.camelcase
@@ -503,16 +513,16 @@ Copyright (c) Microsoft Corporation.
     copies of the Software, and to permit persons to whom the Software is
     furnished to do so, subject to the following conditions:
 
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE
 
 
 ======================= Dependencies Grouped by License ============
@@ -629,10 +639,7 @@ bytebuffer
 -------- Dependency
 detect-libc
 -------- Copyrights
-
--------- Dependency
-invert-kv
--------- Copyrights
+Copyright 2017 Lovell Fuller
 
 -------- Dependency
 long
@@ -643,25 +650,18 @@ long
 // Copyright 2009 The Closure Library Authors. All Rights Reserved.
 
 -------- Dependency
-optjs
--------- Copyrights
-
--------- Dependency
 protobufjs
 -------- Copyrights
  Copyright 2013 Daniel Wirtz <dcode@dcode.io>
  * Copyright 2012 The Closure Compiler Authors.
 Copyright (c) 2010 Caolan McMahon
- * Copyright (c) 2010 Caolan McMahon
 // Copyright (c) 2009 Thomas Robinson <280north.com>
 
 ======== Dependencies Summary
 ascli
 bytebuffer
 detect-libc
-invert-kv
 long
-optjs
 protobufjs
 
 ======== License used by Dependencies
@@ -681,6 +681,7 @@ Copyright (c) 2015, Rebecca Turner
 -------- Dependency
 chownr
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 cliui
@@ -695,6 +696,7 @@ Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
 -------- Dependency
 fs-minipass
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 gauge
@@ -704,6 +706,7 @@ Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
 -------- Dependency
 glob
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 has-unicode
@@ -713,62 +716,77 @@ Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
 -------- Dependency
 ignore-walk
 -------- Copyrights
+Copyright (c) 2014, Rebecca Turner <me@re-becca.org>
 
 -------- Dependency
 inflight
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 inherits
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 ini
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 minimatch
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 minipass
 -------- Copyrights
+Copyright (c) npm, Inc. and Contributors
 
 -------- Dependency
 nopt
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 npm-bundled
 -------- Copyrights
+Copyright (c) npm, Inc. and Contributors
 
 -------- Dependency
 npm-normalize-package-bin
 -------- Copyrights
+Copyright (c) npm, Inc.
 
 -------- Dependency
 npm-packlist
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 npmlog
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 once
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 osenv
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 rimraf
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 semver
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 set-blocking
@@ -783,6 +801,7 @@ Copyright (c) 2015, Contributors
 -------- Dependency
 tar
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 wide-align
@@ -792,6 +811,7 @@ Copyright (c) 2015, Rebecca Turner <me@re-becca.org>
 -------- Dependency
 wrappy
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 y18n
@@ -801,6 +821,7 @@ Copyright (c) 2015, Contributors
 -------- Dependency
 yallist
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 ======== Dependencies Summary
 aproba
@@ -853,6 +874,7 @@ PERFORMANCE OF THIS SOFTWARE.
 -------- Dependency
 ansi-regex
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 balanced-match
@@ -867,10 +889,12 @@ Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 -------- Dependency
 camelcase
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 code-point-at
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 colour
@@ -888,6 +912,7 @@ concat-map
 -------- Dependency
 core-util-is
 -------- Copyrights
+Copyright Node.js contributors. All rights reserved.
 
 -------- Dependency
 debug
@@ -897,6 +922,7 @@ Copyright (c) 2014 TJ Holowaychuk <tj@vision-media.ca>
 -------- Dependency
 decamelize
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 deep-extend
@@ -915,24 +941,48 @@ iconv-lite
 Copyright (c) 2011 Alexander Shtuchkin
 
 -------- Dependency
+invert-kv
+-------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+-------- Dependency
 is-fullwidth-code-point
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 isarray
 -------- Copyrights
+Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 
 -------- Dependency
 lcid
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 lodash.camelcase
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 -------- Dependency
 lodash.clone
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 -------- Dependency
 minimist
@@ -941,6 +991,9 @@ minimist
 -------- Dependency
 minizlib
 -------- Copyrights
+Copyright Isaac Z. Schlueter and Contributors
+Copyright Node.js contributors. All rights reserved.
+Copyright Joyent, Inc. and other Node contributors. All rights reserved.
 
 -------- Dependency
 mkdirp
@@ -961,38 +1014,51 @@ Copyright (c) 2018 NAN contributors
 -------- Dependency
 needle
 -------- Copyrights
+Copyright (c) Fork, Ltd.
 
 -------- Dependency
 number-is-nan
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 object-assign
+-------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+-------- Dependency
+optjs
 -------- Copyrights
 
 -------- Dependency
 os-homedir
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 os-locale
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 os-tmpdir
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-is-absolute
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 readable-stream
 -------- Copyrights
+Copyright Node.js contributors. All rights reserved.
 
 -------- Dependency
 safe-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 safer-buffer
@@ -1002,18 +1068,22 @@ Copyright (c) 2018 Nikita Skovoroda <chalkerx@gmail.com>
 -------- Dependency
 string-width
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 string_decoder
 -------- Copyrights
+Copyright Node.js contributors. All rights reserved.
 
 -------- Dependency
 strip-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 strip-json-comments
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 util-deprecate
@@ -1029,6 +1099,7 @@ Copyright (c) 2015, Jon Schlinkert.
 -------- Dependency
 wrap-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 yargs
@@ -1049,6 +1120,7 @@ decamelize
 deep-extend
 delegates
 iconv-lite
+invert-kv
 is-fullwidth-code-point
 isarray
 lcid
@@ -1062,6 +1134,7 @@ nan
 needle
 number-is-nan
 object-assign
+optjs
 os-homedir
 os-locale
 os-tmpdir
@@ -1740,6 +1813,7 @@ Copyright 2018 Stefan Penner
 -------- Dependency
 inherits
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 require-main-filename
@@ -1906,6 +1980,7 @@ ansi-red
 -------- Dependency
 ansi-regex
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ansi-reset
@@ -1920,6 +1995,7 @@ ansi-strikethrough
 -------- Dependency
 ansi-styles
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ansi-underline
@@ -2000,6 +2076,7 @@ Copyright (c) 2014-2017, Jon Schlinkert.
 -------- Dependency
 camelcase
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 class-utils
@@ -2057,6 +2134,7 @@ Copyright (c) 2014 TJ Holowaychuk <tj@vision-media.ca>
 -------- Dependency
 decamelize
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 decode-uri-component
@@ -2075,6 +2153,7 @@ define-property
 -------- Dependency
 emoji-regex
 -------- Copyrights
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 
 -------- Dependency
 ent
@@ -2113,6 +2192,7 @@ Copyright (c) 2014-2017, Jon Schlinkert
 -------- Dependency
 find-up
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 for-in
@@ -2214,6 +2294,7 @@ Copyright (c) 2015, Jon Schlinkert.
 -------- Dependency
 is-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 is-data-descriptor
@@ -2244,6 +2325,7 @@ Copyright (c) 2014-2016, Jon Schlinkert
 -------- Dependency
 is-fullwidth-code-point
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 is-glob
@@ -2297,6 +2379,7 @@ Copyright (c) 2015-2016, Jon Schlinkert.
 -------- Dependency
 locate-path
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 lodash._reinterpolate
@@ -2388,14 +2471,17 @@ Copyright (c) 2014-2016, Jon Schlinkert.
 -------- Dependency
 p-limit
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-locate
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-try
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 pascalcase
@@ -2405,6 +2491,7 @@ Copyright (c) 2015, Jon Schlinkert.
 -------- Dependency
 path-exists
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 posix-character-classes
@@ -2461,6 +2548,7 @@ Copyright (C) 2011 by Roly Fentanes
 -------- Dependency
 safe-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 safe-regex
@@ -2521,6 +2609,7 @@ Copyright (c) 2016, Jon Schlinkert.
 -------- Dependency
 string-width
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 string_decoder
@@ -2529,6 +2618,7 @@ string_decoder
 -------- Dependency
 strip-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 striptags
@@ -2952,6 +3042,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 -------- Dependency
 esprima
 -------- Copyrights
+Copyright JS Foundation and other contributors, https://js.foundation/
 
 ======== Dependencies Summary
 esprima
@@ -2982,17 +3073,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ======================= Dependencies Grouped by License ============
 -------- Dependency
-growl
--------- Copyrights
-
-======== Dependencies Summary
-growl
-
-======== License used by Dependencies
-SPDX:Apache-2.0
-
-======================= Dependencies Grouped by License ============
--------- Dependency
 anymatch
 -------- Copyrights
 Copyright (c) 2019 Elan Shanker, Paul Miller (https://paulmillr.com)
@@ -3015,6 +3095,7 @@ Copyright 2018 Stefan Penner
 -------- Dependency
 glob
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 glob-parent
@@ -3024,22 +3105,27 @@ Copyright (c) 2015, 2019 Elan Shanker
 -------- Dependency
 inflight
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 inherits
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 isexe
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 minimatch
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 once
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 require-main-filename
@@ -3054,6 +3140,7 @@ Copyright (c) 2016, Contributors
 -------- Dependency
 which
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 which-module
@@ -3068,6 +3155,7 @@ Copyright (c) 2015, Rebecca Turner <me@re-becca.org>
 -------- Dependency
 wrappy
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 y18n
@@ -3123,10 +3211,12 @@ Copyright (c) 2015-present, Brian Woodward.
 -------- Dependency
 ansi-regex
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ansi-styles
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 argparse
@@ -3157,10 +3247,12 @@ Copyright (c) 2014-2018, Jon Schlinkert.
 -------- Dependency
 camelcase
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 chalk
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 color-convert
@@ -3184,6 +3276,7 @@ Copyright (c) 2014 TJ Holowaychuk <tj@vision-media.ca>
 -------- Dependency
 decamelize
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 define-properties
@@ -3193,10 +3286,12 @@ Copyright (C) 2015 Jordan Harband
 -------- Dependency
 emoji-regex
 -------- Copyrights
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 
 -------- Dependency
 escape-string-regexp
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 fill-range
@@ -3206,6 +3301,7 @@ Copyright (c) 2014-present, Jon Schlinkert.
 -------- Dependency
 find-up
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 fsevents
@@ -3219,8 +3315,15 @@ function-bind
 Copyright (c) 2013 Raynos.
 
 -------- Dependency
+growl
+-------- Copyrights
+Copyright (c) 2009 TJ Holowaychuk tj@vision-media.ca
+Copyright (c) 2016 Joshua Boy Nicolai Appelman joshua@jbna.nl
+
+-------- Dependency
 has-flag
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 has-symbols
@@ -3230,6 +3333,7 @@ Copyright (c) 2016 Jordan Harband
 -------- Dependency
 he
 -------- Copyrights
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 
 -------- Dependency
 is-binary-path
@@ -3240,6 +3344,7 @@ Copyright (c) 2019 Sindre Sorhus <sindresorhus@gmail.com>
 -------- Dependency
 is-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 is-extglob
@@ -3249,6 +3354,7 @@ Copyright (c) 2014-2016, Jon Schlinkert
 -------- Dependency
 is-fullwidth-code-point
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 is-glob
@@ -3268,14 +3374,24 @@ Copyright (C) 2011-2015 by Vitaly Puzrin
 -------- Dependency
 locate-path
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 lodash
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 -------- Dependency
 log-symbols
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ms
@@ -3300,22 +3416,27 @@ Copyright (c) 2014 Jordan Harband
 -------- Dependency
 p-limit
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-locate
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-try
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-exists
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-is-absolute
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 picomatch
@@ -3335,18 +3456,22 @@ Copyright (c) 2011 Troy Goode <troygoode@gmail.com>
 -------- Dependency
 string-width
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 strip-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 strip-json-comments
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 supports-color
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 to-regex-range
@@ -3356,6 +3481,7 @@ Copyright (c) 2015-present, Jon Schlinkert.
 -------- Dependency
 wrap-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 yargs
@@ -3392,6 +3518,7 @@ fill-range
 find-up
 fsevents
 function-bind
+growl
 has-flag
 has-symbols
 he
@@ -3461,8 +3588,9 @@ Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>
 
 All rights reserved.
 
-Redistribution and use of this software in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Redistribution and use of this software in source and binary forms, with or
+without modification, are permitted provided that the following conditions are
+met:
 
 * Redistributions of source code must retain the above
   copyright notice, this list of conditions and the
@@ -3478,19 +3606,22 @@ are permitted provided that the following conditions are met:
   derived from this software without specific prior
   written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
-IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
-OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ======================= Dependencies Grouped by License ============
 -------- Dependency
 fs.realpath
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 ======== Dependencies Summary
 fs.realpath
@@ -3859,6 +3990,7 @@ Copyright (c) 2015, Contributors
 -------- Dependency
 foreground-child
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 get-caller-file
@@ -3868,34 +4000,42 @@ Copyright 2018 Stefan Penner
 -------- Dependency
 glob
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 graceful-fs
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter, Ben Noordhuis, and Contributors
 
 -------- Dependency
 inflight
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 inherits
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter
 
 -------- Dependency
 isexe
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 istanbul-lib-processinfo
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 minimatch
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 once
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 package-hash
@@ -3915,10 +4055,12 @@ Copyright (c) 2016, Contributors
 -------- Dependency
 rimraf
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 semver
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 set-blocking
@@ -3933,6 +4075,7 @@ Copyright (c) 2015, Contributors
 -------- Dependency
 spawn-wrap
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 test-exclude
@@ -3942,6 +4085,7 @@ Copyright (c) 2016, Contributors
 -------- Dependency
 which
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 which-module
@@ -3951,6 +4095,7 @@ Copyright (c) 2016, Contributors
 -------- Dependency
 wrappy
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 -------- Dependency
 write-file-atomic
@@ -4114,18 +4259,22 @@ Copyright (c) 2019 CFWare, LLC
 -------- Dependency
 aggregate-error
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ansi-regex
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 ansi-styles
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 append-transform
 -------- Copyrights
+Copyright (c) James Talmage <james@talmage.io> (github.com/jamestalmage)
 
 -------- Dependency
 archy
@@ -4149,18 +4298,22 @@ Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 -------- Dependency
 caching-transform
 -------- Copyrights
+Copyright (c) James Talmage <james@talmage.io> (github.com/jamestalmage)
 
 -------- Dependency
 camelcase
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 chalk
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 clean-stack
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 color-convert
@@ -4199,14 +4352,17 @@ Copyright (c) 2014 TJ Holowaychuk <tj@vision-media.ca>
 -------- Dependency
 decamelize
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 default-require-extensions
 -------- Copyrights
+Copyright (c) Node.js contributors, James Talmage <james@talmage.io> (github.com/jamestalmage)
 
 -------- Dependency
 emoji-regex
 -------- Copyrights
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 
 -------- Dependency
 es6-error
@@ -4216,18 +4372,22 @@ Copyright (c) 2015 Ben Youngblood
 -------- Dependency
 escape-string-regexp
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 find-cache-dir
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 find-up
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 fromentries
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 gensync
@@ -4237,14 +4397,17 @@ Copyright 2018 Logan Smyth <loganfsmyth@gmail.com>
 -------- Dependency
 globals
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 has-flag
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 hasha
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 html-escaper
@@ -4254,18 +4417,22 @@ Copyright (C) 2017-present by Andrea Giammarchi - @WebReflection
 -------- Dependency
 imurmurhash
 -------- Copyrights
+Copyright (c) 2013 Gary Court, Jens Taylor
 
 -------- Dependency
 indent-string
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 is-fullwidth-code-point
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 is-stream
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 is-typedarray
@@ -4289,6 +4456,7 @@ Copyright (C) 2011-2015 by Vitaly Puzrin
 -------- Dependency
 jsesc
 -------- Copyrights
+Copyright Mathias Bynens <https://mathiasbynens.be/>
 
 -------- Dependency
 json5
@@ -4299,18 +4467,36 @@ Copyright (c) 2012-2018 Aseem Kishore, and [others].
 -------- Dependency
 locate-path
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 lodash
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 -------- Dependency
 lodash.flattendeep
 -------- Copyrights
+Copyright JS Foundation and other contributors <https://js.foundation/>
+
+Based on Underscore.js, copyright Jeremy Ashkenas,
+DocumentCloud and Investigative Reporters & Editors <http://underscorejs.org/>
+
+This software consists of voluntary contributions made by many
+individuals. For exact contribution history, see the revision history
+available at https://github.com/lodash/lodash
 
 -------- Dependency
 make-dir
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 minimist
@@ -4329,30 +4515,37 @@ Copyright (c) 2019 CFWare, LLC
 -------- Dependency
 p-limit
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-locate
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-map
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 p-try
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-exists
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-is-absolute
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-key
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 path-parse
@@ -4362,6 +4555,7 @@ Copyright (c) 2015 Javier Blanco
 -------- Dependency
 pkg-dir
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 process-on-spawn
@@ -4381,34 +4575,42 @@ Copyright (c) 2012 James Halliday
 -------- Dependency
 resolve-from
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 safe-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 shebang-command
 -------- Copyrights
+Copyright (c) Kevin Mårtensson <kevinmartensson@gmail.com> (github.com/kevva)
 
 -------- Dependency
 shebang-regex
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 string-width
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 strip-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 strip-bom
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 supports-color
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 to-fast-properties
@@ -4418,10 +4620,12 @@ Copyright (c) 2014 Petka Antonov
 -------- Dependency
 type-fest
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 typedarray-to-buffer
 -------- Copyrights
+Copyright (c) Feross Aboukhadijeh
 
 -------- Dependency
 uuid
@@ -4433,6 +4637,7 @@ Copyright (c) 2010-2016 Robert Kieffer and other contributors
 -------- Dependency
 wrap-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 yargs
@@ -4561,6 +4766,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -------- Dependency
 fs.realpath
 -------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
 
 ======== Dependencies Summary
 fs.realpath
