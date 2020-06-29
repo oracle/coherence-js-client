@@ -5,23 +5,18 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-// Reference mocha-typescript's global definitions:
-/// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
 
-import { expect } from 'chai';
-import { suite, test, slow, timeout } from "mocha-typescript";
+import {expect} from 'chai';
+import {suite, test, timeout} from "@testdeck/mocha";
 
-import { Extractors } from '../src/extractor/extractors';
-import { Filters } from '../src/filter/filters';
-import { BetweenFilter } from '../src/filter/between_filter';
+import {Extractors} from '../src/extractor/extractors';
+import {Filters} from '../src/filter/filters';
+import {BetweenFilter} from '../src/filter/between_filter';
 
-import {
-    TestUtil,
-    val123, val234, val345, val456,
-} from './abstract_named_cache_tests';
+import {TestUtil, val123, val234, val345, val456,} from './abstract_named_cache_tests';
 
-import { NamedCacheClient } from "../src/cache/named_cache_client";
-import { SessionBuilder } from '../src/cache/session';
+import {NamedCacheClient} from "../src/cache/named_cache_client";
+import {SessionBuilder} from '../src/cache/session';
 
 export const session = new SessionBuilder().build();
 

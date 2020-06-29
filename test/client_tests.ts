@@ -5,21 +5,18 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-// Reference mocha-typescript's global definitions:
-/// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
+import {suite, test, timeout} from "@testdeck/mocha";
+import {expect} from 'chai';
 
-import { suite, test, slow, timeout } from "mocha-typescript";
-import { expect } from 'chai';
+import {Extractors} from '../src/extractor/extractors';
+import {Filters} from '../src/filter/filters';
 
-import { Extractors } from '../src/extractor/extractors';
-import { Filters } from '../src/filter/filters';
+import {Processors} from '../src/processor/processors';
 
-import { Processors } from '../src/processor/processors';
-
-import { val123, val234, val345, val456 } from './abstract_named_cache_tests';
-import { NamedCacheClient } from "../src/cache/named_cache_client";
-import { SessionBuilder } from '../src/cache/session';
-import { Aggregators } from "../src/aggregator/aggregators";
+import {val123, val234, val345, val456} from './abstract_named_cache_tests';
+import {NamedCacheClient} from "../src/cache/named_cache_client";
+import {SessionBuilder} from '../src/cache/session';
+import {Aggregators} from "../src/aggregator/aggregators";
 
 export const session = new SessionBuilder().build();
 describe("NamedCacheClient IT Test Suite", () => {

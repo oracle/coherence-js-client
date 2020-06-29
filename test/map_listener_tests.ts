@@ -5,16 +5,15 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { expect } from "chai";
-import { suite, test, slow, timeout } from "mocha-typescript";
+import {expect} from "chai";
+import {suite, test, timeout} from "@testdeck/mocha";
 
-import { EventEmitter } from 'events';
-import { NamedCacheClient } from "../src/cache/named_cache_client";
-import { Filters } from '../src/filter/filters';
-import { MapEventFilter } from '../src/filter/map_event_filter';
-import { MapEvent } from "../src/util/map_event";
-import { MapListener } from "../src/util/map_listener";
-import { SessionBuilder } from '../src/cache/session';
+import {EventEmitter} from 'events';
+import {Filters} from '../src/filter/filters';
+import {MapEventFilter} from '../src/filter/map_event_filter';
+import {MapEvent} from "../src/util/map_event";
+import {MapListener} from "../src/util/map_listener";
+import {SessionBuilder} from '../src/cache/session';
 
 export const session = new SessionBuilder().build();
 

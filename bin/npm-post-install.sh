@@ -9,30 +9,19 @@ set -e
 
 declare -r ROOT="$PWD"
 
-# Creates a shallow copy of the coherence-grpc-proxy git project and uses
-# a sparse checkout filter only checkout the proto files.  The proto
-# files are then linked to the PROJECT_ROOT/etc/proto directory.
+# Grabs the proto files from the Coherence project.
 function grab-proto-files() {
-    declare -r ETC_DIR="${ROOT}/etc"
-    declare -r GRPC_ORIGIN="git@gitlab-odx.oracledx.com:coherence/coherence-grpc-proxy.git"
-    declare -r SPARSE_GRPC_COPY="./.coherence-grpc-proxy"
-    declare -r PROTO_PATH="coherence-grpc-client/src/main/proto"
+    declare -r BASE_URL="https://raw.githubusercontent.com/oracle/coherence/master/prj/coherence-grpc/src/main/proto/"
+    declare -r PROTO_FILES=("messages.proto" "services.proto")
+    declare -r PROTO_DIR="${ROOT}/etc/proto"
+
+    if [[ ! -d "${PROTO_DIR}" ]]; then
+    	mkdir -p "${PROTO_DIR}" 
+    fi
 
     cd ${ROOT}
-
-    rm -rf ${ETC_DIR} ${SPARSE_GRPC_COPY}
-    mkdir ${ETC_DIR} ${SPARSE_GRPC_COPY} && cd ${SPARSE_GRPC_COPY}
-
-    git init
-    git remote add -f origin ${GRPC_ORIGIN}
-    git config core.sparseCheckout true
-
-    echo ${PROTO_PATH}/* > .git/info/sparse-checkout
-
-    git pull --depth=1 origin master
-
-    ln -s ${PWD}/${PROTO_PATH} ${ETC_DIR}
-    cd ${ROOT}
+    
+    for i in "${PROTO_FILES[@]}"; do curl -s "${BASE_URL}${i}" -o "${PROTO_DIR}/${i}"; done
 }
 
 # Generates and compiles the stubs generated from the installed proto files.

@@ -5,18 +5,15 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-// Reference mocha-typescript's global definitions:
-/// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
+import {RequestFactory} from '../src/cache/request_factory';
+import {expect} from 'chai';
+import {suite, test, timeout} from "@testdeck/mocha";
 
-import { RequestFactory } from '../src/cache/request_factory';
-import { expect } from 'chai';
-import { suite, test, slow, timeout } from "mocha-typescript";
-
-import { Serializer, SerializerRegistry } from '../src/util/serializer';
-import { Extractors } from '../src/extractor/extractors';
-import { Filters } from '../src/filter/filters';
-import { UniversalExtractor } from '../src/extractor/universal_extractor';
-import { states, StateType } from './states';
+import {SerializerRegistry} from '../src/util/serializer';
+import {Extractors} from '../src/extractor/extractors';
+import {Filters} from '../src/filter/filters';
+import {UniversalExtractor} from '../src/extractor/universal_extractor';
+import {states, StateType} from './states';
 
 const serializer = SerializerRegistry.instance().serializer('json');
 const reqFactory = new RequestFactory<string, StateType>("States", serializer);

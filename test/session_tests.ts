@@ -5,10 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { expect } from "chai";
-import { suite, test, slow, timeout } from "mocha-typescript";
+import {expect} from "chai";
+import {suite, test, timeout} from "@testdeck/mocha";
 
-import { SessionBuilder } from "../src/cache/session";
+import {SessionBuilder} from "../src/cache/session";
 
 describe("Session IT Test Suite", () => {
 

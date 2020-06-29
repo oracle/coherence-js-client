@@ -5,27 +5,23 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-// Reference mocha-typescript's global definitions:
-/// <reference path='../node_modules/mocha-typescript/globals.d.ts' />
+import {expect} from 'chai';
+import {suite, test, timeout} from "@testdeck/mocha";
 
-
-import { expect } from 'chai';
-import { suite, test, slow, timeout } from "mocha-typescript";
-
-import { Filters } from '../src/filter/filters';
-import { Extractors } from '../src/extractor/extractors';
-import { NamedCacheClient } from "../src/cache/named_cache_client";
-import { SessionBuilder } from '../src/cache/session';
+import {Filters} from '../src/filter/filters';
+import {Extractors} from '../src/extractor/extractors';
+import {NamedCacheClient} from "../src/cache/named_cache_client";
+import {SessionBuilder} from '../src/cache/session';
 
 export const session = new SessionBuilder().build();
 describe("Collection IT Test Suite", () => {
 
     let cache: NamedCacheClient;
 
-    const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3] };
-    const val234 = { id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null' };
-    const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5] };
-    const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], nullIfOdd: 'non-null' };
+    const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]};
+    const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], nullIfOdd: 'non-null'};
+    const val345 = {id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5]};
+    const val456 = {id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], nullIfOdd: 'non-null'};
 
     class CollectionTestSuiteBase {
 

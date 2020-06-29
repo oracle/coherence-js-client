@@ -1,31 +1,38 @@
 {
   "name": "coherence-js-client",
   "version": "0.0.1",
+  "license": "UPL-1.0",
+  "keywords": [
+    "Oracle Coherence",
+    "Coherence",
+    "gRPC",
+    "node"
+  ],
+  "repository": "https://github.com/oracle/coherence-js-client",
   "dependencies": {
-    "@grpc/proto-loader": "0.5.4",
-    "google-protobuf": "3.11.4",
-    "grpc": "1.24.0"
+    "@grpc/grpc-js": "^1.1.1",
+    "@grpc/proto-loader": "^0.5.4",
+    "google-protobuf": "^3.12.2"
   },
   "devDependencies": {
-    "@types/chai": "4.2.11",
-    "@types/google-protobuf": "3.7.2",
-    "@types/mocha": "7.0.2",
-    "chai": "4.2.0",
-    "grpc-tools": "1.8.1",
-    "grpc_tools_node_protoc_ts": "3.0.0",
-    "mocha": "7.1.2",
-    "mocha-typescript": "1.1.17",
-    "nyc": "15.0.1",
-    "source-map-support": "0.5.19",
-    "ts-node": "8.10.1",
-    "ts-protoc-gen": "0.12.0",
-    "typescript": "3.8.3"
+    "@testdeck/mocha": "^0.1.0",
+    "@types/chai": "^4.2.11",
+    "@types/google-protobuf": "^3.7.2",
+    "@types/mocha": "^7.0.2",
+    "chai": "^4.2.0",
+    "grpc-tools": "^1.9.0",
+    "grpc_tools_node_protoc_ts": "^4.1.0",
+    "mocha": "^8.0.1",
+    "nyc": "^15.0.1",
+    "source-map-support": "^0.5.19",
+    "ts-node": "^8.10.2",
+    "ts-protoc-gen": "^0.12.0",
+    "typescript": "^3.9.5"
   },
   "scripts": {
-    "preinstall": "bin/npm-pre-install.sh",
     "postinstall": "bin/npm-post-install.sh",
     "compile": "tsc",
-    "test": "mocha",
+    "test": "mocha 'target/test/**.js' --recursive --require source-map-support/register --require ts-node/register",
     "coverage": "nyc mocha"
   }
 }

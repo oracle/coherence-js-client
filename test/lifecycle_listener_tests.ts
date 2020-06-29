@@ -5,11 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { suite, test, slow, timeout } from "mocha-typescript";
+import {suite, test, timeout} from "@testdeck/mocha";
 
-import { NamedCacheClient } from "../src/cache/named_cache_client";
-import { SessionBuilder } from '../src/cache/session';
-import { expect } from "chai";
+import {SessionBuilder} from '../src/cache/session';
+import {expect} from "chai";
 
 describe("LifecycleListener IT Test Suite", () => {
 
