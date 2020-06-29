@@ -5,11 +5,11 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from "../util/util";
-import { CompositeAggregator } from "./composite_aggregator";
-import { MapEntry } from "../cache/query_map";
-import { ValueExtractor } from "../extractor/value_extractor";
-import { UniversalExtractor } from "../extractor/universal_extractor";
+import { MapEntry } from '../cache/query_map'
+import { UniversalExtractor } from '../extractor/universal_extractor'
+import { ValueExtractor } from '../extractor/value_extractor'
+import { Util } from '../util/util'
+import { CompositeAggregator } from './composite_aggregator'
 
 /**
  * An EntryAggregator represents processing that can be directed to occur
@@ -24,18 +24,12 @@ import { UniversalExtractor } from "../extractor/universal_extractor";
  * @param <R> the type of the value returned by the EntryAggregator
  */
 export interface EntryAggregator<K = any, V = any, R = any> {
-    andThen(aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R>;
+  andThen (aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R>
 }
 
 /**
  * A StreamingAggregator is an extension of {@link EntryAggregator} that
- * processes entries in a streaming fashion and provides better control
- * over {@link #characteristics() execution characteristics}.
- * <p>
- * It is strongly recommended that all new custom aggregator implementations
- * implement this interface directly and override default implementation of
- * the {@link #characteristics()} method which intentionally errs on a
- * conservative side.
+ * processes entries in a streaming fashion.
  *
  * @param <K> the type of the Map entry keys
  * @param <V> the type of the Map entry values
@@ -45,8 +39,7 @@ export interface EntryAggregator<K = any, V = any, R = any> {
  * @see EntryAggregator
  */
 export interface StreamingAggregator<K = any, V = any, P = any, R = any>
-    extends EntryAggregator<K, V, R> {
-
+  extends EntryAggregator<K, V, R> {
 }
 
 /**
@@ -62,30 +55,25 @@ export interface StreamingAggregator<K = any, V = any, P = any, R = any>
  * @since Coherence 3.1
  */
 export abstract class AbstractAggregator<K = any, V = any, T = any, E = any, R = any>
-    implements StreamingAggregator<K, V, any, R> {
+  implements StreamingAggregator<K, V, any, R> {
+  '@class': string
+  extractor: ValueExtractor<T, E>
 
-    '@class': string;
-
-    // parallel = false;
-
-    extractor: ValueExtractor<T, E>;
-
-    constructor(clz: string, extractor: ValueExtractor<T, E>);
-    constructor(clz: string, property: string);
-    constructor(clz: string, extractorOrProperty: ValueExtractor<T, E> | string) {
-        this['@class'] = Util.toAggregatorName(clz);
-        if (extractorOrProperty instanceof ValueExtractor) {
-            this.extractor = extractorOrProperty;
-        } else {
-            this.extractor = new UniversalExtractor(extractorOrProperty);
-        }
+  protected constructor (clz: string, extractorOrProperty: ValueExtractor<T, E> | string) {
+    this['@class'] = Util.toAggregatorName(clz)
+    if (extractorOrProperty instanceof ValueExtractor) {
+      this.extractor = extractorOrProperty
+    } else {
+      this.extractor = new UniversalExtractor(extractorOrProperty)
     }
+  }
 
-    aggregate(entries: Set<MapEntry<K, V>>): R {
-        throw new Error('aggregate not implemented');
-    }
+  // noinspection JSUnusedLocalSymbols
+  aggregate (entries: Set<MapEntry<K, V>>): R {
+    throw new Error('aggregate not implemented')
+  }
 
-    andThen(aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R> {
-        return new CompositeAggregator(this, aggregator);
-    }
+  andThen (aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R> {
+    return new CompositeAggregator(this, aggregator)
+  }
 }

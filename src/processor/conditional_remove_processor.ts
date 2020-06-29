@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { Filter } from '../filter/filter'
+import { BaseProcessor } from './base_processor'
 
 /**
  * ConditionalRemove is an entry processor that performs a remove
@@ -14,36 +14,34 @@ import { Filter } from '../filter/filter';
  *
  */
 export class ConditionalRemoveProcessor<K = any, V = any>
-    extends BaseProcessor<K, V, V> {
+  extends BaseProcessor<K, V, V> {
+  /**
+   * The underlying filter.
+   */
+  filter: Filter<V>
 
-    /**
-     * The underlying filter.
-     */
-    filter: Filter<V>;
+  /**
+   * Specifies whether or not a return value is required.
+   */
+  'return'?: boolean
 
-    /**
-     * Specifies whether or not a return value is required.
-     */
-    'return'?: boolean;
+  /**
+   * Construct a ConditionalPut that updates an entry with a new value if
+   * and only if the filter applied to the entry evaluates to true.
+   * The result of the {@link process()} invocation does not return any
+   * result.
+   *
+   * @param filter  the filter to evaluate an entry
+   */
+  constructor (filter: Filter<V>, returnValue?: boolean) {
+    super('ConditionalRemove')
 
-    /**
-     * Construct a ConditionalPut that updates an entry with a new value if
-     * and only if the filter applied to the entry evaluates to true.
-     * The result of the {@link process()} invocation does not return any
-     * result.
-     *
-     * @param filter  the filter to evaluate an entry
-     */
-    constructor(filter: Filter<V>, returnValue?: boolean) {
-        super('ConditionalRemove');
+    this.filter = filter
+    this.return = returnValue
+  }
 
-        this.filter = filter;
-        this['return'] = returnValue;
-    }
-
-    returnCurrent(returnCurrent: boolean = true): this {
-        this['return'] = returnCurrent;
-        return this;
-    }
-
+  returnCurrent (returnCurrent: boolean = true): this {
+    this.return = returnCurrent
+    return this
+  }
 }

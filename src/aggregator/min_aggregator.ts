@@ -5,9 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractAggregator } from "./aggregator";
-import { ValueExtractor } from "../extractor/value_extractor";
-import { AbstractDoubleAggregator } from "./abstract_double_aggregator";
+import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractDoubleAggregator } from './abstract_double_aggregator'
 
 /**
  * Calculates a minimum of numeric values extracted from a set of
@@ -15,20 +14,18 @@ import { AbstractDoubleAggregator } from "./abstract_double_aggregator";
  * objects will be treated as numerical values. If the set of entries is
  * empty, a null result is returned.
 
-* @param <T>  the type of the value to extract from
+ * @param <T>  the type of the value to extract from
  */
 export class MinAggregator<T>
-    extends AbstractDoubleAggregator<T> {
-
-    constructor(extractor: ValueExtractor<T, number>);
-    constructor(property: string);
-    constructor(extractorOrProperty: ValueExtractor<T, number> | string) {
-        // ?? This doesn't work => super(clz, extractorOrProperty);
-        if (extractorOrProperty instanceof ValueExtractor) {
-            super('ComparableMin', extractorOrProperty);
-        } else {
-            super('ComparableMin', extractorOrProperty);
-        }
+  extends AbstractDoubleAggregator<T> {
+  // constructor(extractor: ValueExtractor<T, number>);
+  // constructor(property: string);
+  constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
+    // ?? This doesn't work => super(clz, extractorOrProperty);
+    if (extractorOrProperty instanceof ValueExtractor) {
+      super('ComparableMin', extractorOrProperty)
+    } else {
+      super('ComparableMin', extractorOrProperty)
     }
-
+  }
 }

@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from "../extractor/value_extractor";
-import { ValueUpdater } from "../util/value_updater";
+import { ValueExtractor } from '../extractor/value_extractor'
+import { ValueUpdater } from '../util/value_updater'
 
 /**
  * ValueManipulator represents a composition of {@link ValueExtractor} and
@@ -15,18 +15,18 @@ import { ValueUpdater } from "../util/value_updater";
  * @param <T>  the type of object
  * @param <V>  the type of value that will be extracted/updated from/on object
  */
-export interface ValueManipulator<T=any, V=any> {
-    /**
-     * Retrieve the underlying ValueExtractor reference.
-     *
-     * @return the ValueExtractor
-     */
-    getExtractor(): ValueExtractor<T, V>;
-    
-    /**
-     * Retrieve the underlying ValueUpdater reference.
-     *
-     * @return the ValueUpdater
-     */
-    getUpdater(): ValueUpdater<T, V>;
+export interface ValueManipulator<T = any, V = any> {
+  /**
+   * Retrieve the underlying ValueExtractor reference.
+   *
+   * @return the ValueExtractor
+   */
+  getExtractor (): ValueExtractor<T, V>;
+
+  /**
+   * Retrieve the underlying ValueUpdater reference.
+   *
+   * @return the ValueUpdater
+   */
+  getUpdater (): ValueUpdater<T, V>;
 }

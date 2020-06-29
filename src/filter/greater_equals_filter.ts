@@ -5,13 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ComparisonFilter } from './filter';
-import { ValueExtractor } from '../extractor/value_extractor';
+import { ValueExtractor } from '../extractor/value_extractor'
+import { ComparisonFilter } from './filter'
 
 export class GreaterEqualsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
-
-    constructor(extractor: ValueExtractor<T, E>, value: E) {
-        super('GreaterEqualsFilter', extractor, value);
-    }
+  extends ComparisonFilter<T, E, E> {
+  constructor (extractor: ValueExtractor<T, E>, value: E) {
+    super('GreaterEqualsFilter', extractor, value)
+  }
 }

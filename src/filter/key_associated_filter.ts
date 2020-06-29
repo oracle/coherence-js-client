@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from "./filter";
+import { Filter } from './filter'
 
 /**
  * Filter which limits the scope of another filter according to the key
@@ -16,7 +16,7 @@ import { Filter } from "./filter";
  * as a part of any composite filter (AndFilter, OrFilter, etc.)
  * *Note 2:* This filter is intended to be processed only on the client
  * side of the partitioned cache service.
- * 
+ *
  * Example:
  * ```ts
  * var filter = Filter.less('age', 40).associatedWith(10);
@@ -27,26 +27,24 @@ import { Filter } from "./filter";
  * });
  * ```
  */
-export class KeyAssociatedFilter<T=any>
-    extends Filter<T>  {
+export class KeyAssociatedFilter<T = any>
+  extends Filter<T> {
+  filter: Filter<T>
 
-    filter: Filter<T>;
+  hostKey: any
 
-    hostKey: any;
-
-    /**
-     * Filter which limits the scope of another filter according to the key
-     * association information.
-     * 
-     * @param {Filter} filter the other filter whose scope to limit
-     *
-     * @param {Object} hostKey the `filter` argument will only be applied to
-     * cache service nodes that contain this key.
-     */
-    constructor(filter: Filter, hostKey: any) {
-        super('KeyAssociatedFilter');
-        this.filter = filter;
-        this.hostKey = hostKey;
-    }
-
+  /**
+   * Filter which limits the scope of another filter according to the key
+   * association information.
+   *
+   * @param {Filter} filter the other filter whose scope to limit
+   *
+   * @param {Object} hostKey the `filter` argument will only be applied to
+   * cache service nodes that contain this key.
+   */
+  constructor (filter: Filter, hostKey: any) {
+    super('KeyAssociatedFilter')
+    this.filter = filter
+    this.hostKey = hostKey
+  }
 }

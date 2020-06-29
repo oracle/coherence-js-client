@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { BaseProcessor } from './base_processor'
 
 /**
  * VersionedPut is an entry processor that performs a remove
@@ -14,47 +13,42 @@ import { Filter } from '../filter/filter';
  *
  */
 export class VersionedPutProcessor<K, V>
-    extends BaseProcessor<K, V, V> {
+  extends BaseProcessor<K, V, V> {
+  /**
+   * The underlying filter.
+   */
+  value: V
 
-    /**
-     * The underlying filter.
-     */
-    value: V;
+  /**
+   * Specifies whether or not an insert is allowed.
+   */
+  insert?: boolean
 
-    /**
-     * Specifies whether or not an insert is allowed.
-     */
-    insert?: boolean;
+  /**
+   * Specifies whether or not a return value is required.
+   */
+  'return'?: boolean
 
-    /**
-     * Specifies whether or not a return value is required.
-     */
-    'return'?: boolean;
+  /**
+   * Construct a ConditionalPut that updates an entry with a new value if
+   * and only if the filter applied to the entry evaluates to true.
+   * The result of the {@link process()} invocation does not return any
+   * result.
+   *
+   * JS Objects must have a '@version' attribute.
+   *
+   * @param filter  the filter to evaluate an entry
+   */
+  constructor (value: V, allowInsert: boolean = false, returnCurrent: boolean = false) {
+    super('VersionedPut')
 
-    /**
-     * Construct a ConditionalPut that updates an entry with a new value if
-     * and only if the filter applied to the entry evaluates to true.
-     * The result of the {@link process()} invocation does not return any
-     * result.
-     * 
-     * JS Objects must have a '@version' attribute.
-     *
-     * @param filter  the filter to evaluate an entry
-     */
-    constructor(value: V);
-    constructor(value: V, allowInsert: boolean);
-    constructor(value: V, allowInsert: boolean, returnCurrent: boolean);
-    constructor(value: V, allowInsert: boolean = false, returnCurrent: boolean = false) {        
-        super('VersionedPut');
+    this.value = value
+    this.insert = allowInsert
+    this.return = returnCurrent
+  }
 
-        this.value = value;
-        this.insert = allowInsert;
-        this['return'] = returnCurrent;
-    }
-
-    returnCurrent(returnCurrent: boolean = true): this {
-        this['return'] = returnCurrent ;
-        return this;
-    }
-
+  returnCurrent (returnCurrent: boolean = true): this {
+    this.return = returnCurrent
+    return this
+  }
 }

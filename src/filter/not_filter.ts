@@ -5,16 +5,14 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter';
+import { Filter } from './filter'
 
-export class NotFilter<T=any>
-    extends Filter<T> {
+export class NotFilter<T = any>
+  extends Filter<T> {
+  filter: Filter<T>
 
-    filter: Filter<T>;
-
-    constructor(filter: Filter<T>) {
-        super('NotFilter');
-        this.filter = filter;
-    }
-
+  constructor (filter: Filter<T>) {
+    super('NotFilter')
+    this.filter = filter
+  }
 }

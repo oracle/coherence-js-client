@@ -5,12 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ComparisonFilter, AndFilter } from './filter';
-import { ValueExtractor } from '../extractor/value_extractor';
-import { GreaterEqualsFilter } from './greater_equals_filter';
-import { LessEqualsFilter } from './less_equals_filter';
-import { LessFilter } from './less_filter';
-import { GreaterFilter } from './greater_filter';
+import { ValueExtractor } from '../extractor/value_extractor'
+import { AndFilter } from './filter'
+import { GreaterEqualsFilter } from './greater_equals_filter'
+import { GreaterFilter } from './greater_filter'
+import { LessEqualsFilter } from './less_equals_filter'
+import { LessFilter } from './less_filter'
 
 /**
  * Filter which compares the result of a method invocation with a value for
@@ -22,25 +22,24 @@ import { GreaterFilter } from './greater_filter';
  *
  * @param <T> the type of the input argument to the filter
  * @param <E> the type of the extracted attribute to use for comparison
-*/
+ */
 export class BetweenFilter<T = any, E = any>
-    extends AndFilter {
+  extends AndFilter {
+  private from: E
 
-    private from: E;
+  private to: E
 
-    private to: E;
+  constructor (extractor: ValueExtractor<T, E>, from: E, to: E,
+               includeLowerBound: boolean = false, includeUpperBound: boolean = false) {
+    super(includeLowerBound
+      ? new GreaterEqualsFilter(extractor, from)
+      : new GreaterFilter(extractor, from),
+      includeUpperBound
+        ? new LessEqualsFilter(extractor, to)
+        : new LessFilter(extractor, to)
+    )
 
-    constructor(extractor: ValueExtractor<T, E>, from: E, to: E,
-        includeLowerBound: boolean = false, includeUpperBound: boolean = false) {
-        super(includeLowerBound
-            ? new GreaterEqualsFilter(extractor, from)
-            : new GreaterFilter(extractor, from),
-            includeUpperBound
-                ? new LessEqualsFilter(extractor, to)
-                : new LessFilter(extractor, to)
-        );
-
-        this.from = from;
-        this.to = to;
-    }
+    this.from = from
+    this.to = to
+  }
 }

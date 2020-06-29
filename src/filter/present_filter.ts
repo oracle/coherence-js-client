@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter, ExtractorFilter } from './filter';
-import { ValueExtractor } from '../extractor/value_extractor';
+import { Filter } from './filter'
 
 /**
  * Filter which returns true for {@link com.tangosol.util.InvocableMap.Entry}
@@ -20,13 +19,11 @@ import { ValueExtractor } from '../extractor/value_extractor';
  *
  * @see com.tangosol.util.InvocableMap.Entry#isPresent()
  */
-export class PresentFilter<T=any>
-    extends Filter<T> {
+export class PresentFilter<T = any>
+  extends Filter<T> {
+  public static INSTANCE = new PresentFilter()
 
-    public static INSTANCE = new PresentFilter();
-
-    constructor() {
-        super('PresentFilter');
-    }
-
+  constructor () {
+    super('PresentFilter')
+  }
 }

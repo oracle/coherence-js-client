@@ -5,21 +5,19 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from './value_extractor';
+import { ValueExtractor } from './value_extractor'
 
 export class UniversalExtractor<T = any, E = any>
-    extends ValueExtractor<T, E> {
+  extends ValueExtractor<T, E> {
+  name: string
 
-    name: string;
+  params?: any[]
 
-    params?: any[];
-
-    constructor(name: string, params?: any[]) {
-        super('UniversalExtractor');
-        this.name = name;
-        if (params) {
-            this.params = params;
-        }
+  constructor (name: string, params?: any[]) {
+    super('UniversalExtractor')
+    this.name = name
+    if (params) {
+      this.params = params
     }
-
+  }
 }

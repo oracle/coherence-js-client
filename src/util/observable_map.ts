@@ -5,16 +5,16 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { MapListener } from "./map_listener";
-import { MapEventFilter } from "../filter/map_event_filter";
+import { MapEventFilter } from '../filter/map_event_filter'
+import { MapListener } from './map_listener'
 
-export interface ObservableMap<K=any, V=any> {
+export interface ObservableMap<K = any, V = any> {
 
-    on(event_name: "cache_truncated" | "cache_destroyed", handler: (cacheName: string) => void): void;
-    
-    addMapListener(listener: MapListener<K, V>, isLite?: boolean): void;
+  on (event_name: 'cache_truncated' | 'cache_destroyed', handler: (cacheName: string) => void): void;
 
-    addMapListener(listener: MapListener<K, V>, key: K, isLite?: boolean): void;
+  addMapListener (listener: MapListener<K, V>, isLite?: boolean): void;
 
-    addMapListener(listener: MapListener<K, V>, filter: MapEventFilter, isLite?: boolean): void;
+  addMapListener (listener: MapListener<K, V>, key: K, isLite?: boolean): void;
+
+  addMapListener (listener: MapListener<K, V>, filter: MapEventFilter, isLite?: boolean): void;
 }

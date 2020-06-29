@@ -5,13 +5,11 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter';
+import { Filter } from './filter'
 
 export class NeverFilter
-    extends Filter<any> {
-
-    constructor() {
-        super('NeverFilter');
-    }
-
+  extends Filter<any> {
+  constructor () {
+    super('NeverFilter')
+  }
 }

@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { BaseProcessor } from './base_processor'
 
 /**
  * RemoveBlind entry processor.
@@ -15,13 +14,11 @@ import { Filter } from '../filter/filter';
  * @param <V> the type of the Map entry value
  */
 export class RemoveBlindProcessor<K, V>
-    extends BaseProcessor<K, V, void> {
-
-    /**
-     * Construct a RemoveBlind EntryProcessor.
-     */
-    constructor() {
-        super('RemoveBlind');
-    }
-
+  extends BaseProcessor<K, V, void> {
+  /**
+   * Construct a RemoveBlind EntryProcessor.
+   */
+  constructor () {
+    super('RemoveBlind')
+  }
 }

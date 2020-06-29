@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { BaseProcessor } from './base_processor'
 
 /**
  * Put entry processor.
@@ -15,33 +14,31 @@ import { Filter } from '../filter/filter';
  * @param <V> the type of the Map entry value
  */
 export class PutProcessor<K, V>
-    extends BaseProcessor<K, V, void> {
+  extends BaseProcessor<K, V, void> {
+  /**
+   * Specifies the new value to update an entry with.
+   */
+  value: V
 
-    /**
-     * Specifies the new value to update an entry with.
-     */
-    value: V;
+  /**
+   * The "Time to live" property.
+   */
+  ttl: number = 0
 
-    /**
-     * The "Time to live" property.
-     */
-    ttl: number = 0;
+  /**
+   * Construct a Put EntryProcessor.
+   *
+   * @param filter  the filter to evaluate an entry
+   * @param value   a value to update an entry with
+   */
+  constructor (value: V, ttl: number = 0) {
+    super('Put')
 
-    /**
-     * Construct a Put EntryProcessor.
-     *
-     * @param filter  the filter to evaluate an entry
-     * @param value   a value to update an entry with
-     */
-    constructor(value: V, ttl: number = 0) {
-        super('Put');
+    this.value = value
+    this.ttl = ttl
+  }
 
-        this.value = value;
-        this.ttl = ttl;
-    }
-
-    getValue(): V {
-        return this.value;
-    }
-
+  getValue (): V {
+    return this.value
+  }
 }

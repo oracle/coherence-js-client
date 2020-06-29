@@ -5,28 +5,27 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractCompositeExtractor, ReflectionExtractor, ChainedExtractor, ValueExtractor } from './value_extractor';
+import { AbstractCompositeExtractor, ChainedExtractor, ReflectionExtractor, ValueExtractor } from './value_extractor'
 
 export class MultiExtractor
-    extends AbstractCompositeExtractor {
+  extends AbstractCompositeExtractor {
+  // constructor(extractors: ValueExtractor[]);
+  // constructor(methodNames: string);
+  constructor (extractorsOrMethod: ValueExtractor[] | string) {
+    if (typeof extractorsOrMethod === 'string') {
+      super('MultiExtractor', MultiExtractor.createExtractors(extractorsOrMethod))
+    } else {
+      super('MultiExtractor', extractorsOrMethod)
+    }
+  }
 
-    constructor(extractors: ValueExtractor[]);
-    constructor(methodNames: string);
-    constructor(extractorsOrMethod: ValueExtractor[] | string) {
-        if (typeof extractorsOrMethod === 'string') {
-            super('MultiExtractor', MultiExtractor.createExtractors(extractorsOrMethod));
-        } else {
-            super('MultiExtractor', extractorsOrMethod);
-        }
+  protected static createExtractors (fields: string): ValueExtractor<any, any>[] {
+    const names = fields.split(',').filter(f => f != null && f.length > 0)
+    const arr = new Array<ValueExtractor<any, any>>()
+    for (const name of names) {
+      arr.concat(name.indexOf('.') < 0 ? new ReflectionExtractor(name) : new ChainedExtractor(name))
     }
 
-    protected static createExtractors(fields: string): ValueExtractor<any, any>[] {
-        const names = fields.split(',').filter(f => f != null && f.length > 0);
-        let arr = new Array<ValueExtractor<any, any>>();
-        for (let name of names) {
-            arr.concat(name.indexOf('.') < 0 ? new ReflectionExtractor(name) : new ChainedExtractor(name));
-        }
-
-        return arr;
-    }
+    return arr
+  }
 }

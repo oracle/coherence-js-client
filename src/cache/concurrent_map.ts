@@ -5,11 +5,11 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { RemoteCache } from "./remote_cache";
+import { RemoteCache } from './remote_cache'
 
 /**
  * Map with concurrency features.
- * 
+ *
  * @param <K>  the type of the map entry keys.
  * @param <V>  the type of the map entry values.
  */
@@ -34,10 +34,8 @@ export interface ConcurrentMap<K = any, V = any>
    * Some implementations may allow the entire map to be locked. If the map is
    * locked in such a way, then only a lock holder is allowed to perform
    * any of the "put" or "remove" operations.
-   * Pass the special constant {@link #LOCK_ALL} as the <i>oKey</i> parameter
-   * to indicate the map lock.
    *
-   * @param key   key being locked
+   * @param key    key being locked
    * @param cWait  the number of milliseconds to continue trying to obtain
    *               a lock; pass zero to return immediately; pass -1 to block
    *               the calling thread until the lock could be obtained
@@ -52,7 +50,7 @@ export interface ConcurrentMap<K = any, V = any>
    * <i>unlocked</i>. If the item is currently locked, only
    * the <i>holder</i> of the lock could successfully unlock it.
    *
-   * @param oKey key being unlocked
+   * @param key  key being unlocked
    *
    * @return true if the item was successfully unlocked; false otherwise
    */

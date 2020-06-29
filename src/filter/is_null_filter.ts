@@ -5,14 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '../extractor/value_extractor';
-import { ComparisonFilter } from './filter';
-import { EqualsFilter } from './equals_filter';
+import { ValueExtractor } from '../extractor/value_extractor'
+import { EqualsFilter } from './equals_filter'
 
-export class IsNullFilter<T=any, E=any>
-    extends EqualsFilter<T, E | null> {
-
-    constructor(extractor: ValueExtractor<T, E>) {
-        super('IsNullFilter', extractor, null);
-    }
+export class IsNullFilter<T = any, E = any>
+  extends EqualsFilter<T, E | null> {
+  constructor (extractor: ValueExtractor<T, E>) {
+    super('IsNullFilter', extractor, null)
+  }
 }

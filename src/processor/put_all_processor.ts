@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { BaseProcessor } from './base_processor'
 
 /**
  * PutAll entry processor.
@@ -15,23 +14,21 @@ import { Filter } from '../filter/filter';
  * @param <V> the type of the Map entry value
  */
 export class PutAllProcessor<K, V>
-    extends BaseProcessor<K, V, void> {
+  extends BaseProcessor<K, V, void> {
+  /**
+   * Specifies the new value to update an entry with.
+   */
+  entries: Map<K, V>
 
-    /**
-     * Specifies the new value to update an entry with.
-     */
-    entries: Map<K, V>;
+  /**
+   * Construct a PutAll EntryProcessor.
+   *
+   * @param filter  the filter to evaluate an entry
+   * @param value   a value to update an entry with
+   */
+  constructor (entries: Map<K, V>) {
+    super('PutAll')
 
-    /**
-     * Construct a PutAll EntryProcessor.
-     *
-     * @param filter  the filter to evaluate an entry
-     * @param value   a value to update an entry with
-     */
-    constructor(entries: Map<K, V>) {
-        super('PutAll');
-
-        this.entries = entries;
-    }
-
+    this.entries = entries
+  }
 }

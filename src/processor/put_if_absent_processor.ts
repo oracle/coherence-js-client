@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor';
-import { Filter } from '../filter/filter';
+import { BaseProcessor } from './base_processor'
 
 /**
  * Put entry processor.
@@ -15,26 +14,24 @@ import { Filter } from '../filter/filter';
  * @param <V> the type of the Map entry value
  */
 export class PutIfAbsentProcessor<K, V>
-    extends BaseProcessor<K, V, void> {
+  extends BaseProcessor<K, V, void> {
+  /**
+   * Specifies the new value to update an entry with.
+   */
+  value: V
 
-    /**
-     * Specifies the new value to update an entry with.
-     */
-    value: V;
+  /**
+   * Construct a PutIfAbsent EntryProcessor.
+   *
+   * @param value   a value to update an entry with
+   */
+  constructor (value: V) {
+    super('PutIfAbsent')
 
-    /**
-     * Construct a PutIfAbsent EntryProcessor.
-     *
-     * @param value   a value to update an entry with
-     */
-    constructor(value: V) {
-        super('PutIfAbsent');
+    this.value = value
+  }
 
-        this.value = value;
-    }
-
-    getValue(): V {
-        return this.value;
-    }
-
+  getValue (): V {
+    return this.value
+  }
 }
