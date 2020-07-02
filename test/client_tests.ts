@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 import { Aggregators } from '../src/aggregator/aggregators'
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { SessionBuilder } from '../src/cache/session'
@@ -18,7 +17,9 @@ import { Processors } from '../src/processor/processors'
 
 import { val123, val234, val345, val456 } from './abstract_named_cache_tests'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
+
 describe('NamedCacheClient IT Test Suite', () => {
   let cache: NamedCacheClient
 
@@ -33,7 +34,7 @@ describe('NamedCacheClient IT Test Suite', () => {
       cache.release()
     }
 
-    protected static async populateCache (cache: NamedCacheClient<any, any>) {
+    protected static async populateCache (cache: NamedCacheClient) {
       await cache.put('123', val123)
       await cache.put('234', val234)
       await cache.put('345', val345)
@@ -65,49 +66,50 @@ describe('NamedCacheClient IT Test Suite', () => {
 
     @test
     async checkEmpty () {
-      expect(await cache.isEmpty()).to.equal(true)
+      assert.equal(await cache.isEmpty(), true)
     }
 
     @test
     async checkSize () {
-      expect(await cache.size()).to.equal(0)
+      assert.equal(await cache.size(), 0)
     }
 
     @test
     async checkGet () {
-      expect(await cache.get('123')).to.equal(null)
+      assert.equal(await cache.get('123'), null)
     }
 
     @test
     async checkClear () {
-      expect(await cache.isEmpty()).to.equal(true)
+      await cache.clear();
+      assert.equal(await cache.isEmpty(), true)
     }
 
     @test
     async containsKeyOnEmptyMap () {
-      expect(await cache.containsKey('123')).to.equal(false)
+      assert.equal(await cache.containsKey('123'), false)
     }
 
     @test
     async containsValueOnEmptyMap () {
-      expect(await cache.containsValue(val123)).to.equal(false)
+      assert.equal(await cache.containsValue(val123), false)
     }
 
     @test
     async getOnEmptyMap () {
-      expect(await cache.get('123')).to.equal(null)
+      assert.equal(await cache.get('123'), null)
     }
 
     @test
     async testOnEmptyMap () {
       const result = await cache.getAll(['123'])
-      expect(Array.from(result)).to.have.deep.members([])
+      assert.deepEqual(Array.from(result), [])
     }
 
     @test
     async getOrDefaultOnEmptyMap () {
       const value = {valid: 'yes'}
-      expect(await cache.getOrDefault('123abc', value)).to.eql(value)
+      assert.equal(await cache.getOrDefault('123abc', value), value)
     }
   }
 
@@ -118,19 +120,19 @@ describe('NamedCacheClient IT Test Suite', () => {
       @test
       async checkMinAggregator () {
         const result = await cache.aggregate(Aggregators.min('id'))
-        expect(result).to.equal(123)
+        assert.equal(result, 123)
       }
 
       @test
       async checkMaxAggregator () {
         const result = await cache.aggregate(Aggregators.max('id'))
-        expect(result).to.equal(456)
+        assert.equal(result, 456)
       }
 
       @test
       async checkAvgAggregator () {
         const result = await cache.aggregate(Aggregators.average('id'))
-        expect(Number(result)).to.equal(289.5)
+        assert.equal(Number(result), 289.5);
       }
     }
 
@@ -139,7 +141,7 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async checkSize () {
-        expect(await cache.size()).to.equal(4)
+        assert.equal(await cache.size(), 4)
       }
 
       @test
@@ -163,33 +165,31 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async checkSize () {
-        expect(await cache.size()).to.equal(4)
+        assert.equal(await cache.size(), 4);
       }
 
       @test
       async containsEntryOnEmptyMap () {
         await cache.clear()
-        expect(await cache.containsEntry('123', val123))
-          .to.equal(false)
+        assert.equal(await cache.containsEntry('123', val123), false);
       }
 
       @test
       async containsEntryOnExistingMapping () {
         await ClientTestSuiteBase.populateCache(cache)
-        expect(await cache.size()).to.equal(4)
-        expect(await cache.containsEntry('123', val123)).to.equal(true)
+        assert.equal(await  cache.size(), 4)
+        assert.equal(await cache.containsEntry('123', val123), true);
       }
 
       @test
       async containsEntryOnNonExistingMapping () {
-        expect(await cache.containsEntry('345', {id: 123, str: '123'})).to.equal(false)
+        assert.equal(await cache.containsEntry('345', {id: 123, str: '123'}), false)
       }
 
       @test
       async containsEntryWithComplexKey () {
-        expect(await cache.containsEntry('345', {id: 123, str: '123'})).to.equal(false)
-        await cache.put(val123, val234)
-        expect(await cache.containsEntry(val123, val234)).to.equal(true)
+        await cache.clear().then(await cache.put(val123, val234))
+        assert.equal(await cache.containsEntry(val123, val234), true)
       }
     }
 
@@ -198,18 +198,18 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async containsKeyOnExistingMapping () {
-        expect(await cache.containsKey('123')).to.equal(true)
+        assert.equal(await cache.containsKey('123'), true)
       }
 
       @test
       async containsKeyOnNonExistingMapping () {
-        expect(await cache.containsKey('34556')).to.equal(false)
+        assert.equal(await cache.containsKey('34556'), false)
       }
 
       @test
       async containsKeyWithComplexKey () {
         await cache.put(val123, val234)
-        expect(await cache.containsKey(val123)).to.equal(true)
+        assert.equal(await cache.containsKey(val123), true)
       }
     }
 
@@ -218,12 +218,12 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async containsValueOnExistingMapping () {
-        expect(await cache.containsValue(val123)).to.equal(true)
+        assert.equal(await cache.containsValue(val123), true)
       }
 
       @test
       async containsValueOnNonExistingMapping () {
-        expect(await cache.containsValue({id: 123, name: 'abc'})).to.equal(false)
+        assert.equal(await cache.containsValue({id: 123, name: 'abc'}), false)
       }
     }
 
@@ -232,14 +232,14 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async getOnExistingMapping () {
-        expect(await cache.get('123')).to.eql(val123)
-        expect(await cache.get('456')).to.eql(val456)
+        assert.deepEqual(await cache.get('123'), val123)
+        assert.deepEqual(await cache.get('456'), val456)
       }
 
       @test
       async getOnNonExistingMapping () {
-        expect(await cache.get({id: 123, name: 'abc'})).to.equal(null)
-        expect(await cache.get('123456')).to.equal(null)
+        assert.equal(await cache.get({id: 123, name: 'abc'}), null)
+        assert.equal(await cache.get('123456'), null)
       }
     }
 
@@ -248,21 +248,21 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async testWithEmptyKeys () {
-        expect(await cache.size()).to.equal(4)
+        assert.equal(await cache.size(), 4)
         const result = await cache.getAll([])
-        expect(result.size).to.equal(0)
-        expect(await cache.size()).to.equal(4)
-        expect(Array.from(result)).to.have.deep.members([])
+        assert.equal(result.size, 0)
+        assert.equal(await cache.size(), 4)
+        assert.deepEqual(Array.from(result), [])
       }
 
       @test
       async testWithExistingKeys () {
-        expect(await cache.size()).to.equal(4)
+        assert.equal(await cache.size(), 4)
         const entries = await cache.getAll(['123', '234', '345'])
 
-        expect(entries.size).to.equal(3)
-        expect(Array.from(entries.keys())).to.have.deep.members(['123', '234', '345'])
-        expect(Array.from(entries.values())).to.have.deep.members([val123, val234, val345])
+        assert.equal(entries.size, 3)
+        assert.deepEqual(new Set(Array.from(entries.keys())), new Set(['123', '234', '345']))
+        assert.deepEqual(new Set(Array.from(entries.values())), new Set([val123, val234, val345]))
       }
     }
 
@@ -273,12 +273,12 @@ describe('NamedCacheClient IT Test Suite', () => {
 
       @test
       async getOrDefaultOnExistingMapping () {
-        expect(await cache.getOrDefault('123', this.dVal)).to.eql(val123)
+        assert.deepEqual(await cache.getOrDefault('123', this.dVal), val123)
       }
 
       @test
       async getOnNonExistingMapping () {
-        expect(await cache.getOrDefault({id: 123, name: 'abc'}, this.dVal)).to.eql(this.dVal)
+        assert.deepEqual(await cache.getOrDefault({id: 123, name: 'abc'}, this.dVal), this.dVal)
       }
     }
 
@@ -288,20 +288,20 @@ describe('NamedCacheClient IT Test Suite', () => {
       @test
       async putOnEmptyMap () {
         await cache.clear()
-        expect(await cache.put('123', val123)).to.equal(null)
+        assert.equal(await cache.put('123', val123), null)
       }
 
       @test
       async getOnExistingMapping () {
-        expect(await cache.put('123', {id: 123})).to.eql(val123)
-        expect(await cache.get('123')).to.eql({id: 123})
-        expect(await cache.put('123', val123)).to.eql({id: 123})
-        expect(await cache.get('123')).to.eql(val123)
+        assert.deepEqual(await cache.put('123', {id: 123}), val123)
+        assert.deepEqual(await cache.get('123'), {id: 123})
+        assert.deepEqual(await cache.put('123', val123), {id: 123})
+        assert.deepEqual(await cache.get('123'), val123)
       }
 
       @test
       async getOnNonExistingMapping () {
-        expect(await cache.get('123456')).to.equal(null)
+        assert.equal(await cache.get('123456'),null)
       }
     }
 
@@ -310,20 +310,20 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async checkSizeWhenIsEmptyIsFalse () {
-        expect(await cache.size()).to.not.equal(0)
-        expect(await cache.isEmpty()).to.equal(false)
+        assert.equal(await cache.size(), 4)
+        assert.equal(await cache.isEmpty(), false)
       }
 
       @test
       async checkSizeAndIsEmptyOnPut () {
         await cache.clear()
-        expect(await cache.size()).to.equal(0)
-        expect(await cache.isEmpty()).to.equal(true)
+        assert.equal(await cache.size(), 0)
+        assert.equal(await cache.isEmpty(), true)
 
         await cache.put(val123, val234)
 
-        expect(await cache.size()).to.not.equal(0)
-        expect(await cache.isEmpty()).to.equal(false)
+        assert.equal(await cache.size(), 1)
+        assert.equal(await cache.isEmpty(), false)
       }
     }
 
@@ -332,12 +332,12 @@ describe('NamedCacheClient IT Test Suite', () => {
       extends ClientTestSuiteBase {
       @test
       async invokeOnAnExistingKey () {
-        expect(await cache.invoke('123', Processors.extract())).to.eql(val123)
+        assert.deepEqual(await cache.invoke('123', Processors.extract()), val123)
       }
 
       @test
       async invokeOnANonExistingKey () {
-        expect(await cache.invoke('123456', Processors.extract())).to.equal(null)
+        assert.equal(await cache.invoke('123456', Processors.extract()), null)
       }
     }
 
@@ -350,8 +350,8 @@ describe('NamedCacheClient IT Test Suite', () => {
         const result = await cache.invokeAll(requestKeys, Processors.extract())
 
         const {keys, values} = super.extractKeysAndValues(result)
-        expect(Array.from(keys)).to.have.deep.members(['345', '123', '234', '456'])
-        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456])
+        assert.deepEqual(new Set(Array.from(keys)), new Set(['345', '123', '234', '456']))
+        assert.deepEqual(new Set(Array.from(values)), new Set([val123, val234, val345, val456]))
       }
 
       @test
@@ -360,8 +360,8 @@ describe('NamedCacheClient IT Test Suite', () => {
         const result = await cache.invokeAll(requestKeys, Processors.extract())
 
         const {keys, values} = super.extractKeysAndValues(result)
-        expect(Array.from(keys)).to.have.deep.members(Array.from(requestKeys))
-        expect(Array.from(values)).to.have.deep.members([val234, val345])
+        assert.deepEqual(new Set(Array.from(keys)), new Set(Array.from(requestKeys)))
+        assert.deepEqual(new Set(Array.from(values)), new Set([val234, val345]))
       }
 
       @test
@@ -370,8 +370,8 @@ describe('NamedCacheClient IT Test Suite', () => {
         const result = await cache.invokeAll(requestKeys, Processors.extract())
 
         const {keys, values} = super.extractKeysAndValues(result)
-        expect(Array.from(keys)).to.have.deep.members(['345', '123', '234', '456'])
-        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456])
+        assert.deepEqual(new Set(Array.from(keys)), new Set(['345', '123', '234', '456']))
+        assert.deepEqual(new Set(Array.from(values)), new Set([val123, val234, val345, val456]))
       }
 
       @test
@@ -380,11 +380,11 @@ describe('NamedCacheClient IT Test Suite', () => {
 
         const {keys, values} = super.extractKeysAndValues(result)
 
-        expect(keys.length).to.equal(4)
-        expect(values.length).to.equal(4)
+        assert.equal(keys.length, 4)
+        assert.equal(values.length, 4)
 
-        expect(Array.from(keys)).to.have.deep.members(['123', '234', '345', '456'])
-        expect(Array.from(values)).to.have.deep.members([val123, val234, val345, val456])
+        assert.deepEqual(new Set(Array.from(keys)), new Set(['345', '123', '234', '456']))
+        assert.deepEqual(new Set(Array.from(values)), new Set([val123, val234, val345, val456]))
       }
     }
   })

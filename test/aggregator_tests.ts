@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 import { Aggregators } from '../src/aggregator/aggregators'
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { SessionBuilder } from '../src/cache/session'
@@ -15,7 +14,9 @@ import { Filters } from '../src/filter/filters'
 
 import { val123, val234, val345, val456 } from './abstract_named_cache_tests'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
+
 describe('Aggregators IT Test Suite', () => {
   let cache: NamedCacheClient
 
@@ -30,22 +31,11 @@ describe('Aggregators IT Test Suite', () => {
       cache.release()
     }
 
-    protected static async populateCache (cache: NamedCacheClient<any, any>) {
+    protected static async populateCache (cache: NamedCacheClient) {
       await cache.put('123', val123)
       await cache.put('234', val234)
       await cache.put('345', val345)
       await cache.put('456', val456)
-    }
-
-    protected extractKeysAndValues (map: Map<any, any>): { keys: Array<any>, values: Array<any> } {
-      const keys = new Array<any>()
-      const values = new Array<any>()
-
-      for (const [key, value] of map) {
-        keys.push(key)
-        values.push(value)
-      }
-      return {keys, values}
     }
   }
 
@@ -58,20 +48,20 @@ describe('Aggregators IT Test Suite', () => {
       @test
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
-        expect(Number(result)).to.equal(289.5)
+        assert.equal(Number(result), 289.5)
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456)
         const result = await cache.aggregate(filter, agg)
-        expect(Number(result)).to.equal(289.5)
+        assert.equal(Number(result), 289.5)
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['345', '456'], agg)
-        expect(Number(result)).to.equal(400.5)
+        assert.equal(Number(result), 400.5)
       }
     }
   })
@@ -85,20 +75,20 @@ describe('Aggregators IT Test Suite', () => {
       @test
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
-        expect(result).to.equal('123')
+        assert.equal(result, '123')
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 345, 456, true, true)
         const result = await cache.aggregate(filter, agg)
-        expect(result).to.equal('345')
+        assert.equal(result, '345')
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['345', '456'], agg)
-        expect(result).to.equal('345')
+        assert.equal(result, '345')
       }
     }
   })
@@ -112,20 +102,20 @@ describe('Aggregators IT Test Suite', () => {
       @test
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
-        expect(result).to.equal(45.6)
+        assert.equal(result, 45.6)
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456, true, false)
         const result = await cache.aggregate(filter, agg)
-        expect(result).to.equal(34.5)
+        assert.equal(result, 34.5)
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['123', '345'], agg)
-        expect(Number(result)).to.equal(34.5)
+        assert.equal(result, 34.5)
       }
     }
   })
@@ -139,20 +129,20 @@ describe('Aggregators IT Test Suite', () => {
       @test
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
-        expect(result).to.equal(4)
+        assert.equal(result, 4)
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456, true, false)
         const result = await cache.aggregate(filter, agg)
-        expect(result).to.equal(3)
+        assert.equal(result, 3)
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['123', '345'], agg)
-        expect(result).to.equal(2)
+        assert.equal(result, 2)
       }
     }
   })
@@ -167,21 +157,20 @@ describe('Aggregators IT Test Suite', () => {
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
         console.log(' Distinct result: ' + JSON.stringify(result))
-
-        expect(result).to.have.deep.members([1, 2, 3])
+        assert.deepEqual(new Set(result), new Set([1, 2, 3]))
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456, true, false)
         const result = await cache.aggregate(filter, agg)
-        expect(result).to.have.deep.members([1, 2])
+        assert.deepEqual(new Set(result), new Set([1, 2]))
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['123', '345'], agg)
-        expect(result).to.have.deep.members([1, 2])
+        assert.deepEqual(new Set(result), new Set([1, 2]))
       }
     }
   })
@@ -196,23 +185,23 @@ describe('Aggregators IT Test Suite', () => {
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
         console.log(' GroupBy result: ' + JSON.stringify(result))
-        expect(result).to.have.deep.members([{key: 2, value: 234}, {key: 1, value: 123}, {
+        assert.deepEqual(new Set(result), new Set([{key: 2, value: 234}, {key: 1, value: 123}, {
           key: 3,
           value: 456
-        }])
+        }]))
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456, true, false)
         const result = await cache.aggregate(filter, agg)
-        expect(result).to.have.deep.members([{key: 2, value: 234}, {key: 1, value: 123}])
+        assert.deepEqual(new Set(result), new Set([{key: 2, value: 234}, {key: 1, value: 123}]))
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['123', '345'], agg)
-        expect(result).to.have.deep.members([{key: 1, value: 123}, {key: 2, value: 345}])
+        assert.deepEqual(new Set(result), new Set([{key: 1, value: 123}, {key: 2, value: 345}]))
       }
     }
   })
@@ -226,20 +215,20 @@ describe('Aggregators IT Test Suite', () => {
       @test
       async shouldAggregateAllEntries () {
         const result = await cache.aggregate(agg)
-        expect(Number(result)).to.equal(1158)
+        assert.equal(Number(result), 1158)
       }
 
       @test
       async shouldAggregateFilteredEntries () {
         const filter = Filters.between('id', 123, 456, true, false)
         const result = await cache.aggregate(filter, agg)
-        expect(Number(result)).to.equal(702)
+        assert.equal(Number(result), 702)
       }
 
       @test
       async shouldAggregateEntriesForSpecifiedKeys () {
         const result = await cache.aggregate(['123', '456'], agg)
-        expect(Number(result)).to.equal(579)
+        assert.equal(Number(result), 579)
       }
     }
   })

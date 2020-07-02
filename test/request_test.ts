@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 import { RequestFactory } from '../src/cache/request_factory'
 import { Extractors } from '../src/extractor/extractors'
 import { UniversalExtractor } from '../src/extractor/universal_extractor'
@@ -15,6 +14,7 @@ import { Filters } from '../src/filter/filters'
 import { SerializerRegistry } from '../src/util/serializer'
 import { states, StateType } from './states'
 
+export const assert = require('assert').strict;
 const serializer = SerializerRegistry.instance().serializer('json')
 const reqFactory = new RequestFactory<string, StateType>('States', serializer)
 
@@ -22,87 +22,91 @@ const reqFactory = new RequestFactory<string, StateType>('States', serializer)
 class RequestStructureSuite {
   @test checkClear () {
     const request = reqFactory.clear()
-    expect(request.getCache()).to.equal('States')
+    assert.equal(request.getCache(), 'States')
   }
 
   @test addIndexWithExtractor () {
     const request = reqFactory.addIndex(Extractors.extract('abbreviation'))
-    const ue = new UniversalExtractor('abbreviation')
-    expect(request.getCache()).to.equal('States')
-    expect(serializer.deserialize(request.getExtractor())).to.eql(ue)
-    expect(request.getSorted()).to.equal(false)
-    const compLen = request.getComparator_asU8().length
-    expect(request.getComparator_asU8().length).to.equal(0)
+    const ue = serializer.deserialize(serializer.serialize(new UniversalExtractor('abbreviation')))
+    assert.equal(request.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
+    assert.equal(request.getSorted(), false)
+    assert.equal(request.getComparator_asU8().length, 0)
   }
 
   @test addIndexWithExtractorAndSorted () {
     const request = reqFactory.addIndex(Extractors.extract('abbreviation'), true)
-    const ue = new UniversalExtractor('abbreviation')
-    expect(request.getCache()).to.equal('States')
-    expect(serializer.deserialize(request.getExtractor())).to.eql(ue)
-    expect(request.getSorted()).to.equal(true)
-    expect(request.getComparator_asU8().length).to.equal(0)
+    const ue = serializer.deserialize(serializer.serialize(new UniversalExtractor('abbreviation')))
+    assert.equal(request.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
+    assert.equal(request.getSorted(), true)
+    assert.equal(request.getComparator_asU8().length, 0)
   }
 
   @test addIndexWithExtractorAndSortedAndComparator () {
     const ue = Extractors.extract('abbreviation')
     const request = reqFactory.addIndex(ue, true, ue)
-    expect(request.getCache()).to.equal('States')
-    expect(serializer.deserialize(request.getExtractor())).to.eql(ue)
-    expect(request.getSorted()).to.equal(true)
-    expect(request.getComparator_asU8().length).to.not.equal(0)
+    const ueSerial = serializer.deserialize(serializer.serialize(ue))
+    assert.equal(request.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(request.getExtractor()), ueSerial)
+    assert.equal(request.getSorted(), true)
+    assert.notEqual(request.getComparator_asU8().length, 0)
   }
 
   @test containsEntry () {
     const ce = reqFactory.containsEntry('key1', states.ca)
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getKey())).to.equal('key1')
-    expect(serializer.deserialize(ce.getValue())).to.eql(states.ca)
+    assert.equal(ce.getCache(), 'States')
+    assert.equal(serializer.deserialize(ce.getKey()), 'key1')
+    assert.deepEqual(serializer.deserialize(ce.getValue()), states.ca)
   }
 
   @test containsKey () {
     const ce = reqFactory.containsKey('key1')
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getKey())).to.equal('key1')
+    assert.equal(ce.getCache(), 'States')
+    assert.equal(serializer.deserialize(ce.getKey()), 'key1')
   }
 
   @test containsValue () {
     const ce = reqFactory.containsValue(states.ca)
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getValue())).to.eql(states.ca)
+    assert.equal(ce.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(ce.getValue()), states.ca)
   }
 
   @test getWithStringKey () {
     const ce = reqFactory.get('key1')
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getKey())).to.equal('key1')
+    assert.equal(ce.getCache(), 'States')
+    assert.equal(serializer.deserialize(ce.getKey()), 'key1')
   }
 
   @test getWithObjectKey () {
     const factory = new RequestFactory<StateType, StateType>('States', serializer)
     const ce = factory.get(states.ca)
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getKey())).to.eql(states.ca)
+    assert.equal(ce.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(ce.getKey()), states.ca)
   }
 
   @test entrySetWithFilter () {
+    const filterSer = serializer.deserialize(serializer.serialize(Filters.always()))
     const ce = reqFactory.entrySet(Filters.always())
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getFilter())).to.eql(Filters.always())
-    expect(ce.getComparator_asU8().length).to.equal(0)
+    assert.equal(ce.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
+    assert.equal(ce.getComparator_asU8().length, 0)
   }
 
   @test entrySetWithFilterAndComparator () {
+    const filterSer = serializer.deserialize(serializer.serialize(Filters.always()))
+    const extractorSer = serializer.deserialize(serializer.serialize(Extractors.extract('abbreviation')))
     const ce = reqFactory.entrySet(Filters.always(), Extractors.extract('abbreviation'))
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getFilter())).to.eql(Filters.always())
-    expect(ce.getComparator_asU8().length).not.to.equal(0)
-    expect(serializer.deserialize(ce.getComparator())).to.eql(Extractors.extract('abbreviation'))
+    assert.equal(ce.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
+    assert.notEqual(ce.getComparator_asU8().length, 0)
+    assert.deepEqual(serializer.deserialize(ce.getComparator()), extractorSer)
   }
 
   @test keySetWithFilter () {
+    const filterSer = serializer.deserialize(serializer.serialize(Filters.always()))
     const ce = reqFactory.keySet(Filters.always())
-    expect(ce.getCache()).to.equal('States')
-    expect(serializer.deserialize(ce.getFilter())).to.eql(Filters.always())
+    assert.equal(ce.getCache(), 'States')
+    assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
   }
 }

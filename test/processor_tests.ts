@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { SessionBuilder } from '../src/cache/session'
 
@@ -27,6 +26,7 @@ import {
   val456
 } from './abstract_named_cache_tests'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
 
 describe('Processors IT Test Suite', () => {
@@ -68,7 +68,7 @@ describe('Processors IT Test Suite', () => {
       await versioned.release()
     }
 
-    protected static async populateNestedCache (cache: NamedCacheClient) {
+    protected static async populateNestedCache () {
       await nested.clear()
       await nested.put('To', toObj)
       await nested.put('TypeScript', tscObj)
@@ -85,17 +85,18 @@ describe('Processors IT Test Suite', () => {
     public async before () {
       await cache.clear()
       await TestUtil.populateCache(cache)
-      await ExtractorProcessorTestsSuiteBase.populateNestedCache(cache)
+      await ExtractorProcessorTestsSuiteBase.populateNestedCache()
     }
   }
 
+  // ExtractorProcessor
+  @suite(timeout(3000))
   class ExtractorProcessorTestsSuite
     extends ExtractorProcessorTestsSuiteBase {
-    // ExtractorProcessor
     @test
     testTypeNameOfExtractorProcessor () {
       const processor = Processors.extract('str')
-      expect(processor['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
+      assert.equal(processor['@class'], Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
     }
 
     @test
@@ -103,8 +104,8 @@ describe('Processors IT Test Suite', () => {
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
       const value = await cache.invoke('123', processor)
 
-      expect(value.length).to.equal(2)
-      expect(value).to.have.deep.members([123, '123'])
+      assert.equal(value.length, 2)
+      assert.deepEqual(value, [123, '123'])
     }
 
     @test
@@ -112,9 +113,9 @@ describe('Processors IT Test Suite', () => {
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
       const result = await cache.invokeAll(new Set(['123', '234']), processor)
 
-      expect(result.size).to.equal(2)
-      expect(Array.from(result.keys())).to.have.deep.members(['123', '234'])
-      expect(Array.from(result.values())).to.have.deep.members([[123, '123'], [234, '234']])
+      assert.equal(result.size, 2)
+      assert.deepEqual(new Set(result.keys()), new Set(['123', '234']))
+      assert.deepEqual(new Set(result.values()), new Set([[123, '123'], [234, '234']]))
     }
 
     @test
@@ -122,11 +123,9 @@ describe('Processors IT Test Suite', () => {
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
       const result = await cache.invokeAll(Filters.always(), processor)
 
-      expect(result.size).to.equal(4)
-      expect(Array.from(result.keys())).to.have.deep.members(['123', '234', '345', '456'])
-      expect(Array.from(result.values())).to.have.deep.members([
-        [123, '123'], [234, '234'], [345, '345'], [456, '456']
-      ])
+      assert.equal(result.size, 4)
+      assert.deepEqual(new Set(result.keys()), new Set(['123', '234', '345', '456']))
+      assert.deepEqual(new Set(result.values()), new Set([[123, '123'], [234, '234'], [345, '345'], [456, '456']]))
     }
 
     @test
@@ -134,12 +133,12 @@ describe('Processors IT Test Suite', () => {
       const processor = Processors.extract()
       const f1 = Filters.equal(Extractors.chained('j.a.v.word'), 'JavaScript')
         .or(Filters.equal(Extractors.chained('j.a.d.word'), 'Jade'))
-
       const result = await nested.invokeAll(f1, processor)
-      expect(Array.from(result.keys()).length).to.equal(2)
-      expect(Array.from(result.values()).length).to.equal(2)
-      expect(Array.from(result.keys())).to.have.deep.members(['JavaScript', 'Jade'])
-      expect(Array.from(result.values())).to.have.deep.members([javascriptObj, jadeObj])
+
+      assert.equal(Array.from(result.keys()).length, 2)
+      assert.equal(Array.from(result.values()).length, 2)
+      assert.deepEqual(new Set(result.keys()), new Set(['JavaScript', 'Jade']))
+      assert.deepEqual(new Set(result.values()), new Set([javascriptObj, jadeObj]))
     }
   }
 
@@ -150,11 +149,11 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeName () {
       const ep = Processors.extract('id')
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
 
       const cp = ep.andThen(Processors.extract('str'))
         .andThen(Processors.extract('iVal'))
-      expect(cp['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'CompositeProcessor')
+      assert.equal(cp['@class'], Util.PROCESSOR_PACKAGE + 'CompositeProcessor')
     }
 
     @test
@@ -162,32 +161,31 @@ describe('Processors IT Test Suite', () => {
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
       const value = await cache.invoke('123', processor)
 
-      expect(value.length).to.equal(2)
-      expect(value).to.have.deep.members([123, '123'])
+      assert.equal(value.length, 2)
+      assert.deepEqual(value, [123, '123'])
     }
 
     @test
     async testInvokeAllWithContainsAnyFilter () {
       const filter = Filters.arrayContainsAny(Extractors.extract('iarr'), [1, 2])
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
-
       const result = await cache.invokeAll(filter, processor)
       //        expect(Array.from(result.keys())).to.have.deep.members(['123', '234', '345', '456']);
 
-      expect(Array.from(result).length).to.equal(2)
-      expect(Array.from(result.keys())).to.have.deep.members(['123', '234'])
-      expect(Array.from(result.values())).to.have.deep.members([[123, '123'], [234, '234']])
+      assert.equal(Array.from(result).length, 2)
+      assert.deepEqual(new Set(result.keys()), new Set(['123', '234']))
+      assert.deepEqual(new Set(result.values()), new Set([[123, '123'], [234, '234']]))
     }
 
     @test
     async testInvokeAllWithContainsAllFilter () {
       const filter = Filters.arrayContainsAll(Extractors.extract('iarr'), [2, 4])
       const processor = Processors.extract('id').andThen(Processors.extract('str'))
-
       const result = await cache.invokeAll(filter, processor)
-      expect(Array.from(result).length).to.equal(1)
-      expect(Array.from(result.keys())).to.have.deep.members(['234'])
-      expect(Array.from(result.values())).to.have.deep.members([[234, '234']])
+
+      assert.equal(Array.from(result).length, 1)
+      assert.deepEqual(new Set(result.keys()), new Set(['234']))
+      assert.deepEqual(new Set(result.values()), new Set([[234, '234']]))
     }
   }
 
@@ -200,26 +198,26 @@ describe('Processors IT Test Suite', () => {
       const ep = Processors.extract('str')
         .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]))
 
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ConditionalProcessor')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalProcessor')
     }
 
     @test
     async testInvokeWithKey () {
       const ep = Processors.extract('str')
         .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]))
-
       const value = await cache.invoke('123', ep)
-      expect(value).to.equal('123')
+
+      assert.equal(value, '123')
     }
 
     @test
     async testInvokeAllWithMultipleKeys () {
       const ep = Processors.extract('str')
         .when(Filters.arrayContainsAny(Extractors.extract('iarr'), [2, 3]))
-
       const value = await cache.invokeAll(new Set(['234', '345', '456']), ep)
-      expect(Array.from(value.keys())).to.have.deep.members(['234', '345'])
-      expect(Array.from(value.values())).to.have.deep.members(['234', '345'])
+
+      assert.deepEqual(Array.from(value.keys()), ['234', '345'])
+      assert.deepEqual(Array.from(value.values()), ['234', '345'])
     }
   }
 
@@ -230,21 +228,22 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeName () {
       const ep = Processors.conditionalPut(Filters.always(), 'someValue')
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ConditionalPut')
-      expect(ep.doesReturnValue()).to.equal(true)
-      expect(ep.getValue()).to.equal('someValue')
+
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalPut')
+      assert.equal(ep.doesReturnValue(), true)
+      assert.equal(ep.getValue(), 'someValue')
     }
 
     @test
     async testInvoke () {
       const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2])
       const ep = Processors.conditionalPut(f1, val234).returnCurrent()
-      const value = await cache.invoke('123', ep)
+      await cache.invoke('123', ep)
 
-      expect(await cache.get('123')).to.eql(val234)
-      expect(await cache.get('234')).to.eql(val234)
-      expect(await cache.get('345')).to.eql(val345)
-      expect(await cache.get('456')).to.eql(val456)
+      assert.deepEqual(await cache.get('123'), val234)
+      assert.deepEqual(await cache.get('234'), val234)
+      assert.deepEqual(await cache.get('345'), val345)
+      assert.deepEqual(await cache.get('456'), val456)
     }
 
     @test
@@ -254,10 +253,10 @@ describe('Processors IT Test Suite', () => {
 
       await cache.invokeAll(f1, ep)
 
-      expect(await cache.get('123')).to.eql(val234)
-      expect(await cache.get('234')).to.eql(val234)
-      expect(await cache.get('345')).to.eql(val345)
-      expect(await cache.get('456')).to.eql(val456)
+      assert.deepEqual(await cache.get('123'), val234)
+      assert.deepEqual(await cache.get('234'), val234)
+      assert.deepEqual(await cache.get('345'), val345)
+      assert.deepEqual(await cache.get('456'), val456)
     }
   }
 
@@ -268,7 +267,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.conditionalPutAll(Filters.always(), new Map())
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ConditionalPutAll')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalPutAll')
     }
 
     @test
@@ -280,10 +279,10 @@ describe('Processors IT Test Suite', () => {
 
       await cache.invokeAll(ep)
 
-      expect(await cache.get('123')).to.eql(val234)
-      expect(await cache.get('234')).to.eql(val234)
-      expect(await cache.get('345')).to.eql(val456)
-      expect(await cache.get('456')).to.eql(val456)
+      assert.deepEqual(await cache.get('123'), val234)
+      assert.deepEqual(await cache.get('234'), val234)
+      assert.deepEqual(await cache.get('345'), val456)
+      assert.deepEqual(await cache.get('456'), val456)
     }
 
     @test
@@ -295,10 +294,10 @@ describe('Processors IT Test Suite', () => {
 
       await cache.invokeAll(Filters.always(), ep)
 
-      expect(await cache.get('123')).to.eql(val234)
-      expect(await cache.get('234')).to.eql(val234)
-      expect(await cache.get('345')).to.eql(val345)
-      expect(await cache.get('456')).to.eql(val456)
+      assert.deepEqual(await cache.get('123'), val234)
+      assert.deepEqual(await cache.get('234'), val234)
+      assert.deepEqual(await cache.get('345'), val345)
+      assert.deepEqual(await cache.get('456'), val456)
     }
 
     @test
@@ -311,10 +310,10 @@ describe('Processors IT Test Suite', () => {
 
       await cache.invokeAll(['123', '234', '345', '456'], ep)
 
-      expect(await cache.get('123')).to.eql(val234)
-      expect(await cache.get('234')).to.eql(val234)
-      expect(await cache.get('345')).to.eql(val345)
-      expect(await cache.get('456')).to.eql(val456)
+      assert.deepEqual(await cache.get('123'), val234)
+      assert.deepEqual(await cache.get('234'), val234)
+      assert.deepEqual(await cache.get('345'), val345)
+      assert.deepEqual(await cache.get('456'), val456)
     }
 
     @test
@@ -331,12 +330,12 @@ describe('Processors IT Test Suite', () => {
 
       await cache.invokeAll(ep)
 
-      expect(await cache.get('123')).to.eql(newVal1)
-      expect(await cache.get('234')).to.eql(newVal2)
-      expect(await cache.get('345')).to.eql(val345)
-      expect(await cache.get('456')).to.eql(val456)
-      expect(await cache.get('2-123')).to.equal(null)
-      expect(await cache.get('2-234')).to.equal(null)
+      assert.deepEqual(await cache.get('123'), newVal1)
+      assert.deepEqual(await cache.get('234'), newVal2)
+      assert.deepEqual(await cache.get('345'), val345)
+      assert.deepEqual(await cache.get('456'), val456)
+      assert.equal(await cache.get('2-123'), null)
+      assert.equal(await cache.get('2-234'), null)
     }
 
     @test
@@ -365,33 +364,33 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.conditionalRemove(Filters.always())
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'ConditionalRemove')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalRemove')
     }
 
     @test
     async testRemovalOfOneExistingKey () {
-      expect(await cache.size()).to.equal(4)
-      expect(await cache.get('123')).to.eql(val123)
+      assert.equal(await cache.size(), 4)
+      assert.deepEqual(await cache.get('123'), val123)
 
       const ep = Processors.conditionalRemove(Filters.present())
       const removedValue = await cache.invoke('123', ep)
-      expect(removedValue).to.equal(null)
+      assert.equal(removedValue, null);
 
-      expect(await cache.size()).to.equal(3)
-      expect(await cache.get('123')).to.equal(null)
+      assert.equal(await cache.size(), 3)
+      assert.equal(await cache.get('123'), null)
     }
 
     @test
     async testRemovalWithNeverFilter () {
-      expect(await cache.size()).to.equal(4)
-      expect(await cache.get('123')).to.eql(val123)
+      assert.equal(await cache.size(), 4)
+      assert.deepEqual(await cache.get('123'), val123)
 
       const ep = Processors.conditionalRemove(Filters.never()).returnCurrent()
       const removedValue = await cache.invoke('123', ep)
-      expect(removedValue).to.eql(val123)
+      assert.deepEqual(removedValue, val123);
 
-      expect(await cache.size()).to.equal(4)
-      expect(await cache.get('123')).to.eql(val123)
+      assert.equal(await cache.size(), 4)
+      assert.deepEqual(await cache.get('123'), val123)
     }
   }
 
@@ -402,7 +401,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.versionedPut(versioned123)
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'VersionedPut')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'VersionedPut')
     }
 
     @test
@@ -411,7 +410,7 @@ describe('Processors IT Test Suite', () => {
       await versioned.invoke('123', ep)
 
       const expected = {'@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]}
-      expect(await versioned.get('123')).to.eql(expected)
+      assert.deepEqual(await versioned.get('123'), expected)
     }
 
     @test
@@ -419,7 +418,7 @@ describe('Processors IT Test Suite', () => {
       const ep = Processors.versionedPut(versioned123)
       await versioned.invoke('456', ep)
 
-      expect(await versioned.get('456')).to.eql(versioned456)
+      assert.deepEqual(await versioned.get('456'), versioned456)
     }
 
     @test
@@ -427,7 +426,7 @@ describe('Processors IT Test Suite', () => {
       const ep = Processors.versionedPut(versioned123)
       await versioned.invoke('456', ep)
 
-      expect(await versioned.get('456')).to.eql(versioned456)
+      assert.deepEqual(await versioned.get('456'), versioned456)
     }
   }
 
@@ -438,9 +437,10 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.versionedPutAll(new Map())
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'VersionedPutAll')
-      expect(ep.insert).to.equal(false)
-      expect(ep.return).to.equal(false)
+
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'VersionedPutAll')
+      assert.equal(ep.insert, false)
+      assert.equal(ep.return, false)
     }
 
     @test
@@ -450,7 +450,7 @@ describe('Processors IT Test Suite', () => {
       entries.set('456', versioned456)
       const ep = Processors.versionedPutAll(entries, true)
 
-      const result = await versioned.invokeAll(['123', '456'], ep)
+      await versioned.invokeAll(['123', '456'], ep)
 
       const expected123 = {'@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]}
       const expected456 = {
@@ -463,7 +463,7 @@ describe('Processors IT Test Suite', () => {
         nullIfOdd: 'non-null'
       }
 
-      TestUtil.validate(versioned, ['123', '234', '345', '456'],
+      await TestUtil.validate(versioned, ['123', '234', '345', '456'],
         [expected123, versioned234, versioned345, expected456])
     }
   }
@@ -475,7 +475,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.update('a.b.ival', 12300)
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'UpdaterProcessor')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'UpdaterProcessor')
     }
 
     @test
@@ -487,8 +487,9 @@ describe('Processors IT Test Suite', () => {
 
       const processor = Processors.extract('ival').andThen(Processors.extract('str'))
       const value = await cache.invoke('123', processor)
-      expect(value.length).to.equal(2)
-      expect(value).to.have.deep.members([123000, '123000'])
+
+      assert.equal(value.length, 2)
+      assert.deepEqual(value, [123000, '123000'])
     }
 
     @test
@@ -496,15 +497,15 @@ describe('Processors IT Test Suite', () => {
       const ep1 = Processors.update('str', '123000')
         .andThen(Processors.update('ival', 123000))
 
-      const keys = ['123', '234', '345']
+      const keys = new Set(['123', '234', '345'])
+      const val = new Set([[123000, '123000'], [123000, '123000'], [123000, '123000']])
       await cache.invokeAll(keys, ep1)
 
       const processor = Processors.extract('ival').andThen(Processors.extract('str'))
       const value = await cache.invokeAll(keys, processor)
 
-      expect(Array.from(value.keys())).to.have.deep.members(keys)
-      const val = [123000, '123000']
-      expect(Array.from(value.values())).to.have.deep.members([val, val, val])
+      assert.deepEqual(new Set(value.keys()), keys)
+      assert.deepEqual(new Set(value.values()), val)
     }
 
     @test
@@ -512,15 +513,15 @@ describe('Processors IT Test Suite', () => {
       const ep1 = Processors.update('str', '123000')
         .andThen(Processors.update('ival', 123000))
 
-      const keys = ['123', '234', '345', '456']
+      const keys = new Set(['123', '234', '345', '456'])
+      const expectedValues = new Set([[123, '123'], [123000, '123000'], [123000, '123000'], [456, '456']])
       await cache.invokeAll(Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4]), ep1)
 
       const processor = Processors.extract('ival').andThen(Processors.extract('str'))
       const value = await cache.invokeAll(keys, processor)
 
-      expect(Array.from(value.keys())).to.have.deep.members(keys)
-      const expectedValues = [[123, '123'], [123000, '123000'], [123000, '123000'], [456, '456']]
-      expect(Array.from(value.values())).to.have.deep.members(expectedValues)
+      assert.deepEqual(new Set(value.keys()), keys)
+      assert.deepEqual(new Set(value.values()), expectedValues)
     }
   }
 
@@ -531,15 +532,15 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.invokeAccessor('ival')
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'MethodInvocationProcessor')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'MethodInvocationProcessor')
     }
 
     @test
     async testAgainstSingleKey () {
       const ep = Processors.invokeAccessor('get', 'ival')
-
       const value = await cache.invoke('123', ep)
-      expect(value).to.equal(123)
+
+      assert.equal(value, 123)
     }
 
     @test
@@ -551,10 +552,10 @@ describe('Processors IT Test Suite', () => {
       const value = await cache.get('123')
 
       // Check removed values
-      expect(status).to.have.deep.members([123, [1, 2, 3]])
+      assert.deepEqual(status, [123, [1, 2, 3]])
 
       // Ensure that remaining attributes are still intact.
-      expect(value).to.eql({id: 123, str: '123', fval: 12.3, group: 1})
+      assert.deepEqual(value, {id: 123, str: '123', fval: 12.3, group: 1})
     }
   }
 
@@ -566,23 +567,23 @@ describe('Processors IT Test Suite', () => {
     testTypeNameOf () {
       const ep: any = Processors.multiply('ival', 2)
 
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberMultiplier')
-      expect(ep.manipulator['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
-      expect(ep.manipulator.extractor['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
-      expect(ep.manipulator.updater['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'NumberMultiplier')
+      assert.equal(ep.manipulator['@class'], Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
+      assert.equal(ep.manipulator.extractor['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
+      assert.equal(ep.manipulator.updater['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
     }
 
     @test
     async testAgainstSingleKey () {
-      expect(await cache.get('123')).to.eql(val123)
+      assert.deepEqual(await cache.get('123'), val123)
       const value1 = await cache.invoke('123', Processors.multiply('ival', 2).returnNewValue())
-      expect(value1).to.equal(246)
+      assert.equal(value1, 246)
       let current = await cache.get('123')
-      expect(current.ival).to.equal(246)
+      assert.equal(current.ival, 246)
       const value2 = await cache.invoke('123', Processors.multiply('ival', 0.5).returnNewValue())
-      expect(value2).to.equal(123)
+      assert.equal(value2, 123)
       current = await cache.get('123')
-      expect(current.ival).to.equal(123)
+      assert.equal(current.ival, 123)
     }
   }
 
@@ -594,23 +595,23 @@ describe('Processors IT Test Suite', () => {
     testTypeNameOf () {
       const ep: any = Processors.increment('ival', 2)
 
-      expect(ep['@class']).to.equal(Util.PROCESSOR_PACKAGE + 'NumberIncrementor')
-      expect(ep.manipulator['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
-      expect(ep.manipulator.extractor['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
-      expect(ep.manipulator.updater['@class']).to.equal(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
+      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'NumberIncrementor')
+      assert.equal(ep.manipulator['@class'], Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
+      assert.equal(ep.manipulator.extractor['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
+      assert.equal(ep.manipulator.updater['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
     }
 
     @test
     async testAgainstSingleKey () {
-      expect(await cache.get('123')).to.eql(val123)
+      assert.deepEqual(await cache.get('123'), val123)
       const value1 = await cache.invoke('123', Processors.increment('ival', 2).returnNewValue())
-      expect(value1).to.equal(125)
+      assert.equal(value1, 125)
       let current = await cache.get('123')
-      expect(current.ival).to.equal(125)
+      assert.equal(current.ival, 125)
       const value2 = await cache.invoke('123', Processors.increment('ival', -25).returnNewValue())
-      expect(value2).to.equal(100)
+      assert.equal(value2, 100)
       current = await cache.get('123')
-      expect(current.ival).to.equal(100)
+      assert.equal(current.ival, 100)
     }
   }
 })

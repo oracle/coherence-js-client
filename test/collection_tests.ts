@@ -6,14 +6,15 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { SessionBuilder } from '../src/cache/session'
 import { Extractors } from '../src/extractor/extractors'
 
 import { Filters } from '../src/filter/filters'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
+
 describe('Collection IT Test Suite', () => {
   let cache: NamedCacheClient
 
@@ -31,7 +32,7 @@ describe('Collection IT Test Suite', () => {
       cache.release()
     }
 
-    protected static async populateCache (cache: NamedCacheClient<any, any>) {
+    protected static async populateCache (cache: NamedCacheClient) {
       await cache.put('123', val123)
       await cache.put('234', val234)
       await cache.put('345', val345)
@@ -42,17 +43,6 @@ describe('Collection IT Test Suite', () => {
       await cache.clear()
       await CollectionTestSuiteBase.populateCache(cache)
     }
-
-    protected extractKeysAndValues (map: Map<any, any>): { keys: Array<any>, values: Array<any> } {
-      const keys = new Array<any>()
-      const values = new Array<any>()
-
-      for (const [key, value] of map) {
-        keys.push(key)
-        values.push(value)
-      }
-      return {keys, values}
-    }
   }
 
   @suite(timeout(3000))
@@ -60,7 +50,7 @@ describe('Collection IT Test Suite', () => {
     extends CollectionTestSuiteBase {
     @test
     async keySet () {
-      expect(await cache.size()).to.equal(4)
+      assert.equal(await cache.size(), 4)
       const keys = await cache.keySet()
       const expected = new Set<string>()
       expected.add('123').add('234').add('345').add('456')
@@ -72,9 +62,9 @@ describe('Collection IT Test Suite', () => {
         count++
         set.add(k)
       }
-      expect(count).to.equal(4)
-      expect(set.size).to.equal(4)
-      expect(set).to.eql(expected)
+      assert.equal(count, 4)
+      assert.equal(set.size, 4)
+      assert.deepEqual(set, expected)
     }
 
     @test
@@ -83,9 +73,9 @@ describe('Collection IT Test Suite', () => {
       let count = 0
       for await (const k of keys) {
         count++
-        expect(k).to.equal('234')
+        assert.equal(k, '234')
       }
-      expect(count).to.equal(1)
+      assert.equal(count, 1)
     }
 
     @test
@@ -101,8 +91,8 @@ describe('Collection IT Test Suite', () => {
         set.add(k)
       }
 
-      expect(count).to.equal(3)
-      expect(set).to.eql(expected)
+      assert.equal(count, 3)
+      assert.deepEqual(set, expected)
     }
 
     @test
@@ -118,8 +108,8 @@ describe('Collection IT Test Suite', () => {
         set.add(k)
       }
 
-      expect(count).to.equal(3)
-      expect(set).to.eql(expected)
+      assert.equal(count, 3)
+      assert.deepEqual(set, expected)
     }
   }
 
@@ -139,9 +129,8 @@ describe('Collection IT Test Suite', () => {
         count++
         set.add(e.getValue())
       }
-      expect(count).to.equal(4)
-      expect(set.size).to.equal(4)
-      // expect(set).to.eql(expected);
+      assert.equal(count, 4)
+      assert.deepEqual(set, expected)
     }
 
     @test
@@ -150,9 +139,9 @@ describe('Collection IT Test Suite', () => {
       let count = 0
       for await (const e of entries) {
         count++
-        expect(val234).to.eql(e.getValue())
+        assert.deepEqual(e.getValue(), val234)
       }
-      expect(count).to.equal(1)
+      assert.equal(count, 1)
     }
 
     @test
@@ -161,9 +150,9 @@ describe('Collection IT Test Suite', () => {
       let count = 0
       for await (const e of entries) {
         count++
-        expect(val345).to.eql(e.getValue())
+        assert.deepEqual(e.getValue(), val345)
       }
-      expect(count).to.equal(1)
+      assert.equal(count, 1)
     }
 
     @test
@@ -179,8 +168,8 @@ describe('Collection IT Test Suite', () => {
         set.add(e.getValue())
       }
 
-      expect(count).to.equal(3)
-      expect(set).to.eql(expected)
+      assert.equal(count, 3)
+      assert.deepEqual(set, expected)
     }
   }
 
@@ -189,7 +178,7 @@ describe('Collection IT Test Suite', () => {
     extends CollectionTestSuiteBase {
     @test
     async values () {
-      expect(await cache.size()).to.equal(4)
+      assert.equal(await cache.size(), 4)
       const values = await cache.values()
       const expected = new Set()
       expected.add(val123).add(val234).add(val345).add(val456)
@@ -201,9 +190,9 @@ describe('Collection IT Test Suite', () => {
         count++
         set.add(v)
       }
-      expect(count).to.equal(4)
-      expect(set.size).to.equal(4)
-      // expect(set).to.eql(expected);
+
+      assert.equal(count, 4)
+      assert.deepEqual(set, expected)
     }
 
     @test
@@ -212,9 +201,9 @@ describe('Collection IT Test Suite', () => {
       let count = 0
       for await (const v of values) {
         count++
-        expect(val234).to.eql(v)
+        assert.deepEqual(v, val234)
       }
-      expect(count).to.equal(1)
+      assert.equal(count, 1)
     }
 
     @test
@@ -223,9 +212,9 @@ describe('Collection IT Test Suite', () => {
       let count = 0
       for await (const v of values) {
         count++
-        expect(val345).to.eql(v)
+        assert.deepEqual(v, val345)
       }
-      expect(count).to.equal(1)
+      assert.equal(count, 1)
     }
 
     @test
@@ -241,8 +230,8 @@ describe('Collection IT Test Suite', () => {
         set.add(v)
       }
 
-      expect(count).to.equal(3)
-      expect(set).to.eql(expected)
+      assert.equal(count, 3)
+      assert.deepEqual(set, expected)
     }
   }
 })

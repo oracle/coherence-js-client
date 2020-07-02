@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 
 import { EventEmitter } from 'events'
 import { SessionBuilder } from '../src/cache/session'
@@ -15,6 +14,7 @@ import { MapEventFilter } from '../src/filter/map_event_filter'
 import { MapEvent } from '../src/util/map_event'
 import { MapListener } from '../src/util/map_listener'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
 
 describe('MapListener IT Test Suite', () => {
@@ -23,8 +23,8 @@ describe('MapListener IT Test Suite', () => {
     @test
     async shouldNotHaveReceivedAnyEventsWhenNoUpdatesToCache () {
       const cache = session.getCache('map-list-1')
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_destroyed', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_destroyed', () => {
           resolve()
         })
       })
@@ -34,14 +34,14 @@ describe('MapListener IT Test Suite', () => {
         await cache.destroy()
       })
       await prom
-      expect(stringify(listener.counters)).to.equal(stringify({}))
+      assert.deepEqual(stringify(listener.counters), stringify({}))
     }
 
     @test
     async testAllEventsMapListener () {
       const cache = session.getCache('map-list-2')
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_destroyed', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_destroyed', () => {
           resolve()
         })
       })
@@ -58,14 +58,14 @@ describe('MapListener IT Test Suite', () => {
       })
 
       await prom
-      expect(stringify(listener.counters)).to.equal(stringify({insert: 1, delete: 1}))
+      assert.deepEqual(stringify(listener.counters), stringify({insert: 1, delete: 1}))
     }
 
     @test
     async testMultipleAllEventsMapListener () {
       const cache = session.getCache('map-list-3')
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_destroyed', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_destroyed', () => {
           resolve()
         })
       })
@@ -89,15 +89,15 @@ describe('MapListener IT Test Suite', () => {
 
       await prom
 
-      expect(stringify(listener.counters)).to.equal(stringify({insert: 2, delete: 2}))
-      expect(stringify(listener2.counters)).to.equal(stringify({insert: 1, delete: 1}))
+      assert.deepEqual(stringify(listener.counters), stringify({insert: 2, delete: 2}))
+      assert.deepEqual(stringify(listener2.counters), stringify({insert: 1, delete: 1}))
     }
 
     @test
     async shouldReceiveEventsWithAlwaysFilter () {
       const cache = session.getCache('map-list-4')
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_destroyed', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_destroyed', () => {
           resolve()
         })
       })
@@ -133,16 +133,16 @@ describe('MapListener IT Test Suite', () => {
       })
       await prom
 
-      expect(stringify(listener.counters)).to.equal(stringify({insert: 2, delete: 1}))
-      expect(stringify(filterListener.counters)).to.equal(stringify({insert: 3, delete: 2}))
+      assert.deepEqual(stringify(listener.counters), stringify({insert: 2, delete: 2}))
+      assert.deepEqual(stringify(filterListener.counters), stringify({insert: 3, delete: 2}))
     }
 
     @test
     async shouldCloseChannelIfReleaseIsCalled () {
       const cache = session.getCache('map-listener-cache')
       // Use a KeyListener and a FilterListener
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_released', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_released', () => {
           resolve()
         })
       })
@@ -158,16 +158,16 @@ describe('MapListener IT Test Suite', () => {
       })
       await prom
 
-      expect(stringify(keyListener.counters)).to.equal(stringify({}))
-      expect(stringify(filterListener.counters)).to.equal(stringify({}))
+      assert.deepEqual(stringify(keyListener.counters), stringify({}))
+      assert.deepEqual(stringify(filterListener.counters), stringify({}))
     }
 
     @test
     async shouldReceiveEventsForRemainingListenersAfterOneListenerIsUnregistered () {
       const cache = session.getCache('map-listener-cache')
       // Use 2 KeyListeners and two FilterListeners
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_released', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_released', () => {
           resolve()
         })
       })
@@ -202,11 +202,11 @@ describe('MapListener IT Test Suite', () => {
       await cache.release()
       await prom
 
-      expect(stringify(keyListener1.counters)).to.equal(stringify({insert: 1, delete: 1}))
-      expect(stringify(filterListener2.counters)).to.equal(stringify({insert: 1, delete: 1}))
+      assert.deepEqual(stringify(keyListener1.counters), stringify({insert: 1, delete: 1}))
+      assert.deepEqual(stringify(filterListener2.counters), stringify({insert: 1, delete: 1}))
 
-      expect(stringify(filterListener1.counters)).to.equal(stringify({insert: 2, delete: 2}))
-      expect(stringify(keyListener2.counters)).to.equal(stringify({insert: 2, delete: 2}))
+      assert.deepEqual(stringify(filterListener1.counters), stringify({insert: 2, delete: 2}))
+      assert.deepEqual(stringify(keyListener2.counters), stringify({insert: 2, delete: 2}))
     }
 
     @test
@@ -215,15 +215,15 @@ describe('MapListener IT Test Suite', () => {
       let truncateCount = 0
       let destroyCount = 0
 
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_truncated', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_truncated', () => {
           truncateCount++
         })
-        cache.on('cache_destroyed', (cacheName: string) => {
+        cache.on('cache_destroyed', () => {
           destroyCount++
 
-          expect(truncateCount).to.equal(2)
-          expect(destroyCount).to.equal(1)
+          assert.deepEqual(truncateCount, 2)
+          assert.deepEqual(destroyCount, 1)
 
           resolve()
         })
@@ -246,16 +246,16 @@ describe('MapListener IT Test Suite', () => {
       let truncateCount = 0
       let releasedCount = 0
 
-      const prom = new Promise((resolve, reject) => {
-        cache.on('cache_truncated', (cacheName: string) => {
+      const prom = new Promise((resolve) => {
+        cache.on('cache_truncated', () => {
           truncateCount++
         })
         cache.on('cache_released', (cacheName: string) => {
           console.log('Test [shouldBeAbleToRegisterCacheLifecycleListenersForCacheRelease] received cache_released for: ' + cacheName)
           releasedCount++
 
-          expect(truncateCount).to.equal(2)
-          expect(releasedCount).to.equal(1)
+          assert.deepEqual(truncateCount, 2)
+          assert.deepEqual(releasedCount, 1)
 
           resolve()
         })
@@ -304,8 +304,8 @@ describe('MapListener IT Test Suite', () => {
       }
 
       const self = this
-      return new Promise((resolve, reject) => {
-        self.on('event', (eventName, cacheEventName) => {
+      return new Promise((resolve) => {
+        self.on('event', () => {
           if (checkValue(expected, this.counters) == null) {
             resolve()
           }

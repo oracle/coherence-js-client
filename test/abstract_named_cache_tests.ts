@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { expect } from 'chai'
 import { NamedCacheClient } from '../src/cache/named_cache_client'
+
+export const assert = require('assert').strict;
 
 export const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1}
 export const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null'}
@@ -20,53 +21,33 @@ export const jadeObj = {j: {a: {d: {level: 4, word: 'Jade', tokens: ['j', 'a', '
 export const javascriptObj = {j: {a: {level: 4, v: {word: 'JavaScript', tokens: ['j', 'a', 'v']}}}}
 
 export class TestUtil {
-  static async populateCache (cache: NamedCacheClient<any, any>) {
+  static async populateCache (cache: NamedCacheClient) {
     await cache.put('123', val123)
     await cache.put('234', val234)
     await cache.put('345', val345)
     await cache.put('456', val456)
   }
 
-  static toArrayUsing<K> (entries: Set<any>, fn: (e: any) => K): Array<K> {
-    const keys: Array<K> = new Array<K>()
+  static toSetUsing<T> (entries: Set<any>, fn: (e: any) => T): Set<T> {
+    const keys: Set<T> = new Set<T>()
     for (const entry of entries) {
-      keys.push(fn(entry))
+      keys.add(fn(entry))
     }
     return keys
   }
 
-  static entriesToKeys<K> (entries: Set<any>): Array<K> {
-    return this.toArrayUsing(entries, (e) => e.getKey())
+  static entriesToKeys<K> (entries: Set<any>): Set<K> {
+    return this.toSetUsing(entries, (e) => e.getKey())
   }
 
-  static entriesToValues<K> (entries: Set<any>): Array<K> {
-    return this.toArrayUsing(entries, (e) => e.getValue())
+  static entriesToValues<V> (entries: Set<any>): Set<V> {
+    return this.toSetUsing(entries, (e) => e.getValue())
   }
 
-  static toEntries (entries: Set<any>): Array<{ key: any, value: any }> {
-    const array: Array<any> = new Array<any>()
-    for (const entry of entries) {
-      array.push({key: entry.getKey(), value: entry.getValue()})
-    }
-
-    return array
-  }
-
-  static extractKeysAndValues (map: Map<any, any>): { keys: Array<any>, values: Array<any> } {
-    const keys = new Array<any>()
-    const values = new Array<any>()
-
-    for (const [key, value] of map) {
-      keys.push(key)
-      values.push(value)
-    }
-    return {keys, values}
-  }
-
-  static async validate (namedCache: NamedCacheClient<any, any>,
+  static async validate (namedCache: NamedCacheClient,
                          expectedKeys: Array<any>, expectedValues: Array<any>) {
     for (let index = 0; index < expectedKeys.length; index++) {
-      expect(await namedCache.get(expectedKeys[index])).to.eql(expectedValues[index])
+      assert.deepEqual(await namedCache.get(expectedKeys[index]), expectedValues[index])
     }
   }
 }

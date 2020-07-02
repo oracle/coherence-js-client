@@ -6,7 +6,6 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 
 import { NamedCacheClient } from '../src/cache/named_cache_client'
 import { SessionBuilder } from '../src/cache/session'
@@ -14,7 +13,9 @@ import { SessionBuilder } from '../src/cache/session'
 import { Extractors } from '../src/extractor/extractors'
 import { Filters } from '../src/filter/filters'
 
+export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
+
 describe('Extractor IT Test Suite', () => {
   let nested: NamedCacheClient
 
@@ -39,11 +40,11 @@ describe('Extractor IT Test Suite', () => {
     }
 
     protected static async populateCache (cache: NamedCacheClient) {
-      await nested.put('To', toObj)
-      await nested.put('TypeScript', tscObj)
-      await nested.put('Trie', trieObj)
-      await nested.put('Jade', jadeObj)
-      await nested.put('JavaScript', javascriptObj)
+      await cache.put('To', toObj)
+      await cache.put('TypeScript', tscObj)
+      await cache.put('Trie', trieObj)
+      await cache.put('Jade', jadeObj)
+      await cache.put('JavaScript', javascriptObj)
     }
 
     public async before () {
@@ -59,12 +60,12 @@ describe('Extractor IT Test Suite', () => {
       return keys
     }
 
-    protected entriesToKeys<K> (entries: Set<any>): Array<K> {
-      return this.toArrayUsing(entries, (e) => e.getKey())
+    protected entriesToKeys<K> (entries: Set<any>): Set<K> {
+      return new Set<K>(this.toArrayUsing(entries, (e) => e.getKey()))
     }
 
-    protected entriesToValues<K> (entries: Set<any>): Array<K> {
-      return this.toArrayUsing(entries, (e) => e.getValue())
+    protected entriesToValues<V> (entries: Set<any>): Set<V> {
+      return new Set<V>(this.toArrayUsing(entries, (e) => e.getValue()))
     }
   }
 
@@ -78,9 +79,9 @@ describe('Extractor IT Test Suite', () => {
         Extractors.extract('t'), Extractors.extract('r'), Extractors.extract('word')), 'Trie')
       const entries = await nested.entrySet(f1)
 
-      expect(entries.size).to.equal(1)
-      expect(this.entriesToKeys(entries)).to.have.deep.members(['Trie'])
-      expect(this.entriesToValues(entries)).to.have.deep.members([trieObj])
+      assert.equal(entries.size, 1)
+      assert.deepEqual(this.entriesToKeys(entries), new Set(['Trie']))
+      assert.deepEqual(this.entriesToValues(entries), new Set([trieObj]))
     }
 
     @test
@@ -91,9 +92,9 @@ describe('Extractor IT Test Suite', () => {
         Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('d'), Extractors.extract('word')), 'Jade'))
       const entries = await nested.entrySet(f2)
 
-      expect(entries.size).to.equal(2)
-      expect(this.entriesToKeys(entries)).to.have.deep.members(['JavaScript', 'Jade'])
-      expect(this.entriesToValues(entries)).to.have.deep.members([javascriptObj, jadeObj])
+      assert.equal(entries.size, 2)
+      assert.deepEqual(this.entriesToKeys(entries), new Set(['JavaScript', 'Jade']))
+      assert.deepEqual(this.entriesToValues(entries), new Set([javascriptObj, jadeObj]))
     }
 
     @test
@@ -104,8 +105,8 @@ describe('Extractor IT Test Suite', () => {
         Extractors.extract('j'), Extractors.extract('a'), Extractors.extract('d'), Extractors.extract('word')), 'Jade'))
       const values = await nested.values(f2)
 
-      expect(values.size).to.equal(2)
-      expect(Array.from(values)).to.have.deep.members([javascriptObj, jadeObj])
+      assert.equal(values.size, 2)
+      assert.deepEqual(values, new Set([javascriptObj, jadeObj]))
     }
 
     @test
@@ -113,9 +114,9 @@ describe('Extractor IT Test Suite', () => {
       const f1 = Filters.equal(Extractors.chained('t.r.word'), 'Trie')
       const entries = await nested.entrySet(f1)
 
-      expect(entries.size).to.equal(1)
-      expect(this.entriesToKeys(entries)).to.have.deep.members(['Trie'])
-      expect(this.entriesToValues(entries)).to.have.deep.members([trieObj])
+      assert.equal(entries.size, 1)
+      assert.deepEqual(this.entriesToKeys(entries), new Set(['Trie']))
+      assert.deepEqual(this.entriesToValues(entries), new Set([trieObj]))
     }
 
     @test
@@ -124,9 +125,9 @@ describe('Extractor IT Test Suite', () => {
       const f2 = f1.or(Filters.equal(Extractors.chained('j.a.d.word'), 'Jade'))
       const entries = await nested.entrySet(f2)
 
-      expect(entries.size).to.equal(2)
-      expect(this.entriesToKeys(entries)).to.have.deep.members(['JavaScript', 'Jade'])
-      expect(this.entriesToValues(entries)).to.have.deep.members([javascriptObj, jadeObj])
+      assert.equal(entries.size, 2)
+      assert.deepEqual(this.entriesToKeys(entries), new Set(['JavaScript', 'Jade']))
+      assert.deepEqual(this.entriesToValues(entries), new Set([javascriptObj, jadeObj]))
     }
 
     @test
@@ -135,8 +136,8 @@ describe('Extractor IT Test Suite', () => {
       const f2 = f1.or(Filters.equal(Extractors.chained('j.a.d.word'), 'Jade'))
       const values = await nested.values(f2)
 
-      expect(values.size).to.equal(2)
-      expect(Array.from(values)).to.have.deep.members([javascriptObj, jadeObj])
+      assert.equal(values.size, 2)
+      assert.deepEqual(values, new Set([javascriptObj, jadeObj]))
     }
   }
 
@@ -165,26 +166,26 @@ describe('Extractor IT Test Suite', () => {
       const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3)
       const keys = await UniversalExtractorSuite.cache.keySet(f1)
 
-      expect(keys.size).to.equal(3)
-      expect(Array.from(keys)).to.have.deep.members(['123', '234', '345'])
+      assert.equal(keys.size, 3)
+      assert.deepEqual(keys, new Set(['123', '234', '345']))
     }
 
     @test
     async testUniversalExtractorWithArrayContainsWithEntrySet () {
       const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3)
       const entries = await UniversalExtractorSuite.cache.entrySet(f1)
-
-      expect(entries.size).to.equal(3)
-      expect(this.entriesToKeys(entries)).to.have.deep.members(['123', '234', '345'])
-      expect(this.entriesToValues(entries)).to.have.deep.members([val123, val234, val345])
+      assert.equal(entries.size, 3)
+      assert.deepEqual(this.entriesToKeys(entries), new Set(['123', '234', '345']))
+      assert.deepEqual(this.entriesToValues(entries), new Set([val123, val234, val345]))
     }
 
     @test
     async testUniversalExtractorWithArrayContainsWithValues () {
       const f1 = Filters.arrayContains(Extractors.extract('iarr'), 3)
       const entries = await UniversalExtractorSuite.cache.values(f1)
-      expect(entries.size).to.equal(3)
-      expect(Array.from(entries)).to.have.deep.members([val123, val234, val345])
+
+      assert.equal(entries.size, 3)
+      assert.deepEqual(entries, new Set([val123, val234, val345]))
     }
   }
 })

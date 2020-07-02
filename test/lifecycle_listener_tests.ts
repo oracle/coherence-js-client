@@ -6,9 +6,10 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 
 import { SessionBuilder } from '../src/cache/session'
+
+export const assert = require('assert').strict;
 
 describe('LifecycleListener IT Test Suite', () => {
   const CACHE_NAME = 'lifecycle-listener-cache'
@@ -20,7 +21,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
 
-      const prom = new Promise((resolve, reject) => {
+      const prom = new Promise((resolve) => {
         cache.on('cache_released', (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
@@ -40,7 +41,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
 
-      const prom = new Promise((resolve, reject) => {
+      const prom = new Promise((resolve) => {
         cache.on('cache_destroyed', (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
@@ -62,7 +63,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
 
-      const prom1 = new Promise((resolve, reject) => {
+      const prom1 = new Promise((resolve) => {
         cache.on('cache_released', (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
@@ -74,7 +75,7 @@ describe('LifecycleListener IT Test Suite', () => {
       })
 
       const cache2 = sess.getCache('test-cache')
-      const prom2 = new Promise((resolve, reject) => {
+      const prom2 = new Promise((resolve) => {
         cache2.on('cache_destroyed', (cacheName: string) => {
           if (cacheName == 'test-cache') {
             resolve()
@@ -95,7 +96,7 @@ describe('LifecycleListener IT Test Suite', () => {
     async testSessionLifecycleListenerForCacheDestroy () {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
-      const prom = new Promise((resolve, reject) => {
+      const prom = new Promise((resolve) => {
         sess.on('cache_destroyed', (cacheName: string, arg?: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
@@ -116,7 +117,7 @@ describe('LifecycleListener IT Test Suite', () => {
     async testSessionLifecycleListenerForMultipleCaches () {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
-      const prom1 = new Promise((resolve, reject) => {
+      const prom1 = new Promise((resolve) => {
         sess.on('cache_released', (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
@@ -128,7 +129,7 @@ describe('LifecycleListener IT Test Suite', () => {
       })
 
       const cache2 = sess.getCache('test-cache')
-      const prom2 = new Promise((resolve, reject) => {
+      const prom2 = new Promise((resolve) => {
         sess.on('cache_destroyed', (cacheName: string) => {
           if (cacheName == 'test-cache') {
             resolve()
@@ -146,9 +147,9 @@ describe('LifecycleListener IT Test Suite', () => {
     }
 
     @test
-    async testIfSessionCloseTriggersCacheReleseEvents () {
+    async testIfSessionCloseTriggersCacheReleaseEvents () {
       const sess = new SessionBuilder().build()
-      const sessPromise = new Promise((resolve, reject) => {
+      const sessPromise = new Promise((resolve) => {
         let count = 0
         sess.on('registered', (name) => {
           count++
@@ -158,10 +159,9 @@ describe('LifecycleListener IT Test Suite', () => {
           }
         })
       })
-      const cache1 = sess.getCache('test-cache-1')
-      const cache2 = sess.getCache('test-cache-2')
 
-      const prom1 = new Promise((resolve, reject) => {
+      sess.getCache('test-cache-1')
+      const prom1 = new Promise((resolve) => {
         sess.on('cache_released', (cacheName: string) => {
           if (cacheName == 'test-cache-1') {
             resolve()
@@ -170,7 +170,8 @@ describe('LifecycleListener IT Test Suite', () => {
         sess.emit('registered', 'test-cache-1')
       })
 
-      const prom2 = new Promise((resolve, reject) => {
+      sess.getCache('test-cache-2')
+      const prom2 = new Promise((resolve) => {
         sess.on('cache_released', (cacheName: string) => {
           if (cacheName == 'test-cache-2') {
             resolve()
@@ -186,7 +187,7 @@ describe('LifecycleListener IT Test Suite', () => {
       await prom2
 
       await sess.waitUntilClosed()
-      expect(sess.isClosed()).to.equal(true)
+      assert.equal(sess.isClosed(), true)
     }
   }
 })

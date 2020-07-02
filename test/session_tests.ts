@@ -6,9 +6,10 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { expect } from 'chai'
 
 import { SessionBuilder } from '../src/cache/session'
+
+export const assert = require('assert').strict;
 
 describe('Session IT Test Suite', () => {
   describe('Session Unit Tests', () => {
@@ -17,33 +18,33 @@ describe('Session IT Test Suite', () => {
       @test
       async shouldBeDefaultAddressWithDefaultSessionBuilder () {
         const builder = new SessionBuilder()
-        expect(builder.getSessionOptions().address).to.equal(SessionBuilder.DEFAULT_ADDRESS)
-        expect(builder.getSessionOptions().tlsEnabled).to.equal(false)
+        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().tlsEnabled, false)
       }
 
       @test
       async shouldBeAbleToSpecifyAddressWithBuilder () {
         const builder = new SessionBuilder()
         builder.withAddress('abc:1234')
-        expect(builder.getSessionOptions().address).to.equal('abc:1234')
-        expect(builder.getSessionOptions().tlsEnabled).to.equal(false)
+        assert.equal(builder.getSessionOptions().address, 'abc:1234')
+        assert.equal(builder.getSessionOptions().tlsEnabled, false)
       }
 
       @test
       async shouldBeAbleToSpecifyRequestTimeoutWithBuilder () {
         const builder = new SessionBuilder()
         builder.withRequestTimeout(1234)
-        expect(builder.getSessionOptions().address).to.equal(SessionBuilder.DEFAULT_ADDRESS)
-        expect(builder.getSessionOptions().tlsEnabled).to.equal(false)
-        expect(builder.getSessionOptions().requestTimeoutInMillis).to.equal(1234)
+        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().tlsEnabled, false)
+        assert.equal(builder.getSessionOptions().requestTimeoutInMillis, 1234)
       }
 
       @test
       async shouldBeAbleToSpecifyTlsWithBuilder () {
         const builder = new SessionBuilder()
         builder.enableTls()
-        expect(builder.getSessionOptions().address).to.equal(SessionBuilder.DEFAULT_ADDRESS)
-        expect(builder.getSessionOptions().tlsEnabled).to.equal(true)
+        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().tlsEnabled, true)
       }
 
       @test
@@ -51,11 +52,11 @@ describe('Session IT Test Suite', () => {
         const sess = new SessionBuilder().build()
         const cache = sess.getCache('sess-test-1')
         await cache.put('a', 'abc')
-        expect(await cache.size()).to.equal(1)
+        assert.equal(await cache.size(), 1)
 
         await sess.close()
         await sess.waitUntilClosed()
-        expect(sess.isClosed()).to.equal(true)
+        assert.equal(sess.isClosed(), true)
       }
 
       @test
@@ -63,8 +64,8 @@ describe('Session IT Test Suite', () => {
         const sess = new SessionBuilder()
           .withAddress('localhost:1408').build()
 
-        expect(sess.getActiveCacheCount()).to.equal(0)
-        expect(sess.getActiveCaches().length).to.equal(0)
+        assert.equal(sess.getActiveCacheCount(), 0)
+        assert.equal(sess.getActiveCaches().length, 0)
 
         await sess.close()
       }
@@ -75,8 +76,8 @@ describe('Session IT Test Suite', () => {
           .withAddress('localhost:1408').build()
 
         sess.getCache('sess-cache')
-        expect(sess.getActiveCacheCount()).to.equal(1)
-        expect(sess.getActiveCaches()[0].getCacheName()).to.equal('sess-cache')
+        assert.equal(sess.getActiveCacheCount(), 1)
+        assert.equal(sess.getActiveCaches()[0].getCacheName(), 'sess-cache')
 
         await sess.close()
       }
@@ -89,10 +90,10 @@ describe('Session IT Test Suite', () => {
         const cache1 = sess.getCache('sess-cache')
         const cache2 = sess.getCache('sess-cache')
 
-        expect(sess.getActiveCacheCount()).to.equal(1)
-        expect(sess.getActiveCaches()[0].getCacheName()).to.equal('sess-cache')
+        assert.equal(sess.getActiveCacheCount(), 1)
+        assert.equal(sess.getActiveCaches()[0].getCacheName(), 'sess-cache')
 
-        expect(cache1 == cache2).to.equal(true)
+        assert.equal(cache1, cache2)
         await sess.close()
       }
 
@@ -104,13 +105,13 @@ describe('Session IT Test Suite', () => {
         const cache1 = sess.getCache('sess-cache-1')
         const cache2 = sess.getCache('sess-cache-2')
 
-        expect(cache1.isActive()).to.equal(true)
-        expect(cache2.isActive()).to.equal(true)
+        assert.equal(cache1.isActive(), true)
+        assert.equal(cache2.isActive(), true)
 
-        expect(sess.getActiveCacheCount()).to.equal(2)
-        expect(sess.getActiveCacheNames()).to.eql(new Set(['sess-cache-1', 'sess-cache-2']))
+        assert.equal(sess.getActiveCacheCount(), 2)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-cache-1', 'sess-cache-2']))
 
-        expect(cache1 != cache2).to.equal(true)
+        assert.notDeepEqual(cache1, cache2)
         await sess.close()
       }
 
@@ -122,18 +123,18 @@ describe('Session IT Test Suite', () => {
         const cache1 = sess.getCache('sess-cache-1')
         const cache2 = sess.getCache('sess-cache-2')
 
-        expect(sess.getActiveCacheCount()).to.equal(2)
-        expect(sess.getActiveCacheNames()).to.eql(new Set(['sess-cache-1', 'sess-cache-2']))
+        assert.equal(sess.getActiveCacheCount(), 2)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-cache-1', 'sess-cache-2']))
 
-        expect(cache1 != cache2).to.equal(true)
+        assert.notDeepEqual(cache1, cache2)
         await sess.close()
         await sess.waitUntilClosed()
 
-        expect(sess.getActiveCacheCount()).to.equal(0)
-        expect(sess.getActiveCaches()).to.eql([])
+        assert.equal(sess.getActiveCacheCount(), 0)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set([]))
 
-        expect(cache1.isActive()).to.equal(false)
-        expect(cache2.isActive()).to.equal(false)
+        assert.equal(cache1.isActive(), false)
+        assert.equal(cache2.isActive(), false)
       }
 
       @test
@@ -144,11 +145,11 @@ describe('Session IT Test Suite', () => {
         const cache1 = sess.getCache('sess-test-cache-1')
         const cache2 = sess.getCache('sess-test-cache-2')
 
-        expect(sess.getActiveCacheCount()).to.equal(2)
-        expect(sess.getActiveCacheNames()).to.eql(new Set(['sess-test-cache-1', 'sess-test-cache-2']))
+        assert.equal(sess.getActiveCacheCount(), 2)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-test-cache-1', 'sess-test-cache-2']))
 
-        expect(cache1 != cache2).to.equal(true)
-        const prom = new Promise((resolve, reject) => {
+        assert.notDeepEqual(cache1, cache2)
+        const prom = new Promise((resolve) => {
           cache1.on('cache_released', (cacheName: string) => {
             if (cacheName == 'sess-test-cache-1') {
               resolve()
@@ -158,20 +159,20 @@ describe('Session IT Test Suite', () => {
         await cache1.release()
         await prom
 
-        expect(sess.getActiveCacheCount()).to.equal(1)
-        expect(sess.getActiveCacheNames()).to.eql(new Set(['sess-test-cache-2']))
+        assert.equal(sess.getActiveCacheCount(), 1)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-test-cache-2']))
 
-        expect(cache1.isActive()).to.equal(false)
-        expect(cache2.isActive()).to.equal(true)
+        assert.equal(cache1.isActive(), false)
+        assert.equal(cache2.isActive(), true)
 
         await sess.close()
         await sess.waitUntilClosed()
 
-        expect(sess.getActiveCacheCount()).to.equal(0)
-        expect(sess.getActiveCaches()).to.eql([])
+        assert.equal(sess.getActiveCacheCount(), 0)
+        assert.deepEqual(sess.getActiveCacheNames(), new Set([]))
 
-        expect(cache1.isActive()).to.equal(false)
-        expect(cache2.isActive()).to.equal(false)
+        assert.equal(cache1.isActive(), false)
+        assert.equal(cache2.isActive(), false)
       }
     }
   })
