@@ -16,11 +16,11 @@ function grab-proto-files() {
     declare -r PROTO_DIR="${ROOT}/etc/proto"
 
     if [[ ! -d "${PROTO_DIR}" ]]; then
-    	mkdir -p "${PROTO_DIR}" 
+        mkdir -p "${PROTO_DIR}"
     fi
 
     cd ${ROOT}
-    
+
     for i in "${PROTO_FILES[@]}"; do curl -s "${BASE_URL}${i}" -o "${PROTO_DIR}/${i}"; done
 }
 
@@ -35,12 +35,12 @@ function gen-compile-proto-files() {
     mkdir -p ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}
 
     protoc --proto_path=${PROTO_SRC_DIR} \
-	  --plugin=protoc-gen-ts=node_modules/.bin/protoc-gen-ts \
-	  --plugin=protoc-gen-grpc=node_modules/.bin/grpc_tools_node_protoc_plugin \
-	  --js_out=import_style=commonjs:${PROTO_GEN_OUT_DIR} \
-	  --ts_out="service=grpc-node:${PROTO_GEN_SRC_DIR}" \
-	  --grpc_out=${PROTO_GEN_OUT_DIR} \
-	  ${PROTO_SRC_DIR}/*.proto
+      --plugin=protoc-gen-ts=node_modules/.bin/protoc-gen-ts \
+      --plugin=protoc-gen-grpc=node_modules/.bin/grpc_tools_node_protoc_plugin \
+      --js_out=import_style=commonjs:${PROTO_GEN_OUT_DIR} \
+      --ts_out="service=grpc-node:${PROTO_GEN_SRC_DIR}" \
+      --grpc_out=${PROTO_GEN_OUT_DIR} \
+      ${PROTO_SRC_DIR}/*.proto
 }
 
 function main() {
