@@ -442,6 +442,7 @@ export class RequestFactory<K, V> {
     request.setCache(this.cacheName)
     request.setUid(this.generateNextRequestId('init'))
     request.setSubscribe(true)
+    request.setFormat(this.serializer.format())
     request.setType(MapListenerRequest.RequestType.INIT)
 
     return request

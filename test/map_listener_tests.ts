@@ -89,8 +89,8 @@ describe('MapListener IT Test Suite', () => {
 
       await prom
 
-      assert.deepEqual(stringify(listener.counters), stringify({insert: 2, delete: 2}))
-      assert.deepEqual(stringify(listener2.counters), stringify({insert: 1, delete: 1}))
+      assert.deepEqual(listener.counters, {insert: 2, delete: 2})
+      assert.deepEqual(listener2.counters, {insert: 1, delete: 1})
     }
 
     @test
@@ -133,8 +133,8 @@ describe('MapListener IT Test Suite', () => {
       })
       await prom
 
-      assert.deepEqual(stringify(listener.counters), stringify({insert: 2, delete: 2}))
-      assert.deepEqual(stringify(filterListener.counters), stringify({insert: 3, delete: 2}))
+      assert.deepEqual(listener.counters, {insert: 2, delete: 1})
+      assert.deepEqual(filterListener.counters, {insert: 3, delete: 2})
     }
 
     @test
@@ -158,8 +158,8 @@ describe('MapListener IT Test Suite', () => {
       })
       await prom
 
-      assert.deepEqual(stringify(keyListener.counters), stringify({}))
-      assert.deepEqual(stringify(filterListener.counters), stringify({}))
+      assert.deepEqual(keyListener.counters, {})
+      assert.deepEqual(filterListener.counters, {})
     }
 
     @test
@@ -202,11 +202,11 @@ describe('MapListener IT Test Suite', () => {
       await cache.release()
       await prom
 
-      assert.deepEqual(stringify(keyListener1.counters), stringify({insert: 1, delete: 1}))
-      assert.deepEqual(stringify(filterListener2.counters), stringify({insert: 1, delete: 1}))
+      assert.deepEqual(keyListener1.counters, {insert: 1, delete: 1})
+      assert.deepEqual(filterListener2.counters, {insert: 1, delete: 1})
 
-      assert.deepEqual(stringify(filterListener1.counters), stringify({insert: 2, delete: 2}))
-      assert.deepEqual(stringify(keyListener2.counters), stringify({insert: 2, delete: 2}))
+      assert.deepEqual(filterListener1.counters, {insert: 2, delete: 2})
+      assert.deepEqual(keyListener2.counters, {insert: 2, delete: 2})
     }
 
     @test
