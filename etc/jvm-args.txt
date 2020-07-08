@@ -1,11 +1,10 @@
 # Copyright (c) 2000, 2020, Oracle and/or its affiliates.
+#
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # http://oss.oracle.com/licenses/upl.
 
-node_modules/**
-.idea
-target
-src/cache/proto
-etc/proto
-.npmrc
-.coherence-grpc-proxy
+-Xms1g
+-Xmx1g
+-Dcoherence.cluster=test-cluster
+-Dcoherence.log.level=9
+"-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005"

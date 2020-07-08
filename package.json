@@ -39,6 +39,9 @@
     "postinstall": "bin/npm-post-install.sh",
     "compile": "tsc",
     "test": "mocha 'target/test/**.js' --recursive --require source-map-support/register --require ts-node/register",
+    "coh-up": "bin/docker-utils.sh -u",
+    "coh-down": "bin/docker-utils.sh -d",
+    "coh-clean": "bin/docker-utils.sh -c",
     "lint": "npx eslint --ext .ts src test",
     "coverage": "nyc mocha 'target/test/**.js' --recursive --require source-map-support/register --require ts-node/register"
   }

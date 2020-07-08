@@ -7,7 +7,7 @@
 
 set -e
 
-declare -r ROOT="$PWD"
+declare -r ROOT="${PWD}"
 
 # Grabs the proto files from the Coherence project.
 function grab-proto-files() {
@@ -26,7 +26,6 @@ function grab-proto-files() {
 
 # Generates and compiles the stubs generated from the installed proto files.
 function gen-compile-proto-files() {
-    echo $PWD
     declare -r PROTO_SRC_DIR="${PWD}/etc/proto"
     declare -r PROTO_GEN_SRC_DIR="${PWD}/src/cache/proto"
     declare -r PROTO_GEN_OUT_DIR="${PWD}/target/src/cache/proto"
