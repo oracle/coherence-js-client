@@ -19,7 +19,14 @@ import { MapListener } from '../util/map_listener'
 import { Serializer } from '../util/serializer'
 import { Util } from '../util/util'
 import { NamedCache } from './named_cache'
-import { Entry, Entry as GrpcEntry, EntryResult, IsEmptyRequest, SizeRequest } from './proto/messages_pb'
+import {
+  Entry,
+  Entry as GrpcEntry,
+  EntryResult,
+  IsEmptyRequest,
+  SizeRequest,
+  TruncateRequest
+} from './proto/messages_pb'
 import { NamedCacheServiceClient } from './proto/services_grpc_pb'
 import { MapEntry } from './query_map'
 import { Comparator, RequestFactory } from './request_factory'
@@ -609,7 +616,7 @@ export class NamedCacheClient<K = any, V = any>
    * @param key the key whose associated value is to be removed
    * @param value the value that must be associated with the specified key
    *
-   * @return a Promise that will eventually resolve to true if the specifiedf
+   * @return a Promise that will eventually resolve to true if the specified
    *         mapping exists in the cache; false otherwise
    */
   removeMapping (key: K, value: V): Promise<boolean> {
@@ -732,7 +739,7 @@ export class NamedCacheClient<K = any, V = any>
    * Truncate the cache.
    * Note: services.proto still uses SizeRequest
    */
-  truncate (): Promise<number> {
+  truncate (): Promise<void> {
     const self = this
     return new Promise((resolve, reject) => {
       // Note that this listener will be after the default listeners
@@ -747,7 +754,7 @@ export class NamedCacheClient<K = any, V = any>
       // can now send out the 'truncate' request. The handleResponse()
       // method will generate the appropriate event on the internalEmitter
       // for which our 'once & only once' listener is setup.
-      const request = new SizeRequest() // FIXME: services.proto still uses SizeRequest
+      const request = new TruncateRequest()
       request.setCache(this.cacheName)
       this.client.truncate(request, this.callOptions(), (err, resp) => {
         if (err || !resp) {
