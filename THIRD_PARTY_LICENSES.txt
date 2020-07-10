@@ -1336,6 +1336,44 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 *********************************
+@grpc/grpc-js
+*********************************
+@grpc/grpc-js
+-------- Copyrights
+ * Copyright 2019 gRPC authors.
+ * Copyright 2020 gRPC authors.
+
+======== License
+SPDX:Apache-2.0
+
+4P Dependencies
+===============
+
+======================= Dependencies Grouped by License ============
+-------- Dependency
+semver
+-------- Copyrights
+Copyright (c) Isaac Z. Schlueter and Contributors
+
+======== Dependencies Summary
+semver
+
+======== License used by Dependencies
+SPDX:ISC
+Permission to use, copy, modify, and/or distribute this
+software for any purpose with or without fee is hereby granted, provided that
+the above copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+
+*********************************
 google-protobuf
 *********************************
 google-protobuf
@@ -1452,100 +1490,6 @@ the Software without restriction, including without limitation the rights to
 use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
 the Software, and to permit persons to whom the Software is furnished to do so,
 subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-*********************************
-chai
-*********************************
-chai
-
--------- Copyrights
-Copyright (c) 2017 Chai.js Assertion Library
- * Copyright(c) 2011-2016 Jake Luer <jake@alogicalparadox.com>
- * Copyright(c) 2012-2015 Sakthipriyan Vairamani <thechargingvolcano@gmail.com>
-
-======== License
-SPDX:MIT
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction, including without
-limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-4P Dependencies
-===============
-
-======================= Dependencies Grouped by License ============
--------- Dependency
-assertion-error
--------- Copyrights
- * Copyright(c) 2013 Jake Luer <jake@qualiancy.com>
-
--------- Dependency
-check-error
--------- Copyrights
-Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com>
-(http://alogicalparadox.com)
-
--------- Dependency
-deep-eql
--------- Copyrights
-Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com>
-(http://alogicalparadox.com)
-
--------- Dependency
-get-func-name
--------- Copyrights
-Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com>
-(http://alogicalparadox.com)
-
--------- Dependency
-pathval
--------- Copyrights
-Copyright (c) 2011-2013 Jake Luer jake@alogicalparadox.com
-
--------- Dependency
-type-detect
--------- Copyrights
-Copyright (c) 2013 Jake Luer <jake@alogicalparadox.com>
-(http://alogicalparadox.com)
-
-======== Dependencies Summary
-assertion-error
-check-error
-deep-eql
-get-func-name
-pathval
-type-detect
-
-======== License used by Dependencies
-SPDX:MIT
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction, including without
-limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom
-the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -2116,6 +2060,7 @@ Copyright (c) 2015-2016, Jon Schlinkert
 -------- Dependency
 core-util-is
 -------- Copyrights
+Copyright Node.js contributors. All rights reserved.
 
 -------- Dependency
 create-frame
@@ -2125,6 +2070,7 @@ Copyright (c) 2015-2016, Jon Schlinkert
 -------- Dependency
 date.js
 -------- Copyrights
+Copyright (c) 2013 Matt Mueller mailto:mattmuelle@gmail.com
 
 -------- Dependency
 debug
@@ -2139,6 +2085,7 @@ Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 -------- Dependency
 decode-uri-component
 -------- Copyrights
+Copyright (c) Sam Verschueren <sam.verschueren@gmail.com> (github.com/SamVerschueren)
 
 -------- Dependency
 default-compare
@@ -2360,6 +2307,7 @@ Copyright (c) 2015-2018, Jon Schlinkert.
 -------- Dependency
 isarray
 -------- Copyrights
+Copyright (c) 2013 Julian Gruber <julian@juliangruber.com>
 
 -------- Dependency
 isobject
@@ -2393,10 +2341,20 @@ Based on Underscore.js 1.7.0, copyright 2009-2015 Jeremy Ashkenas,
 -------- Dependency
 lodash.template
 -------- Copyrights
+Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+Based on Underscore.js 1.7.0, copyright 2009-2015 Jeremy Ashkenas,
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative
+ * Reporters & Editors
 
 -------- Dependency
 lodash.templatesettings
 -------- Copyrights
+Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+Based on Underscore.js 1.7.0, copyright 2009-2015 Jeremy Ashkenas,
+ * Copyright 2012-2015 The Dojo Foundation <http://dojofoundation.org/>
+ * Copyright 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative
+ * Reporters & Editors
 
 -------- Dependency
 log-ok
@@ -2436,6 +2394,7 @@ Copyright (c) 2014-2015, 2017, Jon Schlinkert.
 -------- Dependency
 moment
 -------- Copyrights
+Copyright (c) JS Foundation and other contributors
 
 -------- Dependency
 ms
@@ -2501,6 +2460,7 @@ Copyright (c) 2016-2017, Jon Schlinkert
 -------- Dependency
 readable-stream
 -------- Copyrights
+Copyright Node.js contributors. All rights reserved.
 
 -------- Dependency
 regex-not
@@ -2633,6 +2593,7 @@ Copyright (c) 2015, Jon Schlinkert.
 -------- Dependency
 through2
 -------- Copyrights
+Copyright (c) Rod Vagg (the "Original Author") and additional contributors
 
 -------- Dependency
 time-stamp
@@ -2698,6 +2659,7 @@ Copyright (c) 2015, Jon Schlinkert.
 -------- Dependency
 wrap-ansi
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 -------- Dependency
 xtend
@@ -5029,6 +4991,7 @@ Copyright (c) 2014 Evan Wallace
 -------- Dependency
 yn
 -------- Copyrights
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
 
 ======== Dependencies Summary
 arg
@@ -5151,4 +5114,28 @@ and limitations under the License.
 
 
 ======== License
+SPDX:Apache-2.0
+
+*********************************
+@testdeck/mocha
+*********************************
+@testdeck/mocha
+
+-------- Copyrights
+
+======== License
+SPDX:Apache-2.0
+
+4P Dependencies:
+================
+
+======================= Dependencies Grouped by License ============
+-------- Dependency
+@testdeck/core
+-------- Copyrights
+
+======== Dependencies Summary
+@testdeck/core
+
+======== License used by Dependencies
 SPDX:Apache-2.0
