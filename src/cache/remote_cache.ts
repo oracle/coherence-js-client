@@ -64,7 +64,7 @@ export interface RemoteCache<K = any, V = any> {
    * @param key the key whose associated value is to be removed
    * @param value the value that must be associated with the specified key
    *
-   * @return a Promise that will eventually resolve to true if the specified
+   * @return a Promise that will eventually resolve to true if the specifiedf
    *         mapping exists in the cache; false otherwise
    */
   removeMapping (key: K, value: V): Promise<boolean>
@@ -89,7 +89,7 @@ export interface RemoteCache<K = any, V = any> {
    * @param value the current value that must be associated with the specified key
    * @param newValue the new value that to be associated with the specified key
    *
-   * @return a Promise that will eventually resolve to true if the specified
+   * @return a Promise that will eventually resolve to true if the specifiedf
    *         mapping exists in the cache; false otherwise
    */
   replaceMapping (key: K, value: V, newValue: V): Promise<boolean>;

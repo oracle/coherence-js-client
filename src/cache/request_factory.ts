@@ -48,12 +48,12 @@ export interface Comparator {
  *
  */
 export class RequestFactory<K, V> {
-  private readonly cacheName: string
+  private cacheName: string
 
-  private readonly serializer: Serializer
+  private serializer: Serializer
 
   // Used for unique uid generation for MapListener subscriptions.
-  private readonly uidPrefix: string
+  private uidPrefix: string
 
   // The next requestID to be used for subscribe requests.
   private nextRequestId: number = 0
@@ -140,8 +140,7 @@ export class RequestFactory<K, V> {
   /**
    * Create a ContainsEntryRequest instance.
    *
-   * @param key   - The key for the request
-   * @param value - the value for the request
+   * @param key The key for the request.
    *
    * @return A ContainsKey instance.
    */
@@ -270,9 +269,8 @@ export class RequestFactory<K, V> {
   /**
    * Create a PutRequest instance.
    *
-   * @param key - The key for the request
-   * @param value - The value for the request
-   * @param ttl - optional ttl for the entry
+   * @param key The key for the request.
+   * @param value The value for the request.
    *
    * @return A PutRequest instance.
    */
@@ -291,14 +289,23 @@ export class RequestFactory<K, V> {
     return request
   }
 
+  page (cookie: Uint8Array | string): PageRequest {
+    const request = new PageRequest()
+    request.setFormat(this.serializer.format())
+    request.setCache(this.cacheName)
+    request.setCookie(cookie)
+
+    return request
+  }
+
   /**
    * Create a PutIfAbsentRequest instance.
    *
-   * @param key - the key for the request
-   * @param value - the value for the request
-   * @param ttl - the time to live for the mapping
+   * @param key The key for the request.
+   * @param value The value for the request.
+   * @param ttl The time to live for the mapping.
    *
-   * @return A PutRPutIfAbsentRequest instance.
+   * @return A PutRPutIfAbsentRequestequest instance.
    */
   putIfAbsent (key: K, value: V, ttl?: number): PutIfAbsentRequest {
     const request = new PutIfAbsentRequest()
@@ -354,8 +361,7 @@ export class RequestFactory<K, V> {
   /**
    * Create a ReplaceRequest instance.
    *
-   * @param key - the key for the request
-   * @param value - the value for the request
+   * @param key The key for the request.
    *
    * @return A ReplaceRequest instance.
    */
@@ -449,7 +455,7 @@ export class RequestFactory<K, V> {
     return request
   }
 
-  values (filter?: Filter, comparator?: any): ValuesRequest {
+  values (filter?: Filter<any>, comparator?: any): ValuesRequest {
     const request = new ValuesRequest()
     request.setFormat(this.serializer.format())
     request.setCache(this.cacheName)

@@ -97,7 +97,7 @@ export class SessionBuilder {
    * Set the client certificate path. enableTls() must also be called before
    * the build() method for this to be used.
    *
-   * @param clientCertPath - the CA certificate path
+   * @param caCertPath The CA certificate path.
    */
   withClientCert (clientCertPath: fs.PathLike): this {
     this.sessionOptions.clientCertPath = clientCertPath
@@ -108,7 +108,7 @@ export class SessionBuilder {
    * Set the client private key path. enableTls() must also be called before
    * the build() method for this to be used.
    *
-   * @param clientKeyPath - the client key path
+   * @param caCertPath The CA certificate path.
    */
   withClientKey (clientKeyPath: fs.PathLike): this {
     this.sessionOptions.clientKeyPath = clientKeyPath
@@ -264,31 +264,31 @@ export class Session
    * The {@link ChannelCredentials} to use. If TLS is not enabled,
    * this will be an insecure ChannelCredentials.
    */
-  private readonly channelCredentials: ChannelCredentials
+  private channelCredentials: ChannelCredentials
 
   /**
    * The (shared) {@link Channel} to use for all the
    * {@link NamedCacheClient} that are created from this
    * {@link Session}.
    */
-  private readonly channel: grpc.Channel
+  private channel: grpc.Channel
 
   /**
    * The set of options to use while creating a {@link Channel}.
    * See here for the list of possible options:
    *  https://grpc.github.io/grpc/core/group__grpc__arg__keys.html
    */
-  private readonly channelOptions: { [key: string]: string | number } = {}
+  private channelOptions: { [key: string]: string | number } = {}
 
   /**
    * The set of options to use while creating a {@link NamedCacheClient}.
    * One of the options will be the 'channelOverride' option to indicate
    * that the specified {@link Channel} must be used rather than creating
-   * a new {@link Channel}.
+   * a new {@linkj Channel}.
    */
-  private readonly clientOptions: object = {}
+  private clientOptions: object = {}
 
-  private readonly sessionClosedPromise: Promise<boolean>
+  private sessionClosedPromise: Promise<boolean>
 
   constructor (sessionOptions: SessionOptions) {
     super()
@@ -322,14 +322,14 @@ export class Session
     }
 
     const self = this
-    this.sessionClosedPromise = new Promise((resolve) => {
-      self.on('cache_released', () => {
+    this.sessionClosedPromise = new Promise((resolve, reject) => {
+      self.on('cache_released', (cacheName: string, format: string) => {
         if (self.markedForClose && self.caches.size == 0) {
           self.closed = true
           resolve(true)
         }
       })
-      self.on('cache_destroyed', () => {
+      self.on('cache_destroyed', (cacheName: string, format: string) => {
         if (self.markedForClose && self.caches.size == 0) {
           self.closed = true
           resolve(true)
@@ -414,8 +414,7 @@ export class Session
    * in the cache it is returned. Else a new {@link NamedCacheClient} is created
    * (then cached) and returned.
    *
-   * @param name - returns a {@link NamedCacheClient} for the specified name
-   * @param format - optional identifier for the Serializer to use with this cache
+   * @param name Returns a {@link NamedCacheClient} for the specified name.
    */
   getCache<K, V> (name: string, format?: string): NamedCacheClient<K, V> {
     if (this.markedForClose) {
@@ -429,7 +428,7 @@ export class Session
     let namedCache = this.caches.get(cacheKey)
     if (!namedCache) {
       namedCache = new NamedCacheClient(name, this, serializer)
-      this.setupEventHandlers(namedCache)
+      this.setupEventHandlers(namedCache, name, format)
       this.caches.set(cacheKey, namedCache)
     }
 
@@ -462,7 +461,7 @@ export class Session
     return this.sessionClosedPromise
   }
 
-  private setupEventHandlers (cache: NamedCacheClient) {
+  private setupEventHandlers (cache: NamedCacheClient, cacheName: string, format: string) {
     const self = this
     cache.on('cache_destroyed', (cacheName: string) => {
       // Our keys in caches Map are of the form cacheName:format.
