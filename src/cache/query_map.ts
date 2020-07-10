@@ -97,14 +97,15 @@ export interface QueryMap<K = any, V = any>
    *
    * @param filter the Filter object representing the criteria that the
    *               entries of this map should satisfy
+   * @param comparator - optional Comparator for ordering
    *
    * @return a set of keys for entries that satisfy the specified criteria
    */
-  keySet (filter: Filter<any>, comparator?: Comparator): Promise<Set<K>>;
+  keySet (filter: Filter, comparator?: Comparator): Promise<Set<K>>;
 
   entrySet (): RemoteSet<MapEntry<K, V>>;
 
-  entrySet (filter: Filter<any>, comp?: Comparator): Promise<Set<MapEntry<K, V>>>;
+  entrySet (filter: Filter, comp?: Comparator): Promise<Set<MapEntry<K, V>>>;
 
   /**
    * Remove an index from this QueryMap.
@@ -116,7 +117,7 @@ export interface QueryMap<K = any, V = any>
    * ```
    *
    * @param extractor - The ValueExtractor object that is used to extract
-   *                    an indexable Object from a value stored in the
+   *                    an indexed Object from a value stored in the
    *                    indexed Map. Must not be null.
    * @typeparam <T>   - The type of the value to extract from.
    * @typeparam <E>   - The type of value that will be extracted.

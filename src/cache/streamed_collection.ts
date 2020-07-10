@@ -7,10 +7,10 @@
 
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
-import { MapEntry, RemoteSet } from '../cache/query_map'
 import { Serializer } from '../util/serializer'
 import { NamedCacheClient } from './named_cache_client'
 import { EntryResult } from './proto/messages_pb'
+import { MapEntry, RemoteSet } from './query_map'
 
 // This needs some cleanup
 class PagedSet<K, V, T>
@@ -33,10 +33,6 @@ class PagedSet<K, V, T>
   // Overridden
   delete (value: T): Promise<boolean> {
     throw new Error('Method not implemented.')
-  }
-
-  forEach (callbackfn: (value: T, value2: T, set: Set<T>) => void, thisArg?: any): void {
-    throw new Error('only async iterator supported.')
   }
 
   // Overridden
@@ -84,7 +80,7 @@ class KeySet<K, V>
   }
 
   delete (key: K): Promise<boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       return this.namedCache.remove(key)
         .then((v) => {
           resolve(v != null || undefined)
@@ -308,28 +304,28 @@ class NamedCacheEntry<K, V>
 
   private value!: V
 
-  private keyBytes: Uint8Array
+  private readonly keyBytes: Uint8Array
 
-  private valueBytes: Uint8Array
+  private readonly valueBytes: Uint8Array
 
-  private serialzer: Serializer
+  private serializer: Serializer
 
   constructor (keyBytes: Uint8Array, valueBytes: Uint8Array, serialzer: Serializer) {
     this.keyBytes = keyBytes
     this.valueBytes = valueBytes
-    this.serialzer = serialzer
+    this.serializer = serialzer
   }
 
   getKey (): K {
     if (!this.key) {
-      this.key = this.serialzer.deserialize(this.keyBytes)
+      this.key = this.serializer.deserialize(this.keyBytes)
     }
     return this.key
   }
 
   getValue (): V {
     if (!this.value) {
-      this.value = this.serialzer.deserialize(this.valueBytes)
+      this.value = this.serializer.deserialize(this.valueBytes)
     }
     return this.value
   }
