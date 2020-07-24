@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { NamedCacheClient } from '../src/cache/named_cache_client'
+import { NamedCacheClient } from '../src'
 
 export const assert = require('assert').strict;
 

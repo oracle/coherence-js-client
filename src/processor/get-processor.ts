@@ -5,7 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  * Put entry processor.
@@ -14,7 +16,7 @@ import { BaseProcessor } from './base_processor'
  * @param <V> the type of the Map entry value
  */
 export class GetProcessor<K = any, V = any>
-  extends BaseProcessor<K, V, void> {
+  extends EntryProcessor<K, V, void> {
   /**
    * Construct a Get EntryProcessor.
    *
@@ -22,6 +24,6 @@ export class GetProcessor<K = any, V = any>
    * @param value   a value to update an entry with
    */
   constructor () {
-    super('Get')
+    super(internal.processorName('Get'))
   }
 }

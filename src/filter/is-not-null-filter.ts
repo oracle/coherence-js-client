@@ -5,12 +5,13 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { NotEqualsFilter } from './not_equals_filter'
+import { ValueExtractor } from '../extractor/'
+import { NotEqualsFilter } from '.'
+import { internal } from './package-internal'
 
 export class IsNotNullFilter<T = any, E = any>
   extends NotEqualsFilter<T, E | null> {
   constructor (extractor: ValueExtractor<T, E>) {
-    super('IsNotNullFilter', extractor, null)
+    super(internal.filterName('IsNotNullFilter'), extractor, null)
   }
 }

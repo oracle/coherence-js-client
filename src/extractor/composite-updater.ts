@@ -5,26 +5,25 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueManipulator } from '../processor/value_manipulator'
-import { Util } from '../util/util'
-import { ValueUpdater } from '../util/value_updater'
-import { UniversalUpdater } from './universal_updater'
-import { ChainedExtractor, IdentityExtractor, ValueExtractor } from './value_extractor'
+import { ValueManipulator } from '../processor/'
+import { Util } from '../util/'
+import { ChainedExtractor, IdentityExtractor, UniversalUpdater, ValueExtractor, ValueUpdater } from '.'
+import { internal } from './package-internal'
 
-export class CompositeUpdater
-  implements ValueUpdater, ValueManipulator {
-  '@class': string = Util.EXTRACTOR_PACKAGE + 'CompositeUpdater'
+export class CompositeUpdater<T, U>
+  extends ValueUpdater<T, U>
+  implements ValueManipulator {
+  '@class': string
 
-  extractor: ValueExtractor
+  extractor: ValueExtractor<T, U>
 
-  updater: ValueUpdater
+  updater: ValueUpdater<T, U>
 
-  // constructor(method: string);
-  // constructor(extractor: ValueExtractor, updater: ValueUpdater);
-  constructor (methodOrExtractor: string | ValueExtractor, updater?: ValueUpdater) {
+  constructor (methodOrExtractor: string | ValueExtractor<T, U>, updater?: ValueUpdater<T, U>) {
+    super(internal.extractorName(('CompositeUpdater')))
     if (updater) {
       // Two arg constructor
-      this.extractor = methodOrExtractor as ValueExtractor
+      this.extractor = methodOrExtractor as ValueExtractor<T, U>
       this.updater = updater
     } else {
       // One arg with method name
@@ -39,15 +38,11 @@ export class CompositeUpdater
     }
   }
 
-  update (target: any, value: any): void {
-    throw new Error('Method not implemented.')
+  getExtractor (): ValueExtractor<T, U> {
+    return this.extractor
   }
 
-  getExtractor (): ValueExtractor {
-    throw new Error('Method not implemented.')
-  }
-
-  getUpdater (): ValueUpdater {
-    throw new Error('Method not implemented.')
+  getUpdater (): ValueUpdater<T, U> {
+    return this.updater
   }
 }

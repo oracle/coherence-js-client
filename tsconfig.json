@@ -1,17 +1,30 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
-    "target": "es6", /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */
-    "module": "commonjs", /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "target": "es6",
+    "module": "commonjs",
     "lib": [
       "es6",
       "esnext.asynciterable"
     ],
-    "declaration": true, /* Generates corresponding '.d.ts' file. */
-    "declarationMap": true, /* Generates a sourcemap for each corresponding '.d.ts' file. */
-    "sourceMap": true, /* Generates corresponding '.map' file. */
-    "outDir": "./target", /* Redirect output structure to the directory. */
-    "downlevelIteration": true, /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
-    "strict": true /* Enable all strict type-checking options. */
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./target",
+    "downlevelIteration": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "strictBindCallApply": true,
+//    "baseUrl": "src",
+//    "paths": {
+//      "@aggregator/*": ["aggregator/*"],
+//      "@cache/*": ["cache/*"],
+//      "@event/*": ["event/*"],
+//      "@extractor/*": ["extractor/*"],
+//      "@filter/*": ["filter/*"],
+//      "@processor/*": ["processor/*"],
+//      "@util/*": ["util/*"]
+//    }
   }
 }

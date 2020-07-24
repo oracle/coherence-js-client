@@ -5,11 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CompositeUpdater } from '../extractor/composite_updater'
-import { UniversalExtractor } from '@extractor/universal-extractor'
-import { UniversalUpdater } from '@extractor/universal-updater'
-import { PropertyProcessor } from './property_processor'
-import { ValueManipulator } from './value_manipulator'
+import { CompositeUpdater, UniversalExtractor, UniversalUpdater } from '../extractor/'
+import { PropertyProcessor, ValueManipulator } from '.'
+import { internal } from './package-internal'
 
 /**
  * NumberIncrementor entry processor.
@@ -38,12 +36,11 @@ export class NumberIncrementor<K = any, V = any>
    * @param postIncrement
    */
   constructor (nameOrManipulator: ValueManipulator<V, number> | string, increment: number, postIncrement: boolean = false) {
-    if (typeof nameOrManipulator === 'string') {
-      // Need to create a ValueManipulator
-      super('NumberIncrementor', NumberIncrementor.createCustomManipulator<V>(nameOrManipulator))
-    } else {
-      super('NumberIncrementor', nameOrManipulator)
-    }
+    super(internal.processorName('NumberIncrementor'),
+      typeof nameOrManipulator === 'string'
+        ? NumberIncrementor.createCustomManipulator<V>(nameOrManipulator)
+        : nameOrManipulator)
+
     this.increment = increment
     this.postIncrement = postIncrement
   }
@@ -53,6 +50,7 @@ export class NumberIncrementor<K = any, V = any>
     return new CompositeUpdater(new UniversalExtractor(name), new UniversalUpdater(name))
   }
 
+  // TODO(rlubke) test
   returnOldValue (): this {
     this.postIncrement = true
     return this

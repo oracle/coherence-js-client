@@ -6,8 +6,7 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-
-import { SessionBuilder } from '../src/cache/session'
+import { event, SessionBuilder } from '../src'
 
 export const assert = require('assert').strict;
 
@@ -22,7 +21,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const cache = sess.getCache(CACHE_NAME)
 
       const prom = new Promise((resolve) => {
-        cache.on('cache_released', (cacheName: string) => {
+        cache.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
           }
@@ -42,7 +41,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const cache = sess.getCache(CACHE_NAME)
 
       const prom = new Promise((resolve) => {
-        cache.on('cache_destroyed', (cacheName: string) => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
           }
@@ -64,7 +63,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const cache = sess.getCache(CACHE_NAME)
 
       const prom1 = new Promise((resolve) => {
-        cache.on('cache_released', (cacheName: string) => {
+        cache.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
           }
@@ -76,7 +75,7 @@ describe('LifecycleListener IT Test Suite', () => {
 
       const cache2 = sess.getCache('test-cache')
       const prom2 = new Promise((resolve) => {
-        cache2.on('cache_destroyed', (cacheName: string) => {
+        cache2.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
           if (cacheName == 'test-cache') {
             resolve()
           }
@@ -97,7 +96,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
       const prom = new Promise((resolve) => {
-        sess.on('cache_destroyed', (cacheName: string, arg?: string) => {
+        sess.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string, arg?: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
           }
@@ -118,7 +117,7 @@ describe('LifecycleListener IT Test Suite', () => {
       const sess = new SessionBuilder().build()
       const cache = sess.getCache(CACHE_NAME)
       const prom1 = new Promise((resolve) => {
-        sess.on('cache_released', (cacheName: string) => {
+        sess.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           if (cacheName == CACHE_NAME) {
             resolve()
           }
@@ -130,7 +129,7 @@ describe('LifecycleListener IT Test Suite', () => {
 
       const cache2 = sess.getCache('test-cache')
       const prom2 = new Promise((resolve) => {
-        sess.on('cache_destroyed', (cacheName: string) => {
+        sess.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
           if (cacheName == 'test-cache') {
             resolve()
           }
@@ -162,7 +161,7 @@ describe('LifecycleListener IT Test Suite', () => {
 
       sess.getCache('test-cache-1')
       const prom1 = new Promise((resolve) => {
-        sess.on('cache_released', (cacheName: string) => {
+        sess.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           if (cacheName == 'test-cache-1') {
             resolve()
           }
@@ -172,7 +171,7 @@ describe('LifecycleListener IT Test Suite', () => {
 
       sess.getCache('test-cache-2')
       const prom2 = new Promise((resolve) => {
-        sess.on('cache_released', (cacheName: string) => {
+        sess.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           if (cacheName == 'test-cache-2') {
             resolve()
           }

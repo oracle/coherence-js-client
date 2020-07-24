@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Extractors, UniversalExtractor, ValueExtractor } from '../extractor/'
+import { UniversalExtractor, ValueExtractor } from './extractor/'
+import { Extractors } from '.'
 import {
   AlwaysFilter,
   BetweenFilter,
@@ -29,8 +30,8 @@ import {
   NotFilter,
   PredicateFilter,
   PresentFilter,
-  RegexFilter
-} from '.'
+  RegexFilter, MapEventFilter
+} from './filter'
 
 
 /**
@@ -258,10 +259,17 @@ export class Filters {
    */
   static equal<T, E> (extractor: ValueExtractor<T, E>, value: E): EqualsFilter<T, E>;
   static equal<T, E> (arg: string | ValueExtractor<T, E>, value: E): EqualsFilter<T, E> {
-    if (!(arg instanceof ValueExtractor)) {
-      return new EqualsFilter('EqualsFilter', new UniversalExtractor(arg), value)
-    }
-    return new EqualsFilter('EqualsFilter', arg, value)
+    return new EqualsFilter(arg instanceof ValueExtractor
+      ? arg
+      : new UniversalExtractor(arg), value)
+  }
+
+  /**
+   * TODO(rlubke) docs
+   * @param filter
+   */
+  static event<T, E> (filter: Filter): MapEventFilter<T> {
+    return new MapEventFilter(filter);
   }
 
   /**

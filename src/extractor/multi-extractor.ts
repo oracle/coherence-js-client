@@ -5,18 +5,16 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractCompositeExtractor, ChainedExtractor, ReflectionExtractor, ValueExtractor } from './value_extractor'
+import { AbstractCompositeExtractor, ChainedExtractor, ReflectionExtractor, ValueExtractor } from '.'
+import { internal } from './package-internal'
 
 export class MultiExtractor
   extends AbstractCompositeExtractor {
-  // constructor(extractors: ValueExtractor[]);
-  // constructor(methodNames: string);
-  constructor (extractorsOrMethod: ValueExtractor[] | string) {
-    if (typeof extractorsOrMethod === 'string') {
-      super('MultiExtractor', MultiExtractor.createExtractors(extractorsOrMethod))
-    } else {
-      super('MultiExtractor', extractorsOrMethod)
-    }
+  constructor (extractorsOrMethod: ValueExtractor<any, any>[] | string) {
+    super(internal.extractorName('MultiExtractor'),
+      ((typeof extractorsOrMethod === 'string')
+        ? MultiExtractor.createExtractors(extractorsOrMethod)
+        : extractorsOrMethod))
   }
 
   protected static createExtractors (fields: string): ValueExtractor<any, any>[] {

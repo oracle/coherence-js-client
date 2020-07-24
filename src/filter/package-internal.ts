@@ -9,7 +9,7 @@
  * @hidden
  */
 export module internal {
-  export function extractorName(name: string): string {
-    return 'extractor.' + name
+  export function filterName(name: string): string {
+    return 'filter.' + name
   }
 }

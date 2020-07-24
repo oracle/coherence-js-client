@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  * VersionedPut is an entry processor that performs a remove
@@ -13,7 +14,7 @@ import { BaseProcessor } from './base_processor'
  *
  */
 export class VersionedPutProcessor<K, V>
-  extends BaseProcessor<K, V, V> {
+  extends EntryProcessor<K, V, V> {
   /**
    * The underlying filter.
    */
@@ -40,7 +41,7 @@ export class VersionedPutProcessor<K, V>
    * @param filter  the filter to evaluate an entry
    */
   constructor (value: V, allowInsert: boolean = false, returnCurrent: boolean = false) {
-    super('VersionedPut')
+    super(internal.processorName('VersionedPut'))
 
     this.value = value
     this.insert = allowInsert

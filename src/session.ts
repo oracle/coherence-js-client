@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CacheLifecycleEvent, SessionLifecycleEvent } from '../event/events' // SessionLifecycleEvent not exported
-import { SerializerRegistry } from '../util/'
+import { CacheLifecycleEvent, SessionLifecycleEvent } from './event/events' // SessionLifecycleEvent not exported
+import { SerializerRegistry } from './util'
 import { EventEmitter } from 'events'
 import { PathLike, readFileSync } from 'fs'
 import { Channel, ChannelCredentials, credentials } from 'grpc'

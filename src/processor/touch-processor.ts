@@ -5,17 +5,18 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  * Touch entry processor.
  */
 export class TouchProcessor<K, V>
-  extends BaseProcessor<K, V, void> {
+  extends EntryProcessor<K, V, void> {
   /**
    * Construct a Touch EntryProcessor.
    */
   constructor () {
-    super('Touch')
+    super(internal.processorName('Touch'))
   }
 }

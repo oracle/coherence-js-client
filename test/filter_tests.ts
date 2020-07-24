@@ -6,14 +6,7 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-
-import { NamedCacheClient } from '../src/cache/named_cache_client'
-import { SessionBuilder } from '../src/cache/session'
-
-import { Extractors } from '../src/extractor/extractors'
-import { BetweenFilter } from '../src/filter/between_filter'
-import { Filters } from '../src/filter/filters'
-
+import { Extractors, Filters, NamedCacheClient, SessionBuilder } from '../src'
 import { TestUtil, val123, val234, val345, val456 } from './abstract_named_cache_tests'
 
 export const assert = require('assert').strict
@@ -237,7 +230,7 @@ describe('Filter IT Test Suite', () => {
     // BetweenFilter with lower bound
     @test
     async testBetweenFilterWithLowerBoundWithKeySet () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true)
       const keys = await cache.keySet(f2)
 
       assert.equal(keys.size, 2)
@@ -246,7 +239,7 @@ describe('Filter IT Test Suite', () => {
 
     @test
     async testBetweenFilterWithLowerBoundWithEntrySet () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true)
       const entries = await cache.entrySet(f2)
 
       assert.equal(entries.size, 2)
@@ -256,7 +249,7 @@ describe('Filter IT Test Suite', () => {
 
     @test
     async testBetweenFilterWithLowerBoundWithValues () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true)
       const values = await cache.values(f2)
 
       assert.equal(values.size, 2)
@@ -266,7 +259,7 @@ describe('Filter IT Test Suite', () => {
     // BetweenFilter with lower and upper bound
     @test
     async testBetweenFilterWithLowerBoundAndUpperBoundWithKeySet () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true, true)
       const keys = await cache.keySet(f2)
 
       assert.equal(keys.size, 3)
@@ -275,7 +268,7 @@ describe('Filter IT Test Suite', () => {
 
     @test
     async testBetweenFilterWithLowerBoundAndUpperBoundWithEntrySet () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true, true)
       const entries = await cache.entrySet(f2)
 
       assert.equal(entries.size, 3)
@@ -285,7 +278,7 @@ describe('Filter IT Test Suite', () => {
 
     @test
     async testBetweenFilterWithLowerBoundAndUpperBoundWithValues () {
-      const f2 = new BetweenFilter(Extractors.extract('ival'), 123, 345, true, true)
+      const f2 = Filters.between(Extractors.extract('ival'), 123, 345, true, true)
       const values = await cache.values(f2)
 
       assert.equal(values.size, 3)

@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which evaluates the content of a MapEvent object according to the
@@ -136,7 +137,7 @@ export class MapEventFilter<T = any>
   filter?: Filter | undefined | null
 
   constructor (maskOrFilter: number | Filter, filter?: Filter) {
-    super('MapEventFilter')
+    super(internal.filterName('MapEventFilter'))
     if (filter) {
       // Two arg invocation.
       this.mask = maskOrFilter as number

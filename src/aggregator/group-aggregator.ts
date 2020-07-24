@@ -5,9 +5,11 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '../extractor/value_extractor'
-import { Filter } from '../filter/filter'
-import { AbstractAggregator, EntryAggregator } from './aggregator'
+import { ValueExtractor } from '../extractor/'
+import { Filter } from '../filter/'
+import { EntryAggregator } from '.'
+import { internal } from './package-internal'
+
 
 /**
  * The GroupAggregator provides an ability to split a subset of entries
@@ -39,20 +41,12 @@ import { AbstractAggregator, EntryAggregator } from './aggregator'
  * @param <T>  the type of the value to extract from
  */
 export class GroupAggregator<K, V, T, E, R>
-  extends AbstractAggregator<K, V, Map<E, any>, Map<E, R>> {
-  aggregator: EntryAggregator<K, V, R>
-
+  extends EntryAggregator<K, V, any, any, Map<E, R>> {
+  aggregator: EntryAggregator<K, V, any, any, R>
   filter: Filter
 
-  // constructor(extractor: ValueExtractor<T, E>, aggregator: EntryAggregator<K, V, R>, filter: Filter);
-  // constructor(property: string, aggregator: EntryAggregator<K, V, R>, filter: Filter);
-  constructor (extractorOrProperty: ValueExtractor<T, E> | string, aggregator: EntryAggregator<K, V, R>, filter: Filter) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('GroupAggregator', extractorOrProperty as ValueExtractor)
-    } else {
-      super('GroupAggregator', extractorOrProperty)
-    }
+  constructor (extractorOrProperty: ValueExtractor<T, E> | string, aggregator: EntryAggregator<K, V, T, E, R>, filter: Filter) {
+    super(internal.aggregatorName('GroupAggregator'), extractorOrProperty)
 
     this.aggregator = aggregator
     this.filter = filter

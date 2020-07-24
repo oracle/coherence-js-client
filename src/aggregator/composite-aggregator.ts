@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from '../util/util'
-import { EntryAggregator, StreamingAggregator } from './aggregator'
+import { EntryAggregator } from '.'
+import { internal } from './package-internal'
 
 /**
  * CompositeAggregator provides an ability to execute a collection of
@@ -15,20 +15,12 @@ import { EntryAggregator, StreamingAggregator } from './aggregator'
  * results. The size of the returned list will always be equal to the
  * length of the aggregators' array.
  */
-export class CompositeAggregator<K, V>
-  implements StreamingAggregator<K, V, any, Array<any>> {
-  '@class': string
+export class CompositeAggregator<K = any, V = any>
+  extends EntryAggregator<K, V, any, any, Array<any>> {
+  aggregators: Array<EntryAggregator<any, any, any, any, any>>
 
-  aggregators: EntryAggregator<K, V, any>[] = []
-
-  constructor (aggregator1: EntryAggregator<K, V, any>, aggregator2: EntryAggregator<K, V, any>) {
-    this['@class'] = Util.toAggregatorName('CompositeAggregator')
-    this.aggregators.push(aggregator1)
-    this.aggregators.push(aggregator2)
-  }
-
-  andThen<R> (aggregator: EntryAggregator<K, V, R>): CompositeAggregator<K, V> {
-    this.aggregators.push(aggregator)
-    return this
+  constructor (aggregators: Array<EntryAggregator<any, any, any, any, any>>,) {
+    super(internal.aggregatorName('CompositeAggregator'))
+    this.aggregators = aggregators
   }
 }

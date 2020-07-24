@@ -5,9 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { UniversalExtractor } from '@extractor/universal-extractor'
-import { ChainedExtractor, IdentityExtractor, ValueExtractor } from '@extractor/value-extractor'
-import { BaseProcessor } from './base_processor'
+import { ChainedExtractor, IdentityExtractor, UniversalExtractor , ValueExtractor} from '../extractor/'
+import { internal } from './package-internal'
+import { EntryProcessor } from '.'
 
 /**
  * An invocable agent that operates against the entry objects within a
@@ -21,13 +21,13 @@ import { BaseProcessor } from './base_processor'
  *
  */
 export class ExtractorProcessor<K = any, V = any, T = any, E = any>
-  extends BaseProcessor<K, V, T> {
+  extends EntryProcessor<K, V, T> {
   name?: string
 
   extractor: ValueExtractor<T, E | any> // This is because ChainedExtractor doesnt guarantee <T, E>
 
   constructor (methodName?: string) {
-    super('ExtractorProcessor')
+    super(internal.processorName('ExtractorProcessor'))
     // this.name = methodName;
     if (!methodName) {
       this.extractor = IdentityExtractor.INSTANCE

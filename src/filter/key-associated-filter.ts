@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which limits the scope of another filter according to the key
@@ -43,7 +44,7 @@ export class KeyAssociatedFilter<T = any>
    * cache service nodes that contain this key.
    */
   constructor (filter: Filter, hostKey: any) {
-    super('KeyAssociatedFilter')
+    super(internal.filterName('KeyAssociatedFilter'))
     this.filter = filter
     this.hostKey = hostKey
   }

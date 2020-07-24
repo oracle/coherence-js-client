@@ -6,8 +6,7 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-
-import { SessionBuilder } from '../src/cache/session'
+import { event, Session, SessionBuilder } from '../src'
 
 export const assert = require('assert').strict;
 
@@ -18,7 +17,7 @@ describe('Session IT Test Suite', () => {
       @test
       async shouldBeDefaultAddressWithDefaultSessionBuilder () {
         const builder = new SessionBuilder()
-        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().address, Session.DEFAULT_ADDRESS)
         assert.equal(builder.getSessionOptions().tlsEnabled, false)
       }
 
@@ -34,7 +33,7 @@ describe('Session IT Test Suite', () => {
       async shouldBeAbleToSpecifyRequestTimeoutWithBuilder () {
         const builder = new SessionBuilder()
         builder.withRequestTimeout(1234)
-        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().address, Session.DEFAULT_ADDRESS)
         assert.equal(builder.getSessionOptions().tlsEnabled, false)
         assert.equal(builder.getSessionOptions().requestTimeoutInMillis, 1234)
       }
@@ -43,7 +42,7 @@ describe('Session IT Test Suite', () => {
       async shouldBeAbleToSpecifyTlsWithBuilder () {
         const builder = new SessionBuilder()
         builder.enableTls()
-        assert.equal(builder.getSessionOptions().address, SessionBuilder.DEFAULT_ADDRESS)
+        assert.equal(builder.getSessionOptions().address, Session.DEFAULT_ADDRESS)
         assert.equal(builder.getSessionOptions().tlsEnabled, true)
       }
 
@@ -150,7 +149,7 @@ describe('Session IT Test Suite', () => {
 
         assert.notDeepEqual(cache1, cache2)
         const prom = new Promise((resolve) => {
-          cache1.on('cache_released', (cacheName: string) => {
+          cache1.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
             if (cacheName == 'sess-test-cache-1') {
               resolve()
             }

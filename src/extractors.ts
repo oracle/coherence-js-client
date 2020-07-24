@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from '../util/'
-import { ChainedExtractor, IdentityExtractor, MultiExtractor, UniversalExtractor, ValueExtractor} from '.'
+import { Util } from './util'
+import { ChainedExtractor, IdentityExtractor, MultiExtractor, UniversalExtractor, ValueExtractor} from './extractor'
 
 /**
  * Simple Extractor DSL.
@@ -40,9 +40,9 @@ export class Extractors {
    *
    * @see UniversalExtractor
    */
-  static chained<T, R> (...extractors: ValueExtractor[]): ValueExtractor<T, R>;
+  static chained<T, R> (...extractors: ValueExtractor<any, any>[]): ValueExtractor<T, R>;
   static chained<T, R> (...fields: string[]): ValueExtractor<T, R>;
-  static chained<T, R> (...extractorsOrFields: ValueExtractor[] | string[]): ValueExtractor<T, R> {
+  static chained<T, R> (...extractorsOrFields: ValueExtractor<any, any>[] | string[]): ValueExtractor<T, R> {
     let extractors = new Array<ValueExtractor<T, R>>()
     Util.ensureNotEmpty(extractorsOrFields, 'The extractors or fields parameter cannot be null or empty')
 
@@ -55,7 +55,7 @@ export class Extractors {
         }
       }
     } else {
-      extractors = extractorsOrFields as ValueExtractor[]
+      extractors = extractorsOrFields as ValueExtractor<any, any>[]
     }
 
     if (extractors.length == 1) {
@@ -78,8 +78,8 @@ export class Extractors {
    */
   static extract<T, E> (from: string, params?: any[]): ValueExtractor<T, E> {
     if (params) {
-      if (!from.endsWith(Util.METHOD_SUFFIX)) {
-        from = from + Util.METHOD_SUFFIX
+      if (!from.endsWith('()')) {
+        from = from + '()'
       }
     }
 
@@ -126,7 +126,7 @@ export class Extractors {
   //   return new MultiExtractor('', extractors) // ??
   // }
 
-  private static isValueExtractor (e: any): e is ValueExtractor {
-    return (e as ValueExtractor).getTarget !== undefined
+  private static isValueExtractor (e: any): e is ValueExtractor<any, any> {
+    return (e as ValueExtractor<any, any>).getTarget !== undefined
   }
 }

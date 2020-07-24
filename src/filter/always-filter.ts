@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which always evaluates to `true`.
@@ -18,6 +19,6 @@ export class AlwaysFilter<T = any>
    * Construct an AlwaysFilter.
    */
   constructor () {
-    super('AlwaysFilter')
+    super(internal.filterName('AlwaysFilter'))
   }
 }

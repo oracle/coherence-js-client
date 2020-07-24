@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+import { internal } from './package-internal'
+import { EntryProcessor } from '.'
 
 /**
  * PutAll entry processor.
@@ -14,7 +15,7 @@ import { BaseProcessor } from './base_processor'
  * @param <V> the type of the Map entry value
  */
 export class PutAllProcessor<K, V>
-  extends BaseProcessor<K, V, void> {
+  extends EntryProcessor<K, V, void> {
   /**
    * Specifies the new value to update an entry with.
    */
@@ -27,7 +28,7 @@ export class PutAllProcessor<K, V>
    * @param value   a value to update an entry with
    */
   constructor (entries: Map<K, V>) {
-    super('PutAll')
+    super(internal.processorName('PutAll'))
 
     this.entries = entries
   }

@@ -5,14 +5,15 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ComparisonFilter } from './filter'
+import { ValueExtractor } from '../extractor/'
+import { ComparisonFilter } from '.'
+import { internal } from './package-internal'
 
 export class ContainsFilter<T = any, E = any>
   extends ComparisonFilter<T, E, E> {
   values: any
 
   constructor (extractor: ValueExtractor<T, E | E[]>, value: E) {
-    super('ContainsFilter', extractor, value)
+    super(internal.filterName('ContainsFilter'), extractor, value)
   }
 }

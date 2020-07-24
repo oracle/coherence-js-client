@@ -5,7 +5,7 @@
 node_modules/**
 .idea
 target
-src/cache/proto
+src/net/grpc
 etc/proto
 .npmrc
-.coherence-grpc-proxy
+docs

@@ -27,8 +27,8 @@ function grab-proto-files() {
 # Generates and compiles the stubs generated from the installed proto files.
 function gen-compile-proto-files() {
     declare -r PROTO_SRC_DIR="${PWD}/etc/proto"
-    declare -r PROTO_GEN_SRC_DIR="${PWD}/src/cache/proto"
-    declare -r PROTO_GEN_OUT_DIR="${PWD}/target/src/cache/proto"
+    declare -r PROTO_GEN_SRC_DIR="${PWD}/src/net/grpc"
+    declare -r PROTO_GEN_OUT_DIR="${PWD}/target/src/net/grpc"
 
     rm -rf ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}
     mkdir -p ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}

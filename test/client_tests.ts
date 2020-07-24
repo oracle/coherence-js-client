@@ -6,14 +6,7 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { Aggregators } from '../src/aggregator/aggregators'
-import { NamedCacheClient } from '../src/cache/named_cache_client'
-import { SessionBuilder } from '../src/cache/session'
-
-import { Extractors } from '../src/extractor/extractors'
-import { Filters } from '../src/filter/filters'
-
-import { Processors } from '../src/processor/processors'
+import { Aggregators, Extractors, Filters, NamedCacheClient, Processors, SessionBuilder } from '../src'
 
 import { val123, val234, val345, val456 } from './abstract_named_cache_tests'
 

@@ -5,11 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CompositeUpdater } from '../extractor/composite_updater'
-import { UniversalExtractor } from '@extractor/universal-extractor'
-import { UniversalUpdater } from '@extractor/universal-updater'
-import { PropertyProcessor } from './property_processor'
-import { ValueManipulator } from './value_manipulator'
+import { CompositeUpdater, UniversalExtractor, UniversalUpdater } from '../extractor/'
+import { PropertyProcessor, ValueManipulator } from '.'
+import { internal } from './package-internal'
 
 /**
  * NumberMultiplier entry processor.
@@ -37,12 +35,11 @@ export class NumberMultiplier<K = any, V = any>
    * @param value   a value to update an entry with
    */
   constructor (nameOrManipulator: ValueManipulator<V, number> | string, multiplier: number, postMultiplication: boolean = false) {
-    if (typeof nameOrManipulator === 'string') {
-      // Need to create a ValueManipulator
-      super('NumberMultiplier', NumberMultiplier.createCustomManipulator<V>(nameOrManipulator))
-    } else {
-      super('NumberMultiplier', nameOrManipulator)
-    }
+    super(internal.processorName('NumberMultiplier'),
+      typeof nameOrManipulator === 'string'
+        ? NumberMultiplier.createCustomManipulator<V>(nameOrManipulator)
+        : nameOrManipulator)
+
     this.multiplier = multiplier
     this.postMultiplication = postMultiplication
   }
@@ -52,6 +49,7 @@ export class NumberMultiplier<K = any, V = any>
     return new CompositeUpdater(new UniversalExtractor(name), new UniversalUpdater(name))
   }
 
+  // TODO(rlubke) test
   returnOldValue (): this {
     this.postMultiplication = true
     return this

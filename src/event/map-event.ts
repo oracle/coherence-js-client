@@ -5,9 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { MapEventResponse } from '../cache/proto/messages_pb'
-import { ObservableMap } from '../util/observable_map'
-import { Serializer } from '../util/serializer'
+import { NamedCache } from '../net'
+import { Serializer} from '../util/'
+import { MapEventResponse } from '../net/grpc/messages_pb'
 
 export class MapEvent<K = any, V = any> {
   /**
@@ -33,7 +33,7 @@ export class MapEvent<K = any, V = any> {
   /**
    * The event source.
    */
-  source: ObservableMap<K, V>
+  source: NamedCache<K, V>
 
   /**
    * Event id; may be one of {@link ENTRY_INSERTED}, {@link ENTRY_UPDATED}, or {@link ENTRY_DELETED}.
@@ -89,7 +89,7 @@ export class MapEvent<K = any, V = any> {
    * @param mapEvent   the {@link MapEventResponse} from the server
    * @param serializer
    */
-  constructor (cacheName: string, source: ObservableMap<K, V>, mapEvent: MapEventResponse, serializer: Serializer) {
+  constructor (cacheName: string, source: NamedCache<K, V>, mapEvent: MapEventResponse, serializer: Serializer) {
     this.cacheName = cacheName
     this.source = source
     this.serializer = serializer
@@ -114,7 +114,7 @@ export class MapEvent<K = any, V = any> {
    *
    * @return the event source
    */
-  getSource (): ObservableMap<K, V> {
+  getSource (): NamedCache<K, V> {
     return this.source
   }
 

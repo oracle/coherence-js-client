@@ -5,12 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
-import { PropertyManipulator } from './property_manipulator'
-import { ValueManipulator } from './value_manipulator'
+import { EntryProcessor, PropertyManipulator, ValueManipulator } from '.'
 
 export abstract class PropertyProcessor<K, V, R>
-  extends BaseProcessor<K, V, R> {
+  extends EntryProcessor<K, V, R> {
   /**
    * The property value manipulator.
    */
@@ -27,10 +25,8 @@ export abstract class PropertyProcessor<K, V, R>
    */
   protected constructor (typeName: string, manipulatorOrPropertyName: ValueManipulator<V, R> | string, useIs: boolean = false) {
     super(typeName)
-    if (typeof manipulatorOrPropertyName === 'string') {
-      this.manipulator = new PropertyManipulator(manipulatorOrPropertyName, useIs)
-    } else {
-      this.manipulator = manipulatorOrPropertyName
-    }
+    this.manipulator = typeof manipulatorOrPropertyName === 'string'
+      ? new PropertyManipulator(manipulatorOrPropertyName, useIs)
+      : manipulatorOrPropertyName
   }
 }

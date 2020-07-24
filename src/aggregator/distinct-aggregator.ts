@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractDoubleAggregator } from '@aggregator/aggregator'
-import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractDoubleAggregator } from '.'
+import { ValueExtractor } from '../extractor/'
+import { internal } from './package-internal'
 
 /**
  * Return the set of unique values extracted from a set of entries in a
@@ -25,14 +26,7 @@ import { ValueExtractor } from '../extractor/value_extractor'
  */
 export class DistinctValuesAggregator<T>
   extends AbstractDoubleAggregator<T> {
-  // constructor(extractor: ValueExtractor<T, number>);
-  // constructor(property: string);
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('DistinctValues', extractorOrProperty)
-    } else {
-      super('DistinctValues', extractorOrProperty)
-    }
+    super(internal.aggregatorName('DistinctValues'), extractorOrProperty)
   }
 }

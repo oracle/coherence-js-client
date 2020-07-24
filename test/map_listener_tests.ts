@@ -8,11 +8,8 @@
 import { suite, test, timeout } from '@testdeck/mocha'
 
 import { EventEmitter } from 'events'
-import { SessionBuilder } from '../src/cache/session'
-import { Filters } from '../src/filter/filters'
-import { MapEventFilter } from '../src/filter/map_event_filter'
-import { MapEvent } from '../src/util/map_event'
-import { MapListener } from '../src/util/map_listener'
+import { event, Filters, SessionBuilder } from '../src'
+import { MapEventFilter } from '../src/filter'
 
 export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()
@@ -24,7 +21,7 @@ describe('MapListener IT Test Suite', () => {
     async shouldNotHaveReceivedAnyEventsWhenNoUpdatesToCache () {
       const cache = session.getCache('map-list-1')
       const prom = new Promise((resolve) => {
-        cache.on('cache_destroyed', () => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -41,7 +38,7 @@ describe('MapListener IT Test Suite', () => {
     async testAllEventsMapListener () {
       const cache = session.getCache('map-list-2')
       const prom = new Promise((resolve) => {
-        cache.on('cache_destroyed', () => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -65,7 +62,7 @@ describe('MapListener IT Test Suite', () => {
     async testMultipleAllEventsMapListener () {
       const cache = session.getCache('map-list-3')
       const prom = new Promise((resolve) => {
-        cache.on('cache_destroyed', () => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -97,7 +94,7 @@ describe('MapListener IT Test Suite', () => {
     async shouldReceiveEventsWithAlwaysFilter () {
       const cache = session.getCache('map-list-4')
       const prom = new Promise((resolve) => {
-        cache.on('cache_destroyed', () => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -142,14 +139,13 @@ describe('MapListener IT Test Suite', () => {
       const cache = session.getCache('map-listener-cache')
       // Use a KeyListener and a FilterListener
       const prom = new Promise((resolve) => {
-        cache.on('cache_released', () => {
+        cache.on(event.CacheLifecycleEvent.RELEASED, () => {
           resolve()
         })
       })
       const keyListener = new CountingMapListener('key-listener')
       const filterListener = new CountingMapListener('filter-listener')
-
-      const mapEventFilter = new MapEventFilter(Filters.equal('id', '123'))
+      const mapEventFilter = Filters.event(Filters.equal('id', '123'))
       await cache.addMapListener(filterListener, mapEventFilter, false)
       await cache.addMapListener(keyListener, '123', false)
 
@@ -167,7 +163,7 @@ describe('MapListener IT Test Suite', () => {
       const cache = session.getCache('map-listener-cache')
       // Use 2 KeyListeners and two FilterListeners
       const prom = new Promise((resolve) => {
-        cache.on('cache_released', () => {
+        cache.on(event.CacheLifecycleEvent.RELEASED, () => {
           resolve()
         })
       })
@@ -176,7 +172,7 @@ describe('MapListener IT Test Suite', () => {
       const filterListener1 = new CountingMapListener('filter-listener-1')
       const filterListener2 = new CountingMapListener('filter-listener-2')
 
-      const mapEventFilter = new MapEventFilter(Filters.equal('id', '123'))
+      const mapEventFilter = Filters.event(Filters.equal('id', '123'))
       await cache.addMapListener(keyListener1, '123', false)
       await cache.addMapListener(filterListener1, mapEventFilter, false)
       await cache.addMapListener(filterListener2, mapEventFilter, false)
@@ -216,10 +212,10 @@ describe('MapListener IT Test Suite', () => {
       let destroyCount = 0
 
       const prom = new Promise((resolve) => {
-        cache.on('cache_truncated', () => {
+        cache.on(event.CacheLifecycleEvent.TRUNCATED, () => {
           truncateCount++
         })
-        cache.on('cache_destroyed', () => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
           destroyCount++
 
           assert.deepEqual(truncateCount, 2)
@@ -247,10 +243,10 @@ describe('MapListener IT Test Suite', () => {
       let releasedCount = 0
 
       const prom = new Promise((resolve) => {
-        cache.on('cache_truncated', () => {
+        cache.on(event.CacheLifecycleEvent.TRUNCATED, () => {
           truncateCount++
         })
-        cache.on('cache_released', (cacheName: string) => {
+        cache.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string) => {
           console.log('Test [shouldBeAbleToRegisterCacheLifecycleListenersForCacheRelease] received cache_released for: ' + cacheName)
           releasedCount++
 
@@ -285,7 +281,7 @@ describe('MapListener IT Test Suite', () => {
 
   class CountingMapListener<K = any, V = any>
     extends EventEmitter
-    implements MapListener<K, V> {
+    implements event.MapListener<K, V> {
     private static RESOLVED = Promise.resolve()
     name: string
     counters: CallbackCounters
@@ -313,17 +309,17 @@ describe('MapListener IT Test Suite', () => {
       })
     }
 
-    entryDeleted (event: MapEvent<K, V>): void {
+    entryDeleted (event: event.MapEvent<K, V>): void {
       this.counters.delete = this.counters.delete ? this.counters.delete + 1 : 1
       super.emit('event', 'delete')
     }
 
-    entryInserted (event: MapEvent<K, V>): void {
+    entryInserted (event: event.MapEvent<K, V>): void {
       this.counters.insert = this.counters.insert ? this.counters.insert + 1 : 1
       super.emit('event', 'insert')
     }
 
-    entryUpdated (event: MapEvent<K, V>): void {
+    entryUpdated (event: event.MapEvent<K, V>): void {
       this.counters.update = this.counters.update ? this.counters.update + 1 : 1
       super.emit('event', 'update')
     }

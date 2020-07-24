@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from '../filter/'
-import { ValueUpdater } from '../util/'
+import { ValueUpdater } from './extractor'
+import { Filter } from './filter/'
 import {
   ConditionalPutAllProcessor,
   ConditionalPutProcessor,
@@ -32,7 +32,7 @@ import {
   UpdaterProcessor,
   VersionedPutAllProcessor,
   VersionedPutProcessor
-} from '.'
+} from './processor'
 
 export class Processors {
   static conditionalPut<K, V> (filter: Filter<V>, value: V, returnValue?: boolean): ConditionalPutProcessor<K, V> {

@@ -6,16 +6,13 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { RequestFactory } from '../src/cache/request_factory'
-import { Extractors } from '../src/extractor/extractors'
-import { UniversalExtractor } from '../src/extractor/universal_extractor'
-import { Filters } from '../src/filter/filters'
+import { Extractors, Filters, util } from '../src'
+import { RequestFactory } from '../src/util/request-factory'
 
-import { SerializerRegistry } from '../src/util/serializer'
 import { states, StateType } from './states'
 
 export const assert = require('assert').strict;
-const serializer = SerializerRegistry.instance().serializer('json')
+const serializer = util.SerializerRegistry.instance().serializer('json')
 const reqFactory = new RequestFactory<string, StateType>('States', serializer)
 
 @suite(timeout(3000))
@@ -27,7 +24,7 @@ class RequestStructureSuite {
 
   @test addIndexWithExtractor () {
     const request = reqFactory.addIndex(Extractors.extract('abbreviation'))
-    const ue = serializer.deserialize(serializer.serialize(new UniversalExtractor('abbreviation')))
+    const ue = serializer.deserialize(serializer.serialize(Extractors.extract('abbreviation')))
     assert.equal(request.getCache(), 'States')
     assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
     assert.equal(request.getSorted(), false)
@@ -36,7 +33,7 @@ class RequestStructureSuite {
 
   @test addIndexWithExtractorAndSorted () {
     const request = reqFactory.addIndex(Extractors.extract('abbreviation'), true)
-    const ue = serializer.deserialize(serializer.serialize(new UniversalExtractor('abbreviation')))
+    const ue = serializer.deserialize(serializer.serialize(Extractors.extract('abbreviation')))
     assert.equal(request.getCache(), 'States')
     assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
     assert.equal(request.getSorted(), true)

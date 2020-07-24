@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from '../filter/filter'
-import { BaseProcessor } from './base_processor'
+import { Filter } from '../filter/'
+import { internal } from './package-internal'
+import { EntryProcessor } from '.'
 
 /**
  * ConditionalRemove is an entry processor that performs a remove
@@ -14,7 +15,7 @@ import { BaseProcessor } from './base_processor'
  *
  */
 export class ConditionalRemoveProcessor<K = any, V = any>
-  extends BaseProcessor<K, V, V> {
+  extends EntryProcessor<K, V, V> {
   /**
    * The underlying filter.
    */
@@ -34,7 +35,7 @@ export class ConditionalRemoveProcessor<K = any, V = any>
    * @param filter  the filter to evaluate an entry
    */
   constructor (filter: Filter<V>, returnValue?: boolean) {
-    super('ConditionalRemove')
+    super(internal.processorName('ConditionalRemove'))
 
     this.filter = filter
     this.return = returnValue

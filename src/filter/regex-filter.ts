@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ComparisonFilter } from './filter'
+import { ValueExtractor } from '../extractor/'
+import { ComparisonFilter } from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which returns true for {@link com.tangosol.util.InvocableMap.Entry}
@@ -23,10 +24,6 @@ import { ComparisonFilter } from './filter'
 export class RegexFilter<T = any, E = any>
   extends ComparisonFilter<T, E, string> {
   constructor (methodOrExtractor: string | ValueExtractor<T, E>, regex: string) {
-    if (methodOrExtractor instanceof ValueExtractor) {
-      super('RegexFilter', methodOrExtractor, regex)
-    } else {
-      super('RegexFilter', methodOrExtractor, regex)
-    }
+    super(internal.filterName('RegexFilter'), methodOrExtractor, regex)
   }
 }

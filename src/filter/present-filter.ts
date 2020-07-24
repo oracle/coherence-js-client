@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which returns true for {@link com.tangosol.util.InvocableMap.Entry}
@@ -24,6 +25,6 @@ export class PresentFilter<T = any>
   public static INSTANCE = new PresentFilter()
 
   constructor () {
-    super('PresentFilter')
+    super(internal.filterName('PresentFilter'))
   }
 }

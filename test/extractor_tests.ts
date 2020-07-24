@@ -6,12 +6,7 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-
-import { NamedCacheClient } from '../src/cache/named_cache_client'
-import { SessionBuilder } from '../src/cache/session'
-
-import { Extractors } from '../src/extractor/extractors'
-import { Filters } from '../src/filter/filters'
+import { Extractors, Filters, NamedCacheClient, SessionBuilder } from '../src'
 
 export const assert = require('assert').strict;
 export const session = new SessionBuilder().build()

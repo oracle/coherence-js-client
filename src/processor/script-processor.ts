@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  * Script is an entry processor that performs a remove
@@ -13,7 +14,7 @@ import { BaseProcessor } from './base_processor'
  *
  */
 export class ScriptProcessor<K, V>
-  extends BaseProcessor<K, V, V> {
+  extends EntryProcessor<K, V, V> {
   /**
    * The script name.
    */
@@ -30,7 +31,7 @@ export class ScriptProcessor<K, V>
    * @param args  The args for the script.
    */
   constructor (script: string, ...args: any[]) {
-    super('Script')
+    super(internal.processorName('Script'))
     this.script = script
     this.args = args
   }

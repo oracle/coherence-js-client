@@ -5,11 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 export class NeverFilter
-  extends Filter<any> {
+  extends Filter {
   constructor () {
-    super('NeverFilter')
+    super(internal.filterName('NeverFilter'))
   }
 }

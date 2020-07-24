@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from '../util/util'
+import { Util } from '../util'
+import { internal } from './package-internal'
 
 export enum Target { VALUE = 0, KEY = 1 }
 
@@ -13,24 +14,16 @@ export enum Target { VALUE = 0, KEY = 1 }
  * ValueExtractor is used to both extract values (for example, for sorting
  * or filtering) from an object, and to provide an identity for that extraction.
  */
-export abstract class ValueExtractor<T = any, E = any> {
+export abstract class ValueExtractor<T, E> {
   public '@class': string
 
   protected target: Target
 
   protected constructor (clz: string, target: Target = Target.VALUE) {
-    this['@class'] = Util.toExtractorName(clz)
+    this['@class'] = clz
     this.target = target
   }
 
-  /**
-   * Returns an extractor that casts its input argument.
-   *
-   * @param <T> the type of the input objects to the function
-   * @param <E> the type of the output objects to the function
-   *
-   * @return an extractor that always returns its input argument
-   */
   static identityCast<P, Q> (): ValueExtractor<P, Q> {
     return IdentityExtractor.INSTANCE
   }
@@ -42,32 +35,15 @@ export abstract class ValueExtractor<T = any, E = any> {
     return this.target
   }
 
-  compose (before: ValueExtractor): ValueExtractor {
+  compose<V> (before: ValueExtractor<T, E>): ValueExtractor<V, E> {
     Util.ensureNotNull(before, 'before cannot be null')
 
     return (before instanceof ChainedExtractor)
       ? before.andThen(this)
-      : new ChainedExtractor([before, this])
+      : new ChainedExtractor<V, E>([before, this])
   }
 
-  /**
-   * Returns a composed extractor that first applies this extractor to its
-   * input, and then applies the {@code after} extractor to the result. If
-   * evaluation of either extractor throws an exception, it is relayed to
-   * the caller of the composed extractor.
-   *
-   * @param <V>   the type of output of the {@code after} extractor, and of
-   *              the composed extractor
-   * @param after the extractor to apply after this extractor is applied
-   *
-   * @return a composed extractor that first applies this extractor and then
-   *         applies the {@code after} extractor
-   *
-   * @throws NullPointerException if the passed extractor is null
-   *
-   * @see #compose(ValueExtractor)
-   */
-  andThen<V = any> (after: ValueExtractor<E, V>): ValueExtractor<T, V> {
+  andThen<V> (after: ValueExtractor<E, V>): ValueExtractor<T, V> {
     Util.ensureNotNull(after, 'before cannot be null')
 
     return (!(after instanceof ChainedExtractor))
@@ -93,7 +69,7 @@ export class ReflectionExtractor<T, E>
   args?: any[]
 
   constructor (method: string, args?: any[], target?: Target | undefined) {
-    super('ReflectionExtractor', target)
+    super(internal.extractorName('ReflectionExtractor'), target)
     this.method = method
     if (args) {
       this.args = args
@@ -101,16 +77,13 @@ export class ReflectionExtractor<T, E>
   }
 }
 
-export class ChainedExtractor<T = any, E = any>
+export class ChainedExtractor<T, E>
   extends AbstractCompositeExtractor<T, E> {
-  // constructor(extractors: ValueExtractor[]);
-  // constructor(method: string);
   constructor (extractorsOrMethod: ValueExtractor<T, E>[] | string) {
-    if (typeof extractorsOrMethod === 'string') {
-      super('ChainedExtractor', ChainedExtractor.createExtractors(extractorsOrMethod))
-    } else {
-      super('ChainedExtractor', extractorsOrMethod)
-    }
+    super(internal.extractorName('ChainedExtractor'),
+      ((typeof extractorsOrMethod === 'string')
+        ? ChainedExtractor.createExtractors(extractorsOrMethod)
+        : extractorsOrMethod))
     this.target = this.computeTarget()
   }
 
@@ -137,6 +110,7 @@ export class ChainedExtractor<T = any, E = any>
     return result
   }
 
+  // TODO (rlubke) fix this - chained extractor needs different implementations for compose() and andThen()
   protected merge (head: ValueExtractor<any, any>[], tail: ValueExtractor<any, any>[]): ValueExtractor<any, any>[] {
     const arr: any[] = []
     arr.concat(head)
@@ -146,11 +120,11 @@ export class ChainedExtractor<T = any, E = any>
   }
 }
 
-export class IdentityExtractor<T = any>
+export class IdentityExtractor<T>
   extends ValueExtractor<T, T> {
   public static INSTANCE = new IdentityExtractor()
 
   constructor () {
-    super('IdentityExtractor')
+    super(internal.extractorName('IdentityExtractor'))
   }
 }

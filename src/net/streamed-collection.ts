@@ -11,7 +11,7 @@ import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
 import { NamedCacheClient } from '..'
 import { MapEntry, RemoteSet } from '.'
-import { EntryResult } from './proto/messages_pb'
+import { EntryResult } from './grpc/messages_pb'
 
 /**
  * A PagedSet provides the ability to page through the contents of a

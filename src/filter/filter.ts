@@ -5,14 +5,15 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ChainedExtractor, ReflectionExtractor, ValueExtractor } from '../extractor/value_extractor'
-import { Util } from '../util/util'
+import { ChainedExtractor, ReflectionExtractor, ValueExtractor } from '../extractor/'
+import { KeyAssociatedFilter } from '../filter/'
+import { internal } from './package-internal'
 
 export abstract class Filter<T = any> {
   '@class': string
 
   protected constructor (clz: string) {
-    this['@class'] = Util.toFilterName(clz)
+    this['@class'] = clz
   }
 
   and (other: Filter): Filter {
@@ -27,6 +28,7 @@ export abstract class Filter<T = any> {
     return new XorFilter(this, other)
   }
 
+  // TODO(rlubke) test
   associatedWith (key: object): KeyAssociatedFilter<T> {
     return new KeyAssociatedFilter(this, key)
   }
@@ -42,10 +44,8 @@ export abstract class Filter<T = any> {
 
 export abstract class ExtractorFilter<T, E>
   extends Filter<T> {
-  extractor: ValueExtractor<T, E | any> // This is because ChainedExtractor cannot guarantee <T, E>
+  extractor: ValueExtractor<T, E>
 
-  // constructor(typeName: string, extractor: ValueExtractor<T, E>);
-  // constructor(typeName: string, method: string);
   protected constructor (typeName: string, extractorOrMethod: ValueExtractor<T, E> | string) {
     super(typeName)
     this.extractor = (extractorOrMethod instanceof ValueExtractor)
@@ -63,18 +63,12 @@ export abstract class ExtractorFilter<T, E>
  * @param <E> the type of the extracted attribute to use for comparison
  * @param <C> the type of value to compare extracted attribute with
  */
-export class ComparisonFilter<T, E, C>
+export abstract class ComparisonFilter<T, E, C>
   extends ExtractorFilter<T, E> {
   value: C
 
-  // constructor(typeName: string, extractor: ValueExtractor<T, E>, value: C);
-  // constructor(typeName: string, method: string, value: C);
-  constructor (typeName: string, extractorOrMethod: ValueExtractor<T, E> | string, value: C) {
-    if (extractorOrMethod instanceof ValueExtractor) {
-      super(typeName, extractorOrMethod)
-    } else {
-      super(typeName, extractorOrMethod)
-    }
+  protected constructor (typeName: string, extractorOrMethod: ValueExtractor<T, E> | string, value: C) {
+    super(typeName, extractorOrMethod)
     this.value = value
   }
 }
@@ -92,14 +86,14 @@ export abstract class ArrayFilter
 export class AnyFilter
   extends ArrayFilter {
   constructor (filters: Filter[]) {
-    super('AnyFilter', filters)
+    super(internal.filterName('AnyFilter'), filters)
   }
 }
 
 export class AllFilter
   extends ArrayFilter {
   constructor (filters: Filter[]) {
-    super('AllFilter', filters)
+    super(internal.filterName('AllFilter'), filters)
   }
 }
 
@@ -107,7 +101,7 @@ export class AndFilter
   extends AllFilter {
   constructor (first: Filter, second: Filter) {
     super([first, second])
-    this['@class'] = Util.toFilterName('AndFilter')
+    this['@class'] = internal.filterName('AndFilter')
   }
 }
 
@@ -115,14 +109,14 @@ export class OrFilter
   extends AnyFilter {
   constructor (first: Filter, second: Filter) {
     super([first, second])
-    this['@class'] = Util.toFilterName('OrFilter')
+    this['@class'] = internal.filterName('OrFilter')
   }
 }
 
 export class XorFilter
   extends ArrayFilter {
   constructor (first: Filter, second: Filter) {
-    super('XorFilter', [first, second])
+    super(internal.filterName('XorFilter'), [first, second])
   }
 }
 
@@ -146,28 +140,6 @@ export class XorFilter
  * });
  * ```
  */
-
-export class KeyAssociatedFilter<T>
-  extends Filter<T> {
-  filter: Filter<T>
-
-  hostKey: any
-
-  /**
-   * Filter which limits the scope of another filter according to the key
-   * association information.
-   *
-   * @param {Filter} filter the other filter whose scope to limit
-   *
-   * @param {Object} hostKey the `filter` argument will only be applied to
-   * cache service nodes that contain this key.
-   */
-  constructor (filter: Filter, hostKey: any) {
-    super('KeyAssociatedFilter')
-    this.filter = filter
-    this.hostKey = hostKey
-  }
-}
 
 export class InKeySetFilter<T, K>
   extends Filter<T> {

@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from './value_extractor'
+import { internal } from './package-internal'
+import {  ValueExtractor } from './value-extractor'
 
 export class UniversalExtractor<T = any, E = any>
   extends ValueExtractor<T, E> {
@@ -14,7 +15,7 @@ export class UniversalExtractor<T = any, E = any>
   params?: any[]
 
   constructor (name: string, params?: any[]) {
-    super('UniversalExtractor')
+    super(internal.extractorName('UniversalExtractor'))
     this.name = name
     if (params) {
       this.params = params

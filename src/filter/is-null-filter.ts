@@ -5,12 +5,14 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { EqualsFilter } from './equals_filter'
+import { ValueExtractor } from '../extractor/'
+import { EqualsFilter } from '.'
+import { internal } from './package-internal'
 
 export class IsNullFilter<T = any, E = any>
   extends EqualsFilter<T, E | null> {
   constructor (extractor: ValueExtractor<T, E>) {
-    super('IsNullFilter', extractor, null)
+    super(extractor, null)
+    this['@class'] = internal.filterName('IsNullFilter')
   }
 }

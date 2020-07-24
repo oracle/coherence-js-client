@@ -5,23 +5,51 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-
-export const enum CacheLifecycleEvent {
+/**
+ * Cache lifecycle events.
+ */
+export enum CacheLifecycleEvent {
+  /**
+   * Raised when a cache is destroyed.
+   */
   DESTROYED = 'cache_destroyed',
+
+  /**
+   * Raised when a cache is truncated.
+   */
   TRUNCATED = 'cache_truncated',
+
+  /**
+   * Raised when a cache is released.
+   */
   RELEASED = 'cache_released'
 }
 
 /**
+ * Internal events for tracing request state.
  * @internal
  */
-export const enum RequestStateEvent {
+export enum RequestStateEvent {
+  /**
+   * Raised when data is received from `gRPC`.
+   */
   DATA = 'data',
+
+  /**
+   * Raised when the `gRPC` request has completed.
+   */
   COMPLETE = 'end',
+
+  /**
+   * Raised if an error occurs at the `gRPC` layer.
+   */
   ERROR = 'error'
 }
 
-export const enum SessionLifecycleEvent {
-  ESTABLISHED= 'session_established',
+/**
+ * Internal Session lifecycle events
+ * @internal
+ */
+export enum SessionLifecycleEvent {
   CLOSED = 'session_closed'
 }

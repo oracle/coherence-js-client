@@ -5,10 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { Util } from '../util/util'
-import { ValueUpdater } from '../util/value_updater'
-import { ValueManipulator } from './value_manipulator'
+import { ValueExtractor, ValueUpdater } from '../extractor/'
+import { ValueManipulator } from '.'
+import { internal } from './package-internal'
 
 export class PropertyManipulator<T = any, V = any>
   implements ValueManipulator<T, V> {
@@ -30,7 +29,7 @@ export class PropertyManipulator<T = any, V = any>
    *                      rather than "get"
    */
   constructor (propertyName: string, useIs: boolean = false) {
-    this['@class'] = Util.PROCESSOR_PACKAGE + 'PropertyManipulator'
+    this['@class'] = internal.processorName('PropertyManipulator')
     this.name = propertyName
     this.useIsPrefix = useIs
   }

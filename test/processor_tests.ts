@@ -6,13 +6,10 @@
  */
 
 import { suite, test, timeout } from '@testdeck/mocha'
-import { NamedCacheClient } from '../src/cache/named_cache_client'
-import { SessionBuilder } from '../src/cache/session'
+import { Extractors, Filters, NamedCacheClient, Processors, SessionBuilder } from '../src'
+import { internal } from '../src/processor/package-internal'
+import { internal as extint } from '../src/extractor/package-internal'
 
-import { Extractors } from '../src/extractor/extractors'
-import { Filters } from '../src/filter/filters'
-import { Processors } from '../src/processor/processors'
-import { Util } from '../src/util/util'
 import {
   jadeObj,
   javascriptObj,
@@ -26,10 +23,10 @@ import {
   val456
 } from './abstract_named_cache_tests'
 
-export const assert = require('assert').strict;
+export const assert = require('assert').strict
 export const session = new SessionBuilder().build()
 
-describe('Processors IT Test Suite', () => {
+describe('processor.Processors IT Test Suite', () => {
   const versioned123 = {'@version': 1, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3]}
   const versioned234 = {
     '@version': 2,
@@ -96,7 +93,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOfExtractorProcessor () {
       const processor = Processors.extract('str')
-      assert.equal(processor['@class'], Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
+      assert.equal(processor['@class'], internal.processorName('ExtractorProcessor'))
     }
 
     @test
@@ -149,11 +146,11 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeName () {
       const ep = Processors.extract('id')
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ExtractorProcessor')
+      assert.equal(ep['@class'], internal.processorName('ExtractorProcessor'))
 
       const cp = ep.andThen(Processors.extract('str'))
         .andThen(Processors.extract('iVal'))
-      assert.equal(cp['@class'], Util.PROCESSOR_PACKAGE + 'CompositeProcessor')
+      assert.equal(cp['@class'], internal.processorName('CompositeProcessor'))
     }
 
     @test
@@ -198,7 +195,7 @@ describe('Processors IT Test Suite', () => {
       const ep = Processors.extract('str')
         .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]))
 
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalProcessor')
+      assert.equal(ep['@class'], internal.processorName('ConditionalProcessor'))
     }
 
     @test
@@ -229,7 +226,7 @@ describe('Processors IT Test Suite', () => {
     testTypeName () {
       const ep = Processors.conditionalPut(Filters.always(), 'someValue')
 
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalPut')
+      assert.equal(ep['@class'], internal.processorName('ConditionalPut'))
       assert.equal(ep.doesReturnValue(), true)
       assert.equal(ep.getValue(), 'someValue')
     }
@@ -267,7 +264,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.conditionalPutAll(Filters.always(), new Map())
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalPutAll')
+      assert.equal(ep['@class'], internal.processorName('ConditionalPutAll'))
     }
 
     @test
@@ -364,7 +361,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.conditionalRemove(Filters.always())
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'ConditionalRemove')
+      assert.equal(ep['@class'], internal.processorName('ConditionalRemove'))
     }
 
     @test
@@ -374,7 +371,7 @@ describe('Processors IT Test Suite', () => {
 
       const ep = Processors.conditionalRemove(Filters.present())
       const removedValue = await cache.invoke('123', ep)
-      assert.equal(removedValue, null);
+      assert.equal(removedValue, null)
 
       assert.equal(await cache.size(), 3)
       assert.equal(await cache.get('123'), null)
@@ -387,7 +384,7 @@ describe('Processors IT Test Suite', () => {
 
       const ep = Processors.conditionalRemove(Filters.never()).returnCurrent()
       const removedValue = await cache.invoke('123', ep)
-      assert.deepEqual(removedValue, val123);
+      assert.deepEqual(removedValue, val123)
 
       assert.equal(await cache.size(), 4)
       assert.deepEqual(await cache.get('123'), val123)
@@ -401,7 +398,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.versionedPut(versioned123)
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'VersionedPut')
+      assert.equal(ep['@class'], internal.processorName('VersionedPut'))
     }
 
     @test
@@ -438,7 +435,7 @@ describe('Processors IT Test Suite', () => {
     testTypeNameOf () {
       const ep = Processors.versionedPutAll(new Map())
 
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'VersionedPutAll')
+      assert.equal(ep['@class'], internal.processorName('VersionedPutAll'))
       assert.equal(ep.insert, false)
       assert.equal(ep.return, false)
     }
@@ -475,7 +472,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.update('a.b.ival', 12300)
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'UpdaterProcessor')
+      assert.equal(ep['@class'], internal.processorName('UpdaterProcessor'))
     }
 
     @test
@@ -532,7 +529,7 @@ describe('Processors IT Test Suite', () => {
     @test
     testTypeNameOf () {
       const ep = Processors.invokeAccessor('ival')
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'MethodInvocationProcessor')
+      assert.equal(ep['@class'], internal.processorName('MethodInvocationProcessor'))
     }
 
     @test
@@ -567,10 +564,10 @@ describe('Processors IT Test Suite', () => {
     testTypeNameOf () {
       const ep: any = Processors.multiply('ival', 2)
 
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'NumberMultiplier')
-      assert.equal(ep.manipulator['@class'], Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
-      assert.equal(ep.manipulator.extractor['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
-      assert.equal(ep.manipulator.updater['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
+      assert.equal(ep['@class'], internal.processorName('NumberMultiplier'))
+      assert.equal(ep.manipulator['@class'], extint.extractorName('CompositeUpdater'))
+      assert.equal(ep.manipulator.extractor['@class'], extint.extractorName('UniversalExtractor'))
+      assert.equal(ep.manipulator.updater['@class'], extint.extractorName('UniversalUpdater'))
     }
 
     @test
@@ -595,10 +592,10 @@ describe('Processors IT Test Suite', () => {
     testTypeNameOf () {
       const ep: any = Processors.increment('ival', 2)
 
-      assert.equal(ep['@class'], Util.PROCESSOR_PACKAGE + 'NumberIncrementor')
-      assert.equal(ep.manipulator['@class'], Util.EXTRACTOR_PACKAGE + 'CompositeUpdater')
-      assert.equal(ep.manipulator.extractor['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalExtractor')
-      assert.equal(ep.manipulator.updater['@class'], Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
+      assert.equal(ep['@class'], internal.processorName('NumberIncrementor'))
+      assert.equal(ep.manipulator['@class'], extint.extractorName('CompositeUpdater'))
+      assert.equal(ep.manipulator.extractor['@class'], extint.extractorName('UniversalExtractor'))
+      assert.equal(ep.manipulator.updater['@class'], extint.extractorName('UniversalUpdater'))
     }
 
     @test

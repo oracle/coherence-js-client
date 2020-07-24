@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ExtractorFilter } from './filter'
+import { ValueExtractor } from '../extractor/'
+import { ExtractorFilter } from '.'
+import { internal } from './package-internal'
 
 /**
  * A {@code java.util.function.Predicate} based {@link ExtractorFilter}.
@@ -25,7 +26,7 @@ export class PredicateFilter<T = any, E = any>
    *                   have an '@class' attribute.
    */
   constructor (predicate: { '@class': string }, extractor?: ValueExtractor<T, E> | undefined) {
-    super('PredicateFilter', extractor || ValueExtractor.identityCast())
+    super(internal.filterName('PredicateFilter'), extractor || ValueExtractor.identityCast())
     this.predicate = predicate
   }
 }

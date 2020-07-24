@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractDoubleAggregator } from '@aggregator/aggregator'
-import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractDoubleAggregator } from '.'
+import { ValueExtractor } from '../extractor/'
+import { internal } from './package-internal'
 
 /**
  * Sums up numeric values extracted from a set of entries in a Map. All the
@@ -16,14 +17,7 @@ import { ValueExtractor } from '../extractor/value_extractor'
  */
 export class SumAggregator<T>
   extends AbstractDoubleAggregator<T> {
-  // constructor(extractor: ValueExtractor<T, number>);
-  // constructor(property: string);
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('BigDecimalSum', extractorOrProperty)
-    } else {
-      super('BigDecimalSum', extractorOrProperty)
-    }
+    super(internal.aggregatorName('BigDecimalSum'), extractorOrProperty)
   }
 }

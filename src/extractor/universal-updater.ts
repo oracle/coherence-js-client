@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractValueUpdater } from '../util/abstract_value_updater'
-import { Util } from '../util/util'
+import { Util } from '../util/'
+import { internal } from './package-internal'
+import { ValueUpdater } from './value-updater'
 
 /**
  * Universal ValueUpdater implementation.
@@ -18,7 +19,7 @@ import { Util } from '../util/util'
  *
  */
 export class UniversalUpdater<T, E>
-  extends AbstractValueUpdater<T, E> {
+  extends ValueUpdater<T, E> {
   name: string
 
   /**
@@ -34,7 +35,7 @@ export class UniversalUpdater<T, E>
    * @param method a method or property name
    */
   constructor (method: string) {
-    super(Util.EXTRACTOR_PACKAGE + 'UniversalUpdater')
+    super(internal.extractorName('UniversalUpdater'))
     this.name = method
   }
 }

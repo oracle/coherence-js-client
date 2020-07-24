@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractDoubleAggregator } from '@aggregator/aggregator'
-import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractDoubleAggregator, } from '.'
+import { ValueExtractor } from '../extractor/'
+import { internal } from './package-internal'
 
 /**
  * Calculates a minimum of numeric values extracted from a set of
@@ -18,14 +19,7 @@ import { ValueExtractor } from '../extractor/value_extractor'
  */
 export class MinAggregator<T>
   extends AbstractDoubleAggregator<T> {
-  // constructor(extractor: ValueExtractor<T, number>);
-  // constructor(property: string);
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('ComparableMin', extractorOrProperty)
-    } else {
-      super('ComparableMin', extractorOrProperty)
-    }
+    super(internal.aggregatorName('ComparableMin'), extractorOrProperty)
   }
 }

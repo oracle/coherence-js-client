@@ -5,11 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from '../filter/filter'
-import { BaseProcessor } from './base_processor'
+import { Filter } from '../filter/'
+import { internal } from './package-internal'
+import { EntryProcessor } from '.'
 
 export class ConditionalPutProcessor<K = any, V = any>
-  extends BaseProcessor<K, V, V> {
+  extends EntryProcessor<K, V, V> {
   /**
    * The underlying filter.
    */
@@ -35,7 +36,7 @@ export class ConditionalPutProcessor<K = any, V = any>
    * @param value   a value to update an entry with
    */
   constructor (filter: Filter<V>, value: V, returnValue?: boolean) {
-    super('ConditionalPut')
+    super(internal.processorName('ConditionalPut'))
 
     this.filter = filter
     this.value = value

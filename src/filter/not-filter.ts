@@ -5,14 +5,15 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from './filter'
+import { Filter } from '.'
+import { internal } from './package-internal'
 
 export class NotFilter<T = any>
   extends Filter<T> {
   filter: Filter<T>
 
   constructor (filter: Filter<T>) {
-    super('NotFilter')
+    super(internal.filterName('NotFilter'))
     this.filter = filter
   }
 }

@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { MapEvent } from './map_event'
+import { MapEvent } from '.'
 
 export interface MapListener<K = any, V = any> {
 

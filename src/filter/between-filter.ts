@@ -5,12 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { AndFilter } from './filter'
-import { GreaterEqualsFilter } from './greater_equals_filter'
-import { GreaterFilter } from './greater_filter'
-import { LessEqualsFilter } from './less_equals_filter'
-import { LessFilter } from './less_filter'
+import { ValueExtractor } from '../extractor/'
+import { AndFilter, GreaterEqualsFilter,  GreaterFilter, LessEqualsFilter, LessFilter} from '.'
+import { internal } from './package-internal'
 
 /**
  * Filter which compares the result of a method invocation with a value for
@@ -39,6 +36,7 @@ export class BetweenFilter<T = any, E = any>
         : new LessFilter(extractor, to)
     )
 
+    this['@class'] = internal.filterName('BetweenFilter')
     this.from = from
     this.to = to
   }

@@ -5,12 +5,13 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ComparisonFilter } from './filter'
+import { ValueExtractor } from '../extractor/'
+import { ComparisonFilter } from '.'
+import { internal } from './package-internal'
 
 export class GreaterFilter<T = any, E = any>
   extends ComparisonFilter<T, E, E> {
   constructor (extractor: ValueExtractor<T, E>, value: E) {
-    super('GreaterFilter', extractor, value)
+    super(internal.filterName('GreaterFilter'), extractor, value)
   }
 }

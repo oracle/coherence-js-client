@@ -5,14 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { EntryAggregator } from '../aggregator/aggregator'
-import { ValueExtractor } from '@extractor/value-extractor'
-import { Filter } from '../filter/filter'
-import { MapEventFilter } from '../filter/map_event_filter'
-import { EntryProcessor } from '../processor/entry_processor'
+import { EntryAggregator } from '../aggregator'
+import { ValueExtractor } from '../extractor'
+import { Filter, MapEventFilter } from '../filter'
+import { EntryProcessor } from '../processor'
 
-import { Serializer } from '../util/serializer'
-import { Util } from '../util/util'
+import { Serializer, Util } from '../util'
 import {
   AddIndexRequest,
   AggregateRequest,
@@ -37,7 +35,7 @@ import {
   ReplaceMappingRequest,
   ReplaceRequest,
   ValuesRequest
-} from '../cache/proto/messages_pb'
+} from '../net/grpc/messages_pb'
 
 export interface Comparator {
   '@class': string;
@@ -45,7 +43,7 @@ export interface Comparator {
 
 /**
  * A class to facilitate Request objects creation.
- *
+ * @hidden
  */
 export class RequestFactory<K, V> {
   private cacheName: string
@@ -77,7 +75,7 @@ export class RequestFactory<K, V> {
   // aggregate<R>(keys: Iterable<K>, aggregator: EntryAggregator<K, V, R>): AggregateRequest;
   // aggregate<R>(filter: Filter<V>, aggregator: EntryAggregator<K, V, R>): AggregateRequest;
   // aggregate<R>(aggregator: EntryAggregator<K, V, R>): AggregateRequest;
-  aggregate<R> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, R>, aggregator?: EntryAggregator<K, V, R>): AggregateRequest {
+  aggregate<R, T, E> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, T, E, R>, aggregator?: EntryAggregator<K, V, T, E, R>): AggregateRequest {
     const request = new AggregateRequest()
     request.setCache(this.cacheName)
     request.setFormat(this.serializer.format())

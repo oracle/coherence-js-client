@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractComparableAggregator } from '@aggregator/aggregator'
-import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractComparableAggregator } from '.'
+import { ValueExtractor } from '../extractor/'
+import { internal } from './package-internal'
 
 /**
  * Calculates a maximum of numeric values extracted from a set of
@@ -18,14 +19,7 @@ import { ValueExtractor } from '../extractor/value_extractor'
  */
 export class MaxAggregator<T>
   extends AbstractComparableAggregator<T, number> {
-  // constructor(extractor: ValueExtractor<T, number>);
-  // constructor(property: string);
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('ComparableMax', extractorOrProperty)
-    } else {
-      super('ComparableMax', extractorOrProperty)
-    }
+    super(internal.aggregatorName('ComparableMax'), extractorOrProperty)
   }
 }

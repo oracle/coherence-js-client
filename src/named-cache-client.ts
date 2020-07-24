@@ -5,20 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { EntryAggregator } from '../aggregator/'
-import { CacheLifecycleEvent, RequestStateEvent } from '../event/events' // RequestStateEvent not exported
-import { MapEventsManager } from '../event/map-events-manager' // MapEventsManager not exported
-import { MapListener } from '../event/'
-import { ValueExtractor } from '../extractor/'
-import { Filter, Filters, MapEventFilter } from '../filter/'
-import { EntryProcessor } from '../processor/'
-import { Comparator, MapEntry, RemoteSet } from '../util/'
-import { RequestFactory } from '../util/request-factory' // RequestFactory not exported
-import { Serializer, Util } from '../util/'
 import { EventEmitter } from 'events'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream, ServiceError } from 'grpc'
-import { NamedCache } from './named-cache'
+import { Filters, Session, SessionOptions } from '.'
+import { EntryAggregator } from './aggregator'
+import { MapEntry, NamedCache, RemoteSet } from './net'
 import {
   Entry,
   Entry as GrpcEntry,
@@ -26,10 +18,17 @@ import {
   IsEmptyRequest,
   SizeRequest,
   TruncateRequest
-} from './proto/messages_pb'
-import { NamedCacheServiceClient } from './proto/services_grpc_pb'
-import { Session, SessionOptions } from '.'
-import { EntrySet, KeySet, NamedCacheEntry, ValueSet } from './streamed-collection' // none of these are exported
+} from './net/grpc/messages_pb'
+import { NamedCacheServiceClient } from './net/grpc/services_grpc_pb'
+import { EntrySet, KeySet, NamedCacheEntry, ValueSet } from './net/streamed-collection' // none of these are exported
+import { MapListener } from './event'
+import { CacheLifecycleEvent, RequestStateEvent } from './event/events' // RequestStateEvent not exported
+import { MapEventsManager } from './event/map-events-manager' // MapEventsManager not exported
+import { ValueExtractor } from './extractor'
+import { Filter, MapEventFilter } from './filter'
+import { EntryProcessor } from './processor'
+import { Comparator, Serializer, Util } from './util'
+import { RequestFactory } from './util/request-factory' // RequestFactory not exported
 
 /**
  * Enum describing the possible states a {@link NamedCacheClient} is allowed to transition to.
@@ -194,15 +193,13 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  // ----- InvocableMap interface -------------------------------------------
+  aggregate<R, T, E> (keys: Iterable<K>, agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
 
-  aggregate<R> (keys: Iterable<K>, agg: EntryAggregator<K, V, R>): Promise<any>;
+  aggregate<R, T, E> (filter: Filter<V>, agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
 
-  aggregate<R> (filter: Filter<V>, agg: EntryAggregator<K, V, R>): Promise<any>;
+  aggregate<R, T, E> (agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
 
-  aggregate<R> (agg: EntryAggregator<K, V, R>): Promise<any>;
-
-  aggregate<R> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, R>, agg?: EntryAggregator<K, V, R>): Promise<any> {
+  aggregate<R, T, E> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, T, E, R>, agg?: EntryAggregator<K, V, T, E, R>): Promise<any> {
     const self = this
     const request = this.requestFactory.aggregate(kfa, agg)
     return new Promise((resolve, reject) => {
@@ -316,7 +313,7 @@ export class NamedCacheClient<K = any, V = any>
 
   // ----- QueryMap interface -----------------------------------------------
 
-  addIndex (extractor: ValueExtractor, ordered?: boolean, comparator?: Comparator): Promise<void> {
+  addIndex<T, E> (extractor: ValueExtractor<T, E>, ordered?: boolean, comparator?: Comparator): Promise<void> {
     const self = this
     const request = this.requestFactory.addIndex(extractor, ordered, comparator)
     return new Promise((resolve, reject) => {
@@ -380,7 +377,16 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  // TODO(rlubke) missing interface definitions
+  removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void> {
+    const self = this
+    const request = this.requestFactory.removeIndex(extractor)
+    return new Promise((resolve, reject) => {
+      self.client.removeIndex(request, (err: ServiceError | null) => {
+        self.resolveValue(resolve, reject, err)
+      })
+    })
+  }
+
   values (): RemoteSet<V>;
 
   values (filter: Filter, comparator?: Comparator): Promise<Set<V>>;
@@ -402,16 +408,6 @@ export class NamedCacheClient<K = any, V = any>
       call.on(RequestStateEvent.COMPLETE, () => resolve(set))
       call.on(RequestStateEvent.ERROR, (e) => {
         reject(e)
-      })
-    })
-  }
-
-  removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void> {
-    const self = this
-    const request = this.requestFactory.removeIndex(extractor)
-    return new Promise((resolve, reject) => {
-      self.client.removeIndex(request, (err: ServiceError | null) => {
-        self.resolveValue(resolve, reject, err)
       })
     })
   }
@@ -649,17 +645,6 @@ export class NamedCacheClient<K = any, V = any>
   // ----- helper functions -------------------------------------------------
 
   /**
-   * Return the per-call options.
-   *
-   * @return the per-call options
-   */
-  protected callOptions (): object {
-    return {
-      deadline: Date.now() + this.sessOpts.requestTimeoutInMillis
-    }
-  }
-
-  /**
    * Obtain the next page of entries from the cache.
    *
    * @param cookie  an opaque cookie for page tracking
@@ -679,6 +664,17 @@ export class NamedCacheClient<K = any, V = any>
    */
   nextKeySetPage (cookie: Uint8Array | string | undefined): ClientReadableStream<BytesValue> {
     return this.client.nextKeySetPage(this.requestFactory.pageRequest(cookie), this.callOptions())
+  }
+
+  /**
+   * Return the per-call options.
+   *
+   * @return the per-call options
+   */
+  protected callOptions (): object {
+    return {
+      deadline: Date.now() + this.sessOpts.requestTimeoutInMillis
+    }
   }
 
   /**

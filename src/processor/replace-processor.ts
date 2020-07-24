@@ -5,7 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  *  Replace entry processor.
@@ -14,7 +16,7 @@ import { BaseProcessor } from './base_processor'
  * @param <V> the type of the Map entry value
  */
 export class ReplaceProcessor<K, V>
-  extends BaseProcessor<K, V, void> {
+  extends EntryProcessor<K, V, void> {
   /**
    * Specifies the value that shopuld exist in the Cache.
    */
@@ -26,7 +28,7 @@ export class ReplaceProcessor<K, V>
    * @param value   The value that must exiost in the Cache.
    */
   constructor (value: V) {
-    super(' Replace')
+    super(internal.processorName(' Replace'))
 
     this.value = value
   }

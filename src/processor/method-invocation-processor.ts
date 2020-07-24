@@ -5,7 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor } from './base_processor'
+
+import { internal } from './package-internal'
+import { EntryProcessor } from '.'
 
 /**
  * An entry processor that invokes the specified method on a value
@@ -13,7 +15,7 @@ import { BaseProcessor } from './base_processor'
  * modified value.
  */
 export class MethodInvocationProcessor<K = any, V = any, R = any>
-  extends BaseProcessor<K, V, R> {
+  extends EntryProcessor<K, V, R> {
   /**
    * The Method name.
    */
@@ -35,7 +37,7 @@ export class MethodInvocationProcessor<K = any, V = any, R = any>
    * @param args  The args for the MethodInvocation.
    */
   constructor (methodName: string, mutator: boolean, args: any[]) {
-    super('MethodInvocationProcessor')
+    super(internal.processorName('MethodInvocationProcessor'))
     this.methodName = methodName
     this.mutator = mutator
     this.args = args

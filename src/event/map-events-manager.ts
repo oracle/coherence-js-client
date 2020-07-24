@@ -7,17 +7,14 @@
 
 import { EventEmitter } from 'events'
 import { ClientDuplexStream } from 'grpc'
+import { MapEvent, MapListener } from '.'
+import { NamedCache } from '../net'
+import { MapListenerRequest, MapListenerResponse } from '../net/grpc/messages_pb'
+import { NamedCacheServiceClient } from '../net/grpc/services_grpc_pb'
+import { AlwaysFilter, MapEventFilter } from '../filter'
+import { Serializer } from '../util/'
+import { RequestFactory } from '../util/request-factory' // RequestFactory not exported
 import { CacheLifecycleEvent } from './events'
-import { MapListenerRequest, MapListenerResponse } from '../cache/proto/messages_pb'
-import { NamedCacheServiceClient } from '../cache/proto/services_grpc_pb'
-
-import { RequestFactory } from '../util/request_factory'
-import { Filters } from '../filter/filters'
-import { MapEventFilter } from '../filter/map_event_filter'
-import { MapEvent } from './map_event'
-import { MapListener } from './map_listener'
-import { ObservableMap } from '../util/observable_map'
-import { Serializer } from '../util/serializer'
 
 type SubscriptionCallback = (uid: string, cookie: any, err?: Error | undefined) => void;
 
@@ -63,7 +60,7 @@ export class MapEventsManager<K, V> {
   /**
    * Internal: A singleton MapEventFilter for an Always filter.
    */
-  private static DEFAULT_FILTER = new MapEventFilter(Filters.always())
+  private static DEFAULT_FILTER = new MapEventFilter(new AlwaysFilter())
   /**
    * The cache name for which events are received.
    */
@@ -76,7 +73,7 @@ export class MapEventsManager<K, V> {
    * The ObservableMap (or the NamedCacheClient) that will used as
    * the 'source' of the events. This is typically a NamedCacheClient.
    */
-  protected observableMap: ObservableMap<K, V>
+  protected observableMap: NamedCache<K, V>
   /**
    * Internal: Request factory.
    */
@@ -114,7 +111,7 @@ export class MapEventsManager<K, V> {
 
   private emitter: EventEmitter
 
-  constructor (cacheName: string, client: NamedCacheServiceClient, observableMap: ObservableMap<K, V>, serializer: Serializer, emitter: EventEmitter) {
+  constructor (cacheName: string, client: NamedCacheServiceClient, observableMap: NamedCache<K, V>, serializer: Serializer, emitter: EventEmitter) {
     this.cacheName = cacheName
     this.client = client
     this.observableMap = observableMap
@@ -192,12 +189,14 @@ export class MapEventsManager<K, V> {
         }
         break
 
+      // TODO(rlubke) fix args issue
       case MapListenerResponse.ResponseTypeCase.DESTROYED:
         if (resp.hasDestroyed() && resp.getDestroyed()?.getCache() == this.cacheName) {
           this.emitter.emit(CacheLifecycleEvent.DESTROYED, this.cacheName)
         }
         break
 
+      // TODO(rlubke) fix args issue
       case MapListenerResponse.ResponseTypeCase.TRUNCATED:
         if (resp.hasTruncated() && resp.getTruncated()?.getCache() == this.cacheName) {
           this.emitter.emit(CacheLifecycleEvent.TRUNCATED, this.cacheName)

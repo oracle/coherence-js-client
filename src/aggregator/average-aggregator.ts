@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { AbstractDoubleAggregator } from '@aggregator/aggregator'
-import { ValueExtractor } from '../extractor/value_extractor'
+import { AbstractDoubleAggregator } from '.'
+import { ValueExtractor } from '../extractor/'
+import { internal } from './package-internal'
 
 /**
  * Calculates an average for values of any numeric type extracted from a
@@ -18,14 +19,7 @@ import { ValueExtractor } from '../extractor/value_extractor'
  */
 export class AverageAggregator<T>
   extends AbstractDoubleAggregator<T> {
-  // constructor(extractor: ValueExtractor<T, number>);
-  // constructor(property: string);
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
-    // ?? This doesn't work => super(clz, extractorOrProperty);
-    if (extractorOrProperty instanceof ValueExtractor) {
-      super('BigDecimalAverage', extractorOrProperty)
-    } else {
-      super('BigDecimalAverage', extractorOrProperty)
-    }
+    super(internal.aggregatorName('BigDecimalAverage'), extractorOrProperty);
   }
 }

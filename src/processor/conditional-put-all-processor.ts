@@ -5,11 +5,13 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Filter } from '../filter/filter'
-import { BaseProcessor, MapHolder } from './base_processor'
+import { Filter } from '../filter/'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
+
 
 export class ConditionalPutAllProcessor<K = any, V = any>
-  extends BaseProcessor<K, V, V> {
+  extends EntryProcessor<K, V, V> {
   /**
    * The underlying filter.
    */
@@ -18,7 +20,7 @@ export class ConditionalPutAllProcessor<K = any, V = any>
   /**
    * Specifies the new value to update an entry with.
    */
-  entries: MapHolder<K, V>
+  entries: internal.MapHolder<K, V>
 
   /**
    * Construct a ConditionalPutAll processor that updates an entry with a
@@ -30,9 +32,9 @@ export class ConditionalPutAllProcessor<K = any, V = any>
    * @param map     a map of values to update entries with
    */
   constructor (filter: Filter<V>, entries: Map<K, V>) {
-    super('ConditionalPutAll')
+    super(internal.processorName('ConditionalPutAll'))
 
     this.filter = filter
-    this.entries = new MapHolder(entries)
+    this.entries = new internal.MapHolder(entries)
   }
 }

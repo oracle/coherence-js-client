@@ -5,13 +5,12 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CompositeUpdater } from '../extractor/composite_updater'
-import { UniversalUpdater } from '@extractor/universal-updater'
-import { ValueUpdater } from '../util/value_updater'
-import { BaseProcessor } from './base_processor'
+import { CompositeUpdater, UniversalUpdater, ValueUpdater } from '../extractor/'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 export class UpdaterProcessor<K = any, V = any, T = any>
-  extends BaseProcessor<K, V, boolean> {
+  extends EntryProcessor<K, V, boolean> {
   /**
    * The property value manipulator.
    */
@@ -29,7 +28,7 @@ export class UpdaterProcessor<K = any, V = any, T = any>
    * @param sName  a property name
    */
   constructor (updaterOrPropertyName: string | ValueUpdater<V, T>, value: T) {
-    super('UpdaterProcessor')
+    super(internal.processorName('UpdaterProcessor'))
     if (typeof updaterOrPropertyName === 'string') {
       const methodName = updaterOrPropertyName
       this.updater = (methodName.indexOf('.') < 0)

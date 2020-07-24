@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ValueUpdater } from '../util/value_updater'
+import { ValueExtractor, ValueUpdater } from '../extractor/'
 
 /**
  * ValueManipulator represents a composition of {@link ValueExtractor} and

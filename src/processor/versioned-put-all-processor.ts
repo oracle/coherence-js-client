@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BaseProcessor, MapHolder } from './base_processor'
+import { EntryProcessor } from '.'
+import { internal } from './package-internal'
 
 /**
  * VersionedPutAll entry processor.
@@ -14,11 +15,11 @@ import { BaseProcessor, MapHolder } from './base_processor'
  * @param <V> the type of the Map entry value
  */
 export class VersionedPutAllProcessor<K, V>
-  extends BaseProcessor<K, V, void> {
+  extends EntryProcessor<K, V, void> {
   /**
    * Specifies the new value to update an entry with.
    */
-  entries: MapHolder<K, V>
+  entries: internal.MapHolder<K, V>
 
   /**
    * Specifies whether or not an insert is allowed.
@@ -37,8 +38,8 @@ export class VersionedPutAllProcessor<K, V>
    * @param value   a value to update an entry with
    */
   constructor (entries: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false) {
-    super('VersionedPutAll')
-    this.entries = new MapHolder(entries)
+    super(internal.processorName('VersionedPutAll'))
+    this.entries = new internal.MapHolder(entries)
     this.insert = allowInsert
     this.return = returnCurrent
   }

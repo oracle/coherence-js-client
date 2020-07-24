@@ -9,7 +9,18 @@
  * @hidden
  */
 export module internal {
-  export function filterName(name: string): string {
-    return 'filter.' + name
+  export function processorName(name: string): string {
+    return 'processor.' + name
+  }
+
+  export class MapHolder<K, V> {
+    entries: Array<{ key: any, value: any }>
+
+    constructor (entries: Map<K, V>) {
+      this.entries = new Array<{ key: any, value: any }>()
+      for (const [k, v] of entries) {
+        this.entries.push({key: k, value: v})
+      }
+    }
   }
 }

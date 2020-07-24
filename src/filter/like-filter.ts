@@ -5,8 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '@extractor/value-extractor'
-import { ComparisonFilter } from './filter'
+import { ValueExtractor } from '../extractor/'
+import { ComparisonFilter } from '.'
+import { internal } from './package-internal'
 
 export class LikeFilter<T = any, E = any>
   extends ComparisonFilter<T, E, string> {
@@ -14,7 +15,7 @@ export class LikeFilter<T = any, E = any>
   ignoreCase: boolean
 
   constructor (extractor: ValueExtractor<T, E>, pattern: string, escape: string = '', ignoreCase: boolean = false) {
-    super('LikeFilter', extractor, pattern)
+    super(internal.filterName('LikeFilter'), extractor, pattern)
 
     if (escape && escape.length > 0) {
       this.escape = escape
