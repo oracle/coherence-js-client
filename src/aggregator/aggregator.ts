@@ -5,11 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { MapEntry } from '../cache/query_map'
-import { UniversalExtractor } from '../extractor/universal_extractor'
-import { ValueExtractor } from '../extractor/value_extractor'
-import { Util } from '../util/util'
-import { CompositeAggregator } from './composite_aggregator'
+import { UniversalExtractor, ValueExtractor } from '../extractor/'
+import { MapEntry, Util } from '../util/'
+import { CompositeAggregator } from '.'
 
 /**
  * An EntryAggregator represents processing that can be directed to occur
@@ -75,5 +73,55 @@ export abstract class AbstractAggregator<K = any, V = any, T = any, E = any, R =
 
   andThen (aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R> {
     return new CompositeAggregator(this, aggregator)
+  }
+}
+
+/**
+ * Abstract base class implementation of {@link EntryAggregator}
+ * that supports streaming aggregation.
+ *
+ * @param <K>  the type of the Map entry key
+ * @param <V>  the type of the Map entry value
+ * @param <T>  the type of the value to extract from
+ * @param <E>  the type of the extracted value to aggregate
+ * @param <R>  the type of the aggregation result
+ *
+ * @since Coherence 3.1
+ */
+export abstract class AbstractComparableAggregator<T, R>
+  extends AbstractAggregator<any, any, T, R, R> {
+  protected constructor (clz: string, extractorOrProperty: ValueExtractor<T, R> | string) {
+    // ?? This doesn't work => super(clz, extractorOrProperty);
+    if (extractorOrProperty instanceof ValueExtractor) {
+      super(clz, extractorOrProperty)
+    } else {
+      super(clz, extractorOrProperty)
+    }
+  }
+}
+
+/**
+ * Abstract base class implementation of {@link EntryAggregator}
+ * that supports streaming aggregation.
+ *
+ * @param <K>  the type of the Map entry key
+ * @param <V>  the type of the Map entry value
+ * @param <T>  the type of the value to extract from
+ * @param <E>  the type of the extracted value to aggregate
+ * @param <R>  the type of the aggregation result
+ *
+ * @since Coherence 3.1
+ */
+export abstract class AbstractDoubleAggregator<T>
+  extends AbstractAggregator<any, any, T, number, number> {
+  // protected constructor(clz: string, extractor: ValueExtractor<T, number>);
+  // protected constructor(clz: string, property: string);
+  protected constructor (clz: string, extractorOrProperty: ValueExtractor<T, number> | string) {
+    // ?? This doesn't work => super(clz, extractorOrProperty);
+    if (extractorOrProperty instanceof ValueExtractor) {
+      super(clz, extractorOrProperty)
+    } else {
+      super(clz, extractorOrProperty)
+    }
   }
 }
