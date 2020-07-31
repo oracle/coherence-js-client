@@ -60,7 +60,7 @@ export class Processors {
     return new GetOrDefaultProcessor()
   }
 
-  static increment<K, V> (property: string, value: number, returnOldValue: boolean = true): NumberIncrementor<K, V> {
+  static increment<K, V> (property: string, value: number, returnOldValue: boolean = false): NumberIncrementor<K, V> {
     return new NumberIncrementor(property, value, returnOldValue)
   }
 
@@ -72,7 +72,7 @@ export class Processors {
     return new MethodInvocationProcessor(method, true, args)
   }
 
-  static multiply<K, V> (property: string, value: number, returnOldValue: boolean = true): NumberMultiplier<K, V> {
+  static multiply<K, V> (property: string, value: number, returnOldValue: boolean = false): NumberMultiplier<K, V> {
     return new NumberMultiplier(property, value, returnOldValue)
   }
 

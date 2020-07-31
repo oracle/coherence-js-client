@@ -6,16 +6,15 @@
  */
 
 import { UniversalExtractor, ValueExtractor } from './extractor/'
-import { Extractors } from '.'
 import {
+  AllFilter,
   AlwaysFilter,
+  AnyFilter,
   BetweenFilter,
   ContainsAllFilter,
   ContainsAnyFilter,
   ContainsFilter,
   EqualsFilter,
-  AllFilter,
-  AnyFilter,
   Filter,
   GreaterEqualsFilter,
   GreaterFilter,
@@ -25,12 +24,13 @@ import {
   LessEqualsFilter,
   LessFilter,
   LikeFilter,
+  MapEventFilter,
   NeverFilter,
   NotEqualsFilter,
   NotFilter,
   PredicateFilter,
   PresentFilter,
-  RegexFilter, MapEventFilter
+  RegexFilter
 } from './filter'
 
 
@@ -103,8 +103,10 @@ export class Filters {
    *
    * @see ContainsFilter
    */
-  static arrayContains<T, E> (extractor: ValueExtractor<T, E[]>, value: E): Filter<T> {
-    return new ContainsFilter(extractor, value)
+  static arrayContains<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, value: E): Filter<T> {
+    return new ContainsFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -121,10 +123,12 @@ export class Filters {
    *
    * @see ContainsAllFilter
    */
-  static arrayContainsAll<T, E> (extractor: ValueExtractor<T, E[]>, ...value: E[]): Filter<T>;
-  static arrayContainsAll<T, E, K extends E> (extractor: ValueExtractor<T, E>, values: Set<K>): Filter<T>;
-  static arrayContainsAll<T, E, K> (extractor: ValueExtractor<T, E>, value: E[] | Set<K>): Filter<T> {
-    return new ContainsAllFilter(extractor, value)
+  static arrayContainsAll<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, ...value: E[]): Filter<T>;
+  static arrayContainsAll<T, E, K extends E> (extractorOrString: ValueExtractor<T, E[]> | string, values: Set<K>): Filter<T>;
+  static arrayContainsAll<T, E, K> (extractorOrString: ValueExtractor<T, E[]> | string, value: E[] | Set<K>): Filter<T> {
+    return new ContainsAllFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -141,10 +145,12 @@ export class Filters {
    *
    * @see ContainsAllFilter
    */
-  static arrayContainsAny<T, E> (extractor: ValueExtractor<T, E>, ...value: E[]): Filter<T>;
-  static arrayContainsAny<T, E, K extends E> (extractor: ValueExtractor<T, E>, values: Set<K>): Filter<T>;
-  static arrayContainsAny<T, E, K> (extractor: ValueExtractor<T, E>, value: E[] | Set<K>): Filter<T> {
-    return new ContainsAnyFilter(extractor, value)
+  static arrayContainsAny<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, ...value: E[]): Filter<T>;
+  static arrayContainsAny<T, E, K extends E> (extractorOrString: ValueExtractor<T, E[]> | string, values: Set<K>): Filter<T>;
+  static arrayContainsAny<T, E, K> (extractorOrString: ValueExtractor<T, E[]> | string, value: E[] | Set<K>): Filter<T> {
+    return new ContainsAnyFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -164,10 +170,9 @@ export class Filters {
    */
   static between<T, E> (extractorOrString: ValueExtractor<T, E> | string, from: E, to: E,
                         includeLowerBound: boolean = false, includeUpperBound: boolean = false): Filter<T> {
-    if (extractorOrString instanceof ValueExtractor) {
-      return new BetweenFilter<T, E>(extractorOrString, from, to, includeLowerBound, includeUpperBound)
-    }
-    return new BetweenFilter<T, E>(Extractors.extract(extractorOrString), from, to, includeLowerBound, includeUpperBound)
+    return new BetweenFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), from, to, includeLowerBound, includeUpperBound)
   }
 
   /**
@@ -185,8 +190,10 @@ export class Filters {
    *
    * @see ContainsFilter
    */
-  static contains<T, E> (extractor: ValueExtractor<T, E>, value: E): ContainsFilter<T, E> {
-    return new ContainsFilter(extractor, value)
+  static contains<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): ContainsFilter<T, E> {
+    return new ContainsFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -203,10 +210,12 @@ export class Filters {
    *
    * @see ContainsAllFilter
    */
-  static containsAll<T, E> (extractor: ValueExtractor<T, E>, ...values: any[]): Filter<T>;
-  static containsAll<T, E> (extractor: ValueExtractor<T, E>, values: Set<any>): Filter<T>;
-  static containsAll<T, E> (extractor: ValueExtractor<T, E>, values: any[] | Set<any>): Filter<T> {
-    return new ContainsAllFilter(extractor, values)
+  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: any[]): Filter<T>;
+  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<any>): Filter<T>;
+  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: any[] | Set<any>): Filter<T> {
+    return new ContainsAllFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), values)
   }
 
   /**
@@ -223,10 +232,12 @@ export class Filters {
    *
    * @see ContainsAllFilter
    */
-  static containsAny<T, E> (extractor: ValueExtractor<T, E>, ...values: any[]): Filter<T>;
-  static containsAny<T, E> (extractor: ValueExtractor<T, E>, values: Set<any>): Filter<T>;
-  static containsAny<T, E> (extractor: ValueExtractor<T, E>, values: any[] | Set<any>): Filter<T> {
-    return new ContainsAnyFilter(extractor, values)
+  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: any[]): Filter<T>;
+  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<any>): Filter<T>;
+  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: any[] | Set<any>): Filter<T> {
+    return new ContainsAnyFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), values)
   }
 
   /**
@@ -268,8 +279,8 @@ export class Filters {
    * TODO(rlubke) docs
    * @param filter
    */
-  static event<T, E> (filter: Filter): MapEventFilter<T> {
-    return new MapEventFilter(filter);
+  static event<T, E> (filter: Filter, mask: number = MapEventFilter.E_KEYSET): MapEventFilter<T> {
+    return new MapEventFilter(mask, filter)
   }
 
   /**
@@ -286,13 +297,10 @@ export class Filters {
    *
    * @see GreaterFilter
    */
-  static greater<T, E> (fieldName: string, value: E): GreaterFilter<T, E>;
-  static greater<T, E> (extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E>;
-  static greater<T, E> (arg: string | ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
-    if (!(arg instanceof ValueExtractor)) {
-      return new GreaterFilter(new UniversalExtractor(arg), value)
-    }
-    return new GreaterFilter(arg, value)
+  static greater<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
+    return new GreaterFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -309,13 +317,10 @@ export class Filters {
    *
    * @see GreaterEqualsFilter
    */
-  static greaterEqual<T, E> (fieldName: string, value: E): GreaterFilter<T, E>;
-  static greaterEqual<T, E> (extractor: ValueExtractor<T, E>, value: E): GreaterFilter<T, E>;
-  static greaterEqual<T, E> (arg: string | ValueExtractor<T, E>, value: E): GreaterFilter<T, E> {
-    if (!(arg instanceof ValueExtractor)) {
-      return new GreaterEqualsFilter(new UniversalExtractor(arg), value)
-    }
-    return new GreaterEqualsFilter(arg, value)
+  static greaterEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
+    return new GreaterEqualsFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -332,10 +337,12 @@ export class Filters {
    *
    * @see ContainsAnyFilter
    */
-  static in<T, E> (extractor: ValueExtractor<T, E>, ...values: E[]): Filter<T>;
-  static in<T, E> (extractor: ValueExtractor<T, E>, values: Set<E>): Filter<T>;
-  static in<T, E> (extractor: ValueExtractor<T, E>, values: E[] | Set<E>): Filter<T> {
-    return new InFilter(extractor, (values instanceof Set) ? values : new Set(values))
+  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: E[]): Filter<T>;
+  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<E>): Filter<T>;
+  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: E[] | Set<E>): Filter<T> {
+    return new InFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), (values instanceof Set) ? values : new Set(values))
   }
 
   /**
@@ -349,8 +356,10 @@ export class Filters {
    *
    * @see IsNotNullFilter
    */
-  static isNotNull<T, E> (extractor: ValueExtractor<T, E>): IsNotNullFilter<T, E> {
-    return new IsNotNullFilter(extractor)
+  static isNotNull<T, E> (extractorOrString: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
+    return new IsNotNullFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString))
   }
 
   /**
@@ -364,8 +373,10 @@ export class Filters {
    *
    * @see IsNullFilter
    */
-  static isNull<T, E> (extractor: ValueExtractor<T, E>): IsNotNullFilter<T, E> {
-    return new IsNullFilter(extractor)
+  static isNull<T, E> (extractorOrString: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
+    return new IsNullFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString))
   }
 
   /**
@@ -382,8 +393,10 @@ export class Filters {
    *
    * @see LessFilter
    */
-  static less<T, E> (extractor: ValueExtractor<T, E>, value: E): Filter<T> {
-    return new LessFilter(extractor, value)
+  static less<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): LessFilter<T, E> {
+    return new LessFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -400,8 +413,10 @@ export class Filters {
    *
    * @see LessEqualsFilter
    */
-  static lessEqual<T, E> (extractor: ValueExtractor<T, E>, value: E): Filter<T> {
-    return new LessEqualsFilter(extractor, value)
+  static lessEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): Filter<T> {
+    return new LessEqualsFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**
@@ -416,17 +431,10 @@ export class Filters {
    *
    * @return a LikeFilter
    */
-  static like<T, E> (extractor: ValueExtractor<T, E>, pattern: string, escape: string, ignoreCase: boolean): Filter<T> {
-    return new LikeFilter(extractor, pattern, escape, ignoreCase)
-  }
-
-  static greaterEquals<T, E> (property: string, value: E): GreaterEqualsFilter<T, E>;
-  static greaterEquals<T, E> (extractor: ValueExtractor<T, E>, value: E): GreaterEqualsFilter<T, E>;
-  static greaterEquals<T, E> (arg: any, value: E): GreaterEqualsFilter<T, E> {
-    if ((typeof arg) === 'string') {
-      return new GreaterEqualsFilter(new UniversalExtractor(arg), value)
-    }
-    return new GreaterEqualsFilter(arg, value)
+  static like<T, E> (extractorOrString: ValueExtractor<T, E> | string, pattern: string, escape: string, ignoreCase: boolean): Filter<T> {
+    return new LikeFilter(extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), pattern, escape, ignoreCase)
   }
 
   /**
@@ -468,8 +476,10 @@ export class Filters {
    *
    * @see NotEqualsFilter
    */
-  static notEqual<T, E> (extractor: ValueExtractor<T, E>, value: E): Filter<T> {
-    return new NotEqualsFilter('NotEqualsFilter', extractor, value)
+  static notEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): Filter<T> {
+    return new NotEqualsFilter('NotEqualsFilter', extractorOrString instanceof ValueExtractor
+      ? extractorOrString
+      : new UniversalExtractor(extractorOrString), value)
   }
 
   /**

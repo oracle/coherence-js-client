@@ -8,10 +8,10 @@
 import { EventEmitter } from 'events'
 import { ClientDuplexStream } from 'grpc'
 import { MapEvent, MapListener } from '.'
+import { AlwaysFilter, MapEventFilter } from '../filter'
 import { NamedCache } from '../net'
 import { MapListenerRequest, MapListenerResponse } from '../net/grpc/messages_pb'
 import { NamedCacheServiceClient } from '../net/grpc/services_grpc_pb'
-import { AlwaysFilter, MapEventFilter } from '../filter'
 import { Serializer } from '../util/'
 import { RequestFactory } from '../util/request-factory' // RequestFactory not exported
 import { CacheLifecycleEvent } from './events'
@@ -60,7 +60,7 @@ export class MapEventsManager<K, V> {
   /**
    * Internal: A singleton MapEventFilter for an Always filter.
    */
-  private static DEFAULT_FILTER = new MapEventFilter(new AlwaysFilter())
+  private static DEFAULT_FILTER = new MapEventFilter(MapEventFilter.E_ALL, new AlwaysFilter())
   /**
    * The cache name for which events are received.
    */
@@ -189,14 +189,12 @@ export class MapEventsManager<K, V> {
         }
         break
 
-      // TODO(rlubke) fix args issue
       case MapListenerResponse.ResponseTypeCase.DESTROYED:
         if (resp.hasDestroyed() && resp.getDestroyed()?.getCache() == this.cacheName) {
           this.emitter.emit(CacheLifecycleEvent.DESTROYED, this.cacheName)
         }
         break
 
-      // TODO(rlubke) fix args issue
       case MapListenerResponse.ResponseTypeCase.TRUNCATED:
         if (resp.hasTruncated() && resp.getTruncated()?.getCache() == this.cacheName) {
           this.emitter.emit(CacheLifecycleEvent.TRUNCATED, this.cacheName)
@@ -208,7 +206,6 @@ export class MapEventsManager<K, V> {
           const event = resp.getEvent()
           if (event) {
             const mapEvent = new MapEvent(this.cacheName, this.observableMap, event, this.serializer)
-            // mapEvent.print();
 
             for (const id of event.getFilteridsList()) {
               const group = this.filterId2ListenerGroup.get(id)

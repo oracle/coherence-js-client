@@ -5,4 +5,6 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
+export * from './named-map'
 export * from './named-cache'
+export { RemoteSet } from '../util'

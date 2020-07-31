@@ -8,9 +8,6 @@
 import { EntryAggregator } from '../aggregator'
 import { ValueExtractor } from '../extractor'
 import { Filter, MapEventFilter } from '../filter'
-import { EntryProcessor } from '../processor'
-
-import { Serializer, Util } from '../util'
 import {
   AddIndexRequest,
   AggregateRequest,
@@ -36,10 +33,10 @@ import {
   ReplaceRequest,
   ValuesRequest
 } from '../net/grpc/messages_pb'
+import { EntryProcessor } from '../processor'
 
-export interface Comparator {
-  '@class': string;
-}
+import { Serializer, Util } from '../util'
+import { Comparator } from './collections'
 
 /**
  * A class to facilitate Request objects creation.

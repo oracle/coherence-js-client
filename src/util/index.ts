@@ -7,5 +7,4 @@
 
 export * from './serializer'
 export * from './util'
-// TODO(rlubke) move Comparator out of request-factory
-export { Comparator } from './request-factory'
+export { Comparator, Map, RemoteSet } from './collections'

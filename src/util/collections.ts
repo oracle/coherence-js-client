@@ -5,13 +5,254 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { RequestStateEvent } from '../event/events'
-import { Serializer } from '../util/'
+
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
-import { NamedCacheClient } from '..'
-import { MapEntry, RemoteSet } from '.'
-import { EntryResult } from './grpc/messages_pb'
+import { RequestStateEvent } from '../event/events'
+import { NamedCacheClient } from '../named-cache-client'
+import { MapEntry } from '../net'
+import { EntryResult } from '../net/grpc/messages_pb'
+import { Serializer } from './serializer'
+
+export class Map<K, V> {
+
+  protected readonly buckets: [K, V][][]
+
+  constructor (iterable?: Iterable<[K, V]>, size: number = 16) {
+    this.buckets = []
+    for (let i = 0; i < size; i++) {
+      this.buckets.push([])
+    }
+    if (iterable) {
+      for (const element of iterable) {
+        this.set(element[0], element[1])
+      }
+    }
+  }
+
+  private _size: number = 0
+
+  get size () {
+    return this._size
+  }
+
+  private static hash (str: string): number {
+    let hash = 0
+    if (str.length == 0) return hash
+    for (let i = 0; i < str.length; i++) {
+      let char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return hash
+  }
+
+  set (key: K, value: V): Map<K, V> {
+    const bucket = this.buckets[this.getBucket(key)]
+    const existing = bucket.find(entry => entry[0] === key)
+    if (existing) {
+      existing[1] = value
+    } else {
+      bucket.push([key, value])
+      this._size++
+    }
+    return this
+  }
+
+  forEach (callback: (value: V, key: K) => void): void {
+    const entries = this.entries()
+    for (const entry of entries) {
+      callback(entry[1], entry[0])
+    }
+  }
+
+  has (key: K): boolean {
+    const bucket = this.buckets[this.getBucket(key)]
+    return bucket.find(entry => entry[0] === key) !== undefined
+  }
+
+  entries (): Iterable<[K, V]> {
+    return new EntryIterator(this.buckets)
+  }
+
+  keys (): Iterable<K> {
+    return new KeyIterator(this.buckets)
+  }
+
+  get (key: K): V | null {
+    const bucket = this.buckets[this.getBucket(key)]
+    const existing = bucket.find(entry => entry[0] === key)
+    return existing ? existing[1] : null
+  }
+
+  clear (): void {
+    for (let i = 0, len = this.buckets.length; i < len; i++) {
+      this.buckets[i] = []
+    }
+    this._size = 0
+  }
+
+  delete (key: K): V | null {
+    const bucket = this.buckets[this.getBucket(key)]
+    const existing = bucket.find(entry => entry[0] === key)
+    let oldValue = null
+    if (existing) {
+      oldValue = existing[1]
+      bucket.splice(bucket.indexOf(existing), 1)
+      this._size--
+    }
+
+    return oldValue
+  }
+
+  [Symbol.iterator] (): IterableIterator<[K, V]> {
+    return new EntryIterator(this.buckets)
+  }
+
+  private getBucket (key: any) {
+    return Math.abs(Map.hash(key.toString()) % this.buckets.length)
+  }
+}
+
+export class LocalSet<T> implements RemoteSet<T> {
+
+  private map: Map<T, any>
+
+  constructor (size: number = 16) {
+    this.map = new Map(undefined, size)
+  }
+
+  get size () {
+    return Promise.resolve(this.map.size)
+  }
+
+  clear (): Promise<boolean> {
+    return Promise.resolve(false)
+  }
+
+  add (val: T): LocalSet<T> {
+    this.map.set(val, true)
+    return this
+  }
+
+  delete (val: T): Promise<boolean> {
+    return Promise.resolve(false)
+  }
+
+  has (val: T): Promise<boolean> {
+    return Promise.resolve(this.map.has(val))
+  }
+
+  /**
+   * @inheritDoc
+   */
+  [Symbol.iterator] (): IterableIterator<T> {
+    throw new Error('only async iterator supported.')
+  }
+
+  [Symbol.asyncIterator] () {
+    // @ts-ignore
+    return new KeyIterator(this.map.buckets)
+  }
+}
+
+class EntryIterator<K, V> implements IterableIterator<[K, V]> {
+
+  private readonly buckets!: [K, V][][]
+  private outer: number = 0
+  private inner: number = 0
+
+  constructor (buckets: [K, V][][]) {
+    this.buckets = buckets
+  }
+
+  next (...args: [] | [undefined]): IteratorResult<[K, V]> {
+    const bc = this.buckets.length
+    while (this.outer < bc) {
+      const bucket = this.buckets[this.outer]
+      if (this.inner < bucket.length) {
+        return this.result(bucket[this.inner++])
+      } else {
+        this.inner = 0
+        this.outer++
+      }
+    }
+    return {done: true, value: null}
+  }
+
+  [Symbol.iterator] (): IterableIterator<[K, V]> {
+    return this
+  }
+
+  protected result (entry: [K, V]): IteratorResult<any> {
+    return {done: false, value: entry}
+  }
+}
+
+class KeyIterator<K> implements IterableIterator<K> {
+
+  private readonly entryIterator: EntryIterator<K, any>
+
+  constructor (buckets: [K, any][][]) {
+    this.entryIterator = new EntryIterator<K, any>(buckets)
+  }
+
+  next (...args: [] | [undefined]): IteratorResult<K> {
+    const result = this.entryIterator.next()
+    if (result.value) {
+      result.value = result.value[0]
+    }
+    return result as IteratorResult<K>
+  }
+
+  [Symbol.iterator] (): IterableIterator<K> {
+    return this
+  }
+}
+
+/**
+ * A `RemoteSet` is similar to the standard Javascript set
+ *
+ */
+export interface RemoteSet<T> {
+
+  /**
+   * Signifies the number of elements within this Set.
+   *
+   * @return the number of key-value mappings in this map
+   */
+  readonly size: Promise<number>
+
+  /**
+   * Removes all of the elements from this set (optional operation).
+   */
+  clear (): Promise<boolean>
+
+  /**
+   * Removes the specified element from this set if it is present (optional operation).
+   *
+   * @param value  the value to be removed from this set, if present
+   *
+   * @return a `Promise` resolving to `true` if the value was deleted, or `false` if not
+   */
+  delete (value: T): Promise<boolean>
+
+  /**
+   * Returns `true` if this set contains the specified element.
+   *
+   * @param value  whose presence in this set is to be tested
+   *
+   * @return a `Promise` resolving to `true` if set contains the value, or `false` if not
+   */
+  has (value: T): Promise<boolean>
+
+  /**
+   * The iterator over this set.
+   *
+   * @return a iterator over this set
+   */
+  [Symbol.iterator] (): IterableIterator<T>
+}
 
 /**
  * A PagedSet provides the ability to page through the contents of a
@@ -46,25 +287,25 @@ abstract class PagedSet<K, V, T>
   /**
    * This is an unsupported operation.
    */
-  clear (): Promise<void> {
+  clear (): Promise<boolean> {
     throw new Error('the clear operation is not supported')
   }
 
   /**
    * @inheritDoc
    */
-  abstract delete (value: T): Promise<boolean>;
+  abstract delete (value: T): Promise<boolean>
 
   /**
    * @inheritDoc
    */
-  abstract has (value: T): Promise<boolean>;
+  abstract has (value: T): Promise<boolean>
 
   /**
    * @inheritDoc
    */
-  size (): Promise<number> {
-    return this.namedCache.size()
+  get size (): Promise<number> {
+    return this.namedCache.size
   }
 
   /**
@@ -100,7 +341,7 @@ export class KeySet<K, V>
    */
   delete (key: K): Promise<boolean> {
     return new Promise((resolve) => {
-      return this.namedCache.remove(key)
+      return this.namedCache.delete(key)
         .then((v) => {
           resolve(v != null || undefined)
         })
@@ -111,7 +352,7 @@ export class KeySet<K, V>
    * @inheritDoc
    */
   has (key: K): Promise<boolean> {
-    return this.namedCache.containsKey(key)
+    return this.namedCache.has(key)
   }
 
   /**
@@ -185,7 +426,7 @@ export class ValueSet<K, V>
   [Symbol.toStringTag]: string = 'ValueSet'
 
   /**
-   * Constructs a new `ValueSet`.
+   * Constructs  a new `ValueSet`.
    *
    * @param namedCache  the {@link NamedCacheClient} to page through
    */
@@ -205,7 +446,7 @@ export class ValueSet<K, V>
    */
   has (value: V): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      return this.namedCache.containsValue(value)
+      return this.namedCache.hasValue(value)
         .then((v) => {
           resolve(v)
         }).catch(e => reject(e))
@@ -541,3 +782,7 @@ export class NamedCacheEntry<K, V>
  * @internal
  */
 type Cookie = Uint8Array | string | undefined;
+
+export interface Comparator {
+  '@class': string;
+}

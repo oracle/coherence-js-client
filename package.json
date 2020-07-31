@@ -2,6 +2,8 @@
   "name": "@oracle/coherence",
   "version": "0.0.1",
   "license": "UPL-1.0",
+  "private": true,
+  "main": "lib/index.js",
   "keywords": [
     "Oracle Coherence",
     "Coherence",
@@ -13,17 +15,10 @@
     "@grpc/grpc-js": "^1.1.1",
     "@grpc/proto-loader": "^0.5.4",
     "google-protobuf": "^3.12.2",
-    "madge": "^3.9.2",
-    "typedoc": "^0.17.8",
-    "typedoc-plugin-barrel-export": "^1.0.0",
-    "typedoc-plugin-external-module-name": "^4.0.3"
+    "typedoc": "^0.17.8"
   },
   "devDependencies": {
-    "@testdeck/mocha": "^0.1.0",
     "@types/google-protobuf": "^3.7.2",
-    "@types/mocha": "^7.0.2",
-    "@typescript-eslint/eslint-plugin": "^3.5.0",
-    "@typescript-eslint/parser": "^3.5.0",
     "grpc-tools": "^1.9.0",
     "grpc_tools_node_protoc_ts": "^4.1.0",
     "mocha": "^8.0.1",
@@ -35,11 +30,14 @@
   },
   "scripts": {
     "postinstall": "bin/npm-post-install.sh",
-    "compile": "tsc",
-    "test": "mocha 'target/test/**.js' --recursive --require source-map-support/register --require ts-node/register",
+    "compile": "tsc -p src",
+    "src-clean": "rm -rf lib; bin/npm-post-install.sh",
+    "full-clean": "rm -rf lib; npm unlink; rm -rf node_modules",
+    "link": "npm unlink; npm link; npm link @oracle/coherence",
+    "test": "mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
-    "coverage": "nyc mocha 'target/test/**.js' --recursive --require source-map-support/register --require ts-node/register"
+    "coverage": "nyc mocha 'test/**.js' --recursive"
   }
 }

@@ -5,7 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CacheLifecycleEvent, SessionLifecycleEvent } from './event/events' // SessionLifecycleEvent not exported
+import { CacheLifecycleEvent, SessionLifecycleEvent } from './event/events'
+import { NamedCache, NamedMap } from './net' // SessionLifecycleEvent not exported
 import { SerializerRegistry } from './util'
 import { EventEmitter } from 'events'
 import { PathLike, readFileSync } from 'fs'
@@ -420,7 +421,7 @@ export class Session
   getActiveCacheNames (): Set<string> {
     const set = new Set<string>()
     for (const cache of this.caches.values()) {
-      set.add(cache.getCacheName())
+      set.add(cache.name)
     }
     return set
   }
@@ -443,7 +444,7 @@ export class Session
    * @param name    the cache name
    * @param format  the serialization format for keys and values stored within the cache
    */
-  getCache<K, V> (name: string, format: string=Session.DEFAULT_FORMAT): NamedCacheClient<K, V> {
+  getCache<K, V> (name: string, format: string=Session.DEFAULT_FORMAT): NamedCache<K, V> {
     if (this.markedForClose) {
       throw new Error('Session is closing')
     }
@@ -462,6 +463,10 @@ export class Session
     }
 
     return namedCache
+  }
+
+  getMap<K, V> (name: string, format: string=Session.DEFAULT_FORMAT): NamedMap<K, V> {
+    return this.getCache(name, format) as NamedMap<K, V>
   }
 
   /**
