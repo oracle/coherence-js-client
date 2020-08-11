@@ -16,9 +16,12 @@ module.exports = {
         if (typeof testEntry.getKey === 'function') {
           testKey = testEntry.getKey()
           testVal = testEntry.getValue()
-        } else {
+        } else if (Array.isArray(testEntry)) {
           testKey = testEntry[0]
           testVal = testEntry[1]
+        } else {
+          testKey = testEntry['key']
+          testVal = testEntry['value']
         }
 
         try {

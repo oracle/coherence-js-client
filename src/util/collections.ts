@@ -9,6 +9,7 @@
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
 import { RequestStateEvent } from '../event/events'
+import { ValueExtractor } from '../extractor'
 import { NamedCacheClient } from '../named-cache-client'
 import { MapEntry } from '../net'
 import { EntryResult } from '../net/grpc/messages_pb'

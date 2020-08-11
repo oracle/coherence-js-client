@@ -5,9 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Aggregators, Filters, SessionBuilder } = require('@oracle/coherence')
+const { Aggregators, Filters, SessionBuilder, aggregator } = require('@oracle/coherence')
 const test = require('./util')
 const assert = require('assert').strict
+const { describe, it, after, beforeEach } = require('mocha')
 
 describe('Aggregators IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
@@ -173,6 +174,178 @@ describe('Aggregators IT Test Suite', function () {
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
       assert.equal(Number(result), 579)
+    })
+  })
+
+  describe('Priority Aggregator', () => {
+    const agg = Aggregators.priority(Aggregators.sum('ival'))
+
+    it('should have the expected structure', () => {
+      assert.equal(agg['@class'], 'aggregator.PriorityAggregator')
+      assert.equal(agg.requestTimeout, aggregator.Timeout.DEFAULT)
+      assert.equal(agg.executionTimeout, aggregator.Timeout.DEFAULT)
+      assert.equal(agg.schedulingPriority, aggregator.Schedule.STANDARD)
+      assert.deepEqual(agg['aggregator'], Aggregators.sum('ival'))
+
+      const agg2 = Aggregators.priority(Aggregators.sum('ival'), aggregator.Schedule.IMMEDIATE,
+        aggregator.Timeout.NONE, aggregator.Timeout.NONE)
+
+      assert.equal(agg2['@class'], 'aggregator.PriorityAggregator')
+      assert.equal(agg2.requestTimeout, aggregator.Timeout.NONE)
+      assert.equal(agg2.executionTimeout, aggregator.Timeout.NONE)
+      assert.equal(agg2.schedulingPriority, aggregator.Schedule.IMMEDIATE)
+      assert.deepEqual(agg2['aggregator'], Aggregators.sum('ival'))
+    })
+
+    it('should aggregate all entries', async () => {
+      const result = await cache.aggregate(agg)
+      assert.equal(Number(result), 1158)
+    })
+
+    it('should aggregate filtered entries', async () => {
+      const filter = Filters.between('id', 123, 456, true, false)
+      const result = await cache.aggregate(filter, agg)
+      assert.equal(Number(result), 702)
+    })
+
+    it('should aggregate entries based on keys', async () => {
+      const result = await cache.aggregate([val123, val456], agg)
+      assert.equal(Number(result), 579)
+    })
+  })
+
+  describe('Query Recorder', () => {
+    const agg = Aggregators.record()
+
+    it('should have the expected structure', () => {
+      assert.equal(agg['@class'], 'aggregator.QueryRecorder')
+      assert.deepEqual(agg['type'], { enum: 'EXPLAIN' })
+
+      const agg2 = Aggregators.record(aggregator.RecordType.TRACE)
+      assert.equal(agg2['@class'], 'aggregator.QueryRecorder')
+      assert.deepEqual(agg2['type'], { enum: 'TRACE' })
+    })
+
+    it('[EXPLAIN] should aggregate filtered entries', async () => {
+      const filter = Filters.between('id', 123, 456, true, false)
+      const result = await cache.aggregate(filter, agg)
+      assert.notEqual(result.results, undefined)
+      assert.equal(result.results.length, 1)
+      assert.notEqual(result.results[0]['partitionSet'], undefined)
+      assert.notEqual(result.results[0]['steps'], undefined)
+    })
+
+    it('[TRACE] should aggregate filtered entries', async () => {
+      const filter = Filters.between('id', 123, 456, true, false)
+      const result = await cache.aggregate(filter, Aggregators.record(aggregator.RecordType.TRACE))
+      assert.notEqual(result.results, undefined)
+      assert.equal(result.results.length, 1)
+      assert.notEqual(result.results[0]['partitionSet'], undefined)
+      assert.notEqual(result.results[0]['steps'], undefined)
+    })
+  })
+
+  describe('Top Aggregator', function () {
+
+    describe('in ascending mode', function () {
+
+      const aggregator = Aggregators.top(3).orderBy('ival').ascending()
+
+      it('can be constructed', function () {
+
+        assert.equal(aggregator['@class'], 'aggregator.TopNAggregator')
+        assert.equal(aggregator['comparator']['comparator']['extractor']['name'], 'ival')
+        assert.equal(aggregator['results'], 3)
+        assert.equal(aggregator['inverse'], true)
+      })
+
+      it('should aggregate entries based on keys', function (done) {
+        cache.aggregate([val123, val234, val345], aggregator)
+          .then(function (data) {
+            assert.deepEqual([val123, val234, val345], data)
+            done()
+          })
+          .catch(e => done(e))
+      })
+
+      it('should aggregate filtered entries', function (done) {
+        cache.aggregate(Filters.between('id', 123, 456, true, false), aggregator)
+          .then(function (data) {
+            assert.deepEqual([val123, val234, val345], data)
+            done()
+          })
+          .catch(e => done(e))
+      })
+    })
+
+    describe('in descending mode', function () {
+
+      const aggregator = Aggregators.top(3).orderBy('ival').descending()
+
+      it('can be constructed', function () {
+        assert.equal(aggregator['@class'], 'aggregator.TopNAggregator')
+        assert.equal(aggregator['comparator']['comparator']['extractor']['name'], 'ival')
+        assert.equal(aggregator['results'], 3)
+        assert.equal(aggregator['inverse'], false)
+      })
+
+      it('should aggregate entries based on keys', function (done) {
+        cache.aggregate([val123, val234, val345], aggregator)
+          .then(function (data) {
+            assert.deepEqual([val345, val234, val123], data)
+            done()
+          })
+          .catch(e => done(e))
+      })
+
+      it('should aggregate filtered entries', function (done) {
+        cache.aggregate(Filters.between('id', 123, 456, true, false), aggregator)
+          .then(function (data) {
+            assert.deepEqual([val345, val234, val123], data)
+            done()
+          })
+          .catch(e => done(e))
+      })
+    })
+  })
+
+  describe('Reducer Aggregator', function () {
+
+    const aggregator = Aggregators.reduce('ival')
+
+    it('can be constructed', function () {
+      assert.equal(aggregator['@class'], 'aggregator.ReducerAggregator')
+      assert.equal(aggregator['extractor']['name'], 'ival')
+    })
+
+    it('should aggregate entries based on keys', function (done) {
+      cache.aggregate([val123, val234, val345], aggregator)
+        .then(function (data) {
+          test.compareEntries([[val123, 123], [val234, 234], [val345, 345]], data)
+          done()
+        })
+        .catch(e => done(e))
+    })
+
+    it('should aggregate filtered entries', function (done) {
+      cache.aggregate(Filters.between('id', 123, 456, true, false), aggregator)
+        .then(function (data) {
+          test.compareEntries([[val123, 123], [val234, 234], [val345, 345]], data)
+          done()
+        })
+        .catch(e => done(e))
+    })
+  })
+
+  describe('Script Aggregator', function () {
+
+    const aggregator = Aggregators.script('clojure', 'my.clj', ['a', 123])
+
+    it('can be constructed', function () {
+      assert.equal(aggregator['@class'], 'aggregator.ScriptAggregator')
+      assert.equal(aggregator['language'], 'clojure')
+      assert.equal(aggregator['name'], 'my.clj')
+      assert.deepEqual(aggregator['args'], ['a', 123])
     })
   })
 })

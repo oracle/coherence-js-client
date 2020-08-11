@@ -8,6 +8,7 @@
 const { event, Filters, filter, SessionBuilder } = require('@oracle/coherence')
 const events = require('events')
 const assert = require('assert').strict
+const { describe, it } = require('mocha');
 
 describe('MapListener IT Test Suite', function () {
   const session = new SessionBuilder().build()

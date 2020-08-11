@@ -5,9 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { event, Filters, Extractors, SessionBuilder, util } = require('@oracle/coherence')
+const { event, Filters, Extractors, SessionBuilder } = require('@oracle/coherence')
 const test = require('./util')
 const assert = require('assert').strict
+const { describe, it, after, beforeEach } = require('mocha');
 
 describe('NamedCacheClient IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }

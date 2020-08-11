@@ -13,7 +13,13 @@ import {
   GroupAggregator,
   MaxAggregator,
   MinAggregator,
-  SumAggregator
+  PriorityAggregator,
+  QueryRecorder,
+  RecordType, ReducerAggregator,
+  Schedule, ScriptAggregator,
+  SumAggregator,
+  TopAggregator,
+  Timeout
 } from './aggregator'
 import { ValueExtractor } from './extractor/'
 import { Filter } from './filter/'
@@ -58,10 +64,35 @@ export class Aggregators {
     return new MaxAggregator(extractorOrProperty)
   }
 
+  static priority<K, V, R>(aggregator: EntryAggregator<K, V, any, any, R>, schedulingPriority: number = Schedule.STANDARD,
+                           executionTimeout: number = Timeout.DEFAULT, requestTimeout: number = Timeout.DEFAULT): PriorityAggregator<K, V, R> {
+    const priorityAgg = new PriorityAggregator(aggregator)
+    priorityAgg.executionTimeout = executionTimeout
+    priorityAgg.requestTimeout = requestTimeout
+    priorityAgg.schedulingPriority = schedulingPriority
+    return priorityAgg
+  }
+
+  static record<K, V>(type: RecordType = RecordType.EXPLAIN) : QueryRecorder<K, V> {
+    return new QueryRecorder<K, V>(type)
+  }
+
+  static reduce<K, V, T, R>(extractorOrProperty: ValueExtractor<T, R> | string): ReducerAggregator<K, V, T, R> {
+    return new ReducerAggregator<K, V, T, R>(extractorOrProperty)
+  }
+
+  static script<K, V, T, R>(language: string, name: string, args: [object]): ScriptAggregator<K, V, T, R> {
+    return new ScriptAggregator<K, V, T, R>(language, name, args)
+  }
+
   static sum<T> (extractorOrProperty: ValueExtractor<T, number> | string): SumAggregator<T> {
     if (extractorOrProperty instanceof ValueExtractor) {
       return new SumAggregator(extractorOrProperty as ValueExtractor<T, number>)
     }
     return new SumAggregator(extractorOrProperty)
+  }
+
+  static top<K, V, R> (count: number): TopAggregator<K, V, any, R> {
+    return new TopAggregator<K, V, any, R>(count)
   }
 }

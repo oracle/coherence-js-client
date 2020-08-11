@@ -8,6 +8,7 @@
 const { Filters, Extractors, SessionBuilder } = require('@oracle/coherence')
 const test = require('./util')
 const assert = require('assert').strict
+const { describe, it, after, beforeEach } = require('mocha');
 
 describe('Extractor IT Test Suite', function () {
   const session = new SessionBuilder().build()

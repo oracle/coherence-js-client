@@ -11,6 +11,7 @@ const req = require('../lib/util/request-factory')
 const ser = require('../lib/util/serializer')
 const { ClearRequest, AddIndexRequest, ContainsEntryRequest, ContainsKeyRequest, ContainsValueRequest,
   GetRequest, EntrySetRequest, KeySetRequest, ValuesRequest } = require('../lib/net/grpc/messages_pb')
+const { describe, it } = require('mocha');
 
 const serializer = ser.SerializerRegistry.instance().serializer('json')
 const reqFactory = new req.RequestFactory('States', serializer)

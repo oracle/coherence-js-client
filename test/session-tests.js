@@ -7,6 +7,8 @@
 
 const { event, SessionBuilder, Session } = require('@oracle/coherence')
 const assert = require('assert').strict
+const { describe, it } = require('mocha');
+
 describe('Session Tests Suite (unit/IT)', () => {
   describe('Session Unit Test Suite', () => {
     describe('A SessionBuilder', () => {
