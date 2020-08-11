@@ -251,7 +251,7 @@ describe('Aggregators IT Test Suite', function () {
 
       const aggregator = Aggregators.top(3).orderBy('ival').ascending()
 
-      it('can be constructed', function () {
+      it('should have the expected structure', function () {
 
         assert.equal(aggregator['@class'], 'aggregator.TopNAggregator')
         assert.equal(aggregator['comparator']['comparator']['extractor']['name'], 'ival')
@@ -282,7 +282,7 @@ describe('Aggregators IT Test Suite', function () {
 
       const aggregator = Aggregators.top(3).orderBy('ival').descending()
 
-      it('can be constructed', function () {
+      it('should have the expected structure', function () {
         assert.equal(aggregator['@class'], 'aggregator.TopNAggregator')
         assert.equal(aggregator['comparator']['comparator']['extractor']['name'], 'ival')
         assert.equal(aggregator['results'], 3)
@@ -313,7 +313,7 @@ describe('Aggregators IT Test Suite', function () {
 
     const aggregator = Aggregators.reduce('ival')
 
-    it('can be constructed', function () {
+    it('should have the expected structure', function () {
       assert.equal(aggregator['@class'], 'aggregator.ReducerAggregator')
       assert.equal(aggregator['extractor']['name'], 'ival')
     })
