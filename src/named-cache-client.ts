@@ -145,7 +145,7 @@ export class NamedCacheClient<K = any, V = any>
     this.setupEventHandlers()
 
     // Now open the events channel.
-    this.mapEventsHandler = new MapEventsManager(cacheName, this.client, this, this.serializer, this.internalEmitter)
+    this.mapEventsHandler = new MapEventsManager(this, this.client, this.serializer, this.internalEmitter)
   }
 
   // ----- public functions -------------------------------------------------

@@ -15,11 +15,13 @@ import {
   MinAggregator,
   PriorityAggregator,
   QueryRecorder,
-  RecordType, ReducerAggregator,
-  Schedule, ScriptAggregator,
+  RecordType,
+  ReducerAggregator,
+  Schedule,
+  ScriptAggregator,
   SumAggregator,
-  TopAggregator,
-  Timeout
+  Timeout,
+  TopAggregator
 } from './aggregator'
 import { ValueExtractor } from './extractor/'
 import { Filter } from './filter/'
@@ -64,11 +66,11 @@ export class Aggregators {
     return new MaxAggregator(extractorOrProperty)
   }
 
-  static priority<K, V, R>(aggregator: EntryAggregator<K, V, any, any, R>, schedulingPriority: number = Schedule.STANDARD,
+  static priority<K, V, R>(aggregator: EntryAggregator<K, V, any, any, R>, schedulingPriority: Schedule = Schedule.STANDARD,
                            executionTimeout: number = Timeout.DEFAULT, requestTimeout: number = Timeout.DEFAULT): PriorityAggregator<K, V, R> {
     const priorityAgg = new PriorityAggregator(aggregator)
-    priorityAgg.executionTimeout = executionTimeout
-    priorityAgg.requestTimeout = requestTimeout
+    priorityAgg.executionTimeoutInMillis = executionTimeout
+    priorityAgg.requestTimeoutInMillis = requestTimeout
     priorityAgg.schedulingPriority = schedulingPriority
     return priorityAgg
   }

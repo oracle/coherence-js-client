@@ -9,10 +9,10 @@ import { EventEmitter } from 'events'
 import { ClientDuplexStream } from 'grpc'
 import { MapEvent, MapListener } from '.'
 import { AlwaysFilter, MapEventFilter } from '../filter'
-import { NamedCache } from '../net'
+import { NamedMap } from '../net'
 import { MapListenerRequest, MapListenerResponse } from '../net/grpc/messages_pb'
 import { NamedCacheServiceClient } from '../net/grpc/services_grpc_pb'
-import { Serializer } from '../util/'
+import { Serializer, Map } from '../util/'
 import { RequestFactory } from '../util/request-factory' // RequestFactory not exported
 import { CacheLifecycleEvent } from './events'
 
@@ -51,70 +51,97 @@ type SubscriptionCallback = (uid: string, cookie: any, err?: Error | undefined) 
  * class uses a method called stringify(obj) that converts the specified
  * object into a stringified form. Currently, this is implemented by just
  * using JSON,.stringify() method.
+ *
+ * @internal
  */
 export class MapEventsManager<K, V> {
   /**
-   * Internal: A singleton for a resolved Promise.
+   * A singleton for a resolved Promise.
    */
   private static RESOLVED = Promise.resolve()
+
   /**
-   * Internal: A singleton MapEventFilter for an Always filter.
+   * A singleton MapEventFilter for an Always filter.
    */
   private static DEFAULT_FILTER = new MapEventFilter(MapEventFilter.E_ALL, new AlwaysFilter())
+
   /**
-   * The cache name for which events are received.
+   * The map name for which events are received.
    */
-  protected cacheName: string
+  protected mapName: string
+
   /**
    * The gRPC service client.
    */
   protected client: NamedCacheServiceClient
+
   /**
-   * The ObservableMap (or the NamedCacheClient) that will used as
-   * the 'source' of the events. This is typically a NamedCacheClient.
+   * The `NamedMap` that will used as the *source* of the events.
    */
-  protected observableMap: NamedCache<K, V>
+  protected namedMap: NamedMap<K, V>
+
   /**
-   * Internal: Request factory.
+   * Request factory.
    */
   protected reqFactory: RequestFactory<K, V>
+
   /**
    * A Promise for lazily creating the duplex stream. The streamPromise
    * will resolve to a ClientDuplexStream<MapListenerRequest, MapListenerResponse>
    * that will be used by this class to send subscriptions and to receive all events.
    */
   private streamPromise: Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse>> | null = null
+
   /**
    * Used to track if a cancel call was due to this object
    * initiating a channel close.
    */
   private markedForClose = false
+
   /**
    * A Map containing the outstanding subscriptions. When the corresponding
    * MapListenerResponse is received (for a SubscriptionRequest) then the
    * registered callback is invoked.
    */
   private pendingSubscriptions = new Map<string, SubscriptionCallback>()
+
   /**
-   * The Map of stringified keys => set of listeners (ListenerGroup).
+   * The Map of keys => set of listeners (ListenerGroup).
    */
-  private keyMap: Map<string, ListenerGroup<K, V>>
+  private keyMap: Map<K, ListenerGroup<K, V>>
+
   /**
-   * The Map of stringified filter => set of listeners (ListenerGroup).
+   * The Map of MapEventFilter => set of listeners (ListenerGroup).
    */
-  private filterMap: Map<string, ListenerGroup<K, V>>
+  private filterMap: Map<MapEventFilter, ListenerGroup<K, V>>
+
   /**
    * A Map of filter ID =>  ListenerGroup.
    */
   private filterId2ListenerGroup: Map<number, ListenerGroup<K, V>>
+
+  /**
+   * The serializer to apply when ser/deser map events.
+   */
   private readonly serializer: Serializer
 
+  /**
+   * The {@link EventEmitter}.
+   */
   private emitter: EventEmitter
 
-  constructor (cacheName: string, client: NamedCacheServiceClient, observableMap: NamedCache<K, V>, serializer: Serializer, emitter: EventEmitter) {
-    this.cacheName = cacheName
+  /**
+   * Constructs a new `MapEventsManager`
+   *
+   * @param namedMap    the {@link NamedMap} to manage events for
+   * @param client      the `gRPC` interface for making requests
+   * @param serializer  the {@link Serializer} used by this map
+   * @param emitter     the {@link EventEmitter} to use
+   */
+  constructor (namedMap: NamedMap<K, V>, client: NamedCacheServiceClient, serializer: Serializer, emitter: EventEmitter) {
+    this.mapName = namedMap.name
     this.client = client
-    this.observableMap = observableMap
+    this.namedMap = namedMap
     this.serializer = serializer
     this.emitter = emitter
 
@@ -122,14 +149,8 @@ export class MapEventsManager<K, V> {
     this.keyMap = new Map()
     this.filterMap = new Map()
     this.filterId2ListenerGroup = new Map()
-    this.reqFactory = new RequestFactory(cacheName, serializer)
+    this.reqFactory = new RequestFactory(this.mapName, serializer)
     this.streamPromise = this.ensureStream()
-  }
-
-  static stringify = (obj: any): string => JSON.stringify(obj)
-
-  getRequestFactory (): RequestFactory<K, V> {
-    return this.reqFactory
   }
 
   /**
@@ -172,6 +193,11 @@ export class MapEventsManager<K, V> {
     return self.streamPromise
   }
 
+  /**
+   * Process incoming `gRPC` {@link MapListenerResponse}s.
+   *
+   * @param resp  the {@link MapListenerResponse} to process
+   */
   handleResponse (resp: MapListenerResponse) {
     switch (resp.getResponseTypeCase()) {
       case MapListenerResponse.ResponseTypeCase.SUBSCRIBED:
@@ -190,14 +216,14 @@ export class MapEventsManager<K, V> {
         break
 
       case MapListenerResponse.ResponseTypeCase.DESTROYED:
-        if (resp.hasDestroyed() && resp.getDestroyed()?.getCache() == this.cacheName) {
-          this.emitter.emit(CacheLifecycleEvent.DESTROYED, this.cacheName)
+        if (resp.hasDestroyed() && resp.getDestroyed()?.getCache() == this.mapName) {
+          this.emitter.emit(CacheLifecycleEvent.DESTROYED, this.mapName)
         }
         break
 
       case MapListenerResponse.ResponseTypeCase.TRUNCATED:
-        if (resp.hasTruncated() && resp.getTruncated()?.getCache() == this.cacheName) {
-          this.emitter.emit(CacheLifecycleEvent.TRUNCATED, this.cacheName)
+        if (resp.hasTruncated() && resp.getTruncated()?.getCache() == this.mapName) {
+          this.emitter.emit(CacheLifecycleEvent.TRUNCATED, this.mapName)
         }
         break
 
@@ -205,7 +231,7 @@ export class MapEventsManager<K, V> {
         if (resp.hasEvent()) {
           const event = resp.getEvent()
           if (event) {
-            const mapEvent = new MapEvent(this.cacheName, this.observableMap, event, this.serializer)
+            const mapEvent = new MapEvent(this.mapName, this.namedMap, event, this.serializer)
 
             for (const id of event.getFilteridsList()) {
               const group = this.filterId2ListenerGroup.get(id)
@@ -215,8 +241,7 @@ export class MapEventsManager<K, V> {
               }
             }
 
-            const stringifiedKey = MapEventsManager.stringify(mapEvent.getKey())
-            const keyGroup = this.keyMap.get(stringifiedKey)
+            const keyGroup = this.keyMap.get(mapEvent.getKey())
             if (keyGroup) {
               keyGroup.notifyListeners(mapEvent)
             }
@@ -226,20 +251,32 @@ export class MapEventsManager<K, V> {
     }
   }
 
+  /**
+   * Registers the specified listener to listen for events matching the provided key.
+   *
+   * @param listener  the {@link MapListener}
+   * @param key       the map key to listen to
+   * @param isLite    `true` if the event should only include the key, or `false`
+   *                  if the event should include old and new values as well as the key
+   */
   registerKeyListener (listener: MapListener<K, V>, key: K, isLite: boolean = false): Promise<void> {
-    const stringifiedKey = MapEventsManager.stringify(key)
-    let group = this.keyMap.get(stringifiedKey)
+    let group = this.keyMap.get(key)
     if (!group) {
       group = new KeyListenerGroup(this, key)
-      this.keyMap.set(stringifiedKey, group)
+      this.keyMap.set(key, group)
     }
 
     return group.addListener(listener, isLite)
   }
 
+  /**
+   * Removes the registration of the listener for the provided key.
+   *
+   * @param listener  the listener to remove
+   * @param key       the key associated with the listener
+   */
   removeKeyListener (listener: MapListener<K, V>, key: K): Promise<void> {
-    const stringifiedKey = MapEventsManager.stringify(key)
-    const group = this.keyMap.get(stringifiedKey)
+    const group = this.keyMap.get(key)
     if (group) {
       return group.removeListener(listener)
     }
@@ -247,24 +284,36 @@ export class MapEventsManager<K, V> {
     return MapEventsManager.RESOLVED
   }
 
+  /**
+   * Registers the specified listener to listen for events matching the provided filter.
+   *
+   * @param listener   the {@link MapListener}
+   * @param mapFilter  the {@link filter} associated with the listener
+   * @param isLite     `true` if the event should only include the key, or `false`
+   *                   if the event should include old and new values as well as the key
+   */
   registerFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter | null, isLite: boolean = false): Promise<void> {
     const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
-    const stringifiedFilter = MapEventsManager.stringify(filter)
 
-    let group = this.filterMap.get(stringifiedFilter)
+    let group = this.filterMap.get(filter)
     if (!group) {
       group = new FilterListenerGroup(this, filter)
-      this.filterMap.set(stringifiedFilter, group)
+      this.filterMap.set(filter, group)
     }
 
     return group.addListener(listener, isLite)
   }
 
+  /**
+   * Removes the registration of the listener for the provided filter.
+   *
+   * @param listener   the listener to remove
+   * @param mapFilter  the {@link MapEventFilter} associated with the listener
+   */
   removeFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter | null): Promise<void> {
     const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
-    const stringifiedFilter = MapEventsManager.stringify(filter)
 
-    const group = this.filterMap.get(stringifiedFilter)
+    const group = this.filterMap.get(filter)
     if (!group) {
       return MapEventsManager.RESOLVED
     }
@@ -272,6 +321,12 @@ export class MapEventsManager<K, V> {
     return group.removeListener(listener)
   }
 
+  /**
+   * Write the provided `gRPC` {@link MapListenerRequest}.
+   *
+   * @param request the {@link MapListenerRequest}
+   *
+   */
   writeRequest (request: MapListenerRequest): Promise<void> {
     const self = this
     return this.ensureStream()
@@ -313,31 +368,59 @@ export class MapEventsManager<K, V> {
     return Promise.resolve()
   }
 
-  keyGroupUnsubscribed (key: string): void {
-    this.keyMap.delete(MapEventsManager.stringify(key))
+  /**
+   * Remove key from key group.
+   *
+   * @param key the key to remove
+   */
+  keyGroupUnsubscribed (key: K): void {
+    this.keyMap.delete(key)
   }
 
+  /**
+   * Add the filter ID and the group to the ID -> group mapping.
+   *
+   * @param filterId  the filter ID
+   * @param group     the listener group
+   */
   filterGroupSubscribed (filterId: number, group: ListenerGroup<K, V>): void {
     this.filterId2ListenerGroup.set(filterId, group)
   }
 
+  /**
+   * Unsubscribe the filter ID and filter from their associated maps.
+   *
+   * @param filterId  the filter ID
+   * @param filter    the filter
+   */
   filterGroupUnsubscribed (filterId: number, filter: MapEventFilter): void {
     this.filterId2ListenerGroup.delete(filterId)
-    this.filterMap.delete(MapEventsManager.stringify(filter))
+    this.filterMap.delete(filter)
   }
 
+  /**
+   * Handles stream errors.
+   *
+   * @param err  the stream error
+   */
   private onError (err: Error) {
     if (!this.markedForClose) {
-      this.emitter.emit('error', this.cacheName + ': Received onError', err)
+      this.emitter.emit('error', this.mapName + ': Received onError', err)
     }
   }
 
+  /**
+   * Handles the end of an event stream.
+   */
   private onEnd () {
     if (!this.markedForClose) {
-      this.emitter.emit('error', this.cacheName + ': Received onEnd')
+      this.emitter.emit('error', this.mapName + ': Received onEnd')
     }
   }
 
+  /**
+   * Handles a stream being cancelled.
+   */
   private onCancel () {
     if (!this.markedForClose) {
       this.emitter.emit('error', '** Received onCancel')
@@ -355,16 +438,19 @@ abstract class ListenerGroup<K, V> {
    * Internal: A singleton resolved Promise.
    */
   private static RESOLVED = Promise.resolve()
+
   /**
    * Active status will be true if the subscribe request has been sent.
    * It will be false if a unsubscribe request has been sent.
    */
   isActive: boolean = true // Initially active.
+
   /**
    * The key or the filter for which this group of MapListener will
    * receive events.
    */
   keyOrFilter: K | MapEventFilter
+
   /**
    * The current value of isLite that is registered with the cache.
    * If a new listener is added to the group that requires isLite == false
@@ -375,19 +461,31 @@ abstract class ListenerGroup<K, V> {
    * re-registration occurs.
    */
   registeredIsLite: boolean = true
+
   /**
    * A map of all listeners in this group. Each listener has a isLite
    * flag.
    */
   listeners: Map<MapListener<K, V>, { isLite: boolean }> = new Map()
+
   /**
    * Number of MapListeners who are registered with isLite == false.
    * If this transitions from zero to non-zero (or vice versa), then
    * a re-registration happens is the current registeredIsLite is true.
    */
   isLiteFalseCount: number = 0
+
+  /**
+   * Reference to MapEventsManager.
+   */
   helper: MapEventsManager<K, V>
 
+  /**
+   * Constructs a new `ListenerGroup`.
+   *
+   * @param helper       the {@link MapEventsManager}
+   * @param keyOrFilter  the key or filter for this group of listeners
+   */
   protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | MapEventFilter) {
     this.helper = helper
     this.keyOrFilter = keyOrFilter
@@ -399,8 +497,9 @@ abstract class ListenerGroup<K, V> {
    * listener, or (b) the isLite param is false but all the previous
    * listeners have isLite == true.
    *
-   * @param listener The MapListener to add.
-   * @param isLite  The isLite flag.
+   * @param listener  the {@link MapListener} to add
+   * @param isLite    `true` if the event should only include the key, or `false`
+   *                  if the event should include old and new values as well as the key
    */
   async addListener (listener: MapListener<K, V>, isLite: boolean): Promise<void> {
     // Check if this Listener is already registered.
@@ -437,9 +536,9 @@ abstract class ListenerGroup<K, V> {
   }
 
   /**
-   * Remove the specified MapListener from this group.
+   * Remove the specified {@link MapListener} from this group.
    *
-   * @param listener The MapListener to be removed.
+   * @param listener  the {@link MapListener} to be removed.
    */
   async removeListener (listener: MapListener<K, V>): Promise<void> {
     const prevStatus = this.listeners.get(listener)
@@ -468,19 +567,35 @@ abstract class ListenerGroup<K, V> {
     return ListenerGroup.RESOLVED
   }
 
+  /**
+   * Send a `gRPC` {@link MapListenerRequest} to subscribe the key or filter.
+   *
+   * @param isLite `true` if the event should only include the key, or `false`
+   *               if the event should include old and new values as well as the key
+   */
   async doSubscribe (isLite: boolean): Promise<void> {
-    const request = this.helper.getRequestFactory().mapListenerRequest(true, this.keyOrFilter, isLite)
+    // @ts-ignore
+    const request = this.helper.reqFactory.mapListenerRequest(true, this.keyOrFilter, isLite)
     await this.helper.writeRequest(request)
     this.postSubscribe(request)
   }
 
+  /**
+   * Send a `gRPC` {@link MapListenerRequest} to unsubscribe the key or filter.
+   */
   async doUnsubscribe (): Promise<void> {
-    const request = this.helper.getRequestFactory().mapListenerRequest(false, this.keyOrFilter)
+    // @ts-ignore
+    const request = this.helper.reqFactory.mapListenerRequest(false, this.keyOrFilter)
     await this.helper.writeRequest(request)
 
     this.postUnsubscribe(request)
   }
 
+  /**
+   * Notify all relevant listeners with the provided event.
+   *
+   * @param mapEvent the {@link MapEvent}
+   */
   notifyListeners (mapEvent: MapEvent): void {
     for (const listener of this.listeners.keys()) {
       switch (mapEvent.getId()) {
@@ -497,36 +612,80 @@ abstract class ListenerGroup<K, V> {
     }
   }
 
+  /**
+   * Custom actions that implementations may need to make after a subscription has been completed.
+   *
+   * @param request the {@link MapListenerRequest} that was used to subscribe
+   */
   abstract postSubscribe (request: MapListenerRequest): void;
 
+  /**
+   * Custom actions that implementations may need to make after an unsubscription has been completed.
+   *
+   * @param request the {@link MapListenerRequest} that was used to unsubscribe
+   */
   abstract postUnsubscribe (request: MapListenerRequest): void;
 }
 
+/**
+ * A {@link ListenerGroup} for key-based listeners.
+ * @internal
+ */
 class KeyListenerGroup<K, V>
   extends ListenerGroup<K, V> {
+
+  /**
+   * Constructs a new `KeyListenerGroup`.
+   *
+   * @param helper  the {@link MapEventsManager}
+   * @param key     they group key
+   */
   constructor (helper: MapEventsManager<K, V>, key: K) {
     super(helper, key)
   }
 
+  /**
+   * @inheritDoc
+   */
   postSubscribe (request: MapListenerRequest): void {
   }
 
+  /**
+   * @inheritDoc
+   */
   postUnsubscribe (request: MapListenerRequest): void {
-    const key = this.helper.getRequestFactory().getSerializer().deserialize(request.getKey())
+    // @ts-ignore
+    const key = this.helper.serializer.deserialize(request.getKey())
     this.helper.keyGroupUnsubscribed(key)
   }
 }
 
+/**
+ * A {@link ListenerGroup} for filter-based listeners.
+ * @internal
+ */
 class FilterListenerGroup<K, V>
   extends ListenerGroup<K, V> {
+  /**
+   * Constructs a new `KeyListenerGroup`.
+   *
+   * @param helper  the {@link MapEventsManager}
+   * @param filter  the group filter
+   */
   constructor (helper: MapEventsManager<K, V>, filter: MapEventFilter) {
     super(helper, filter)
   }
 
+  /**
+   * @inheritDoc
+   */
   postSubscribe (request: MapListenerRequest): void {
     this.helper.filterGroupSubscribed(request.getFilterid(), this)
   }
 
+  /**
+   * @inheritDoc
+   */
   postUnsubscribe (request: MapListenerRequest): void {
     this.helper.filterGroupUnsubscribed(request.getFilterid(), this.keyOrFilter as MapEventFilter)
   }

@@ -182,8 +182,8 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should have the expected structure', () => {
       assert.equal(agg['@class'], 'aggregator.PriorityAggregator')
-      assert.equal(agg.requestTimeout, aggregator.Timeout.DEFAULT)
-      assert.equal(agg.executionTimeout, aggregator.Timeout.DEFAULT)
+      assert.equal(agg.requestTimeoutInMillis, aggregator.Timeout.DEFAULT)
+      assert.equal(agg.executionTimeoutInMillis, aggregator.Timeout.DEFAULT)
       assert.equal(agg.schedulingPriority, aggregator.Schedule.STANDARD)
       assert.deepEqual(agg['aggregator'], Aggregators.sum('ival'))
 
@@ -191,8 +191,8 @@ describe('Aggregators IT Test Suite', function () {
         aggregator.Timeout.NONE, aggregator.Timeout.NONE)
 
       assert.equal(agg2['@class'], 'aggregator.PriorityAggregator')
-      assert.equal(agg2.requestTimeout, aggregator.Timeout.NONE)
-      assert.equal(agg2.executionTimeout, aggregator.Timeout.NONE)
+      assert.equal(agg2.requestTimeoutInMillis, aggregator.Timeout.NONE)
+      assert.equal(agg2.executionTimeoutInMillis, aggregator.Timeout.NONE)
       assert.equal(agg2.schedulingPriority, aggregator.Schedule.IMMEDIATE)
       assert.deepEqual(agg2['aggregator'], Aggregators.sum('ival'))
     })
@@ -339,12 +339,12 @@ describe('Aggregators IT Test Suite', function () {
 
   describe('Script Aggregator', function () {
 
-    const aggregator = Aggregators.script('clojure', 'my.clj', ['a', 123])
+    const aggregator = Aggregators.script('js', 'someFilter', ['a', 123])
 
     it('can be constructed', function () {
       assert.equal(aggregator['@class'], 'aggregator.ScriptAggregator')
-      assert.equal(aggregator['language'], 'clojure')
-      assert.equal(aggregator['name'], 'my.clj')
+      assert.equal(aggregator['language'], 'js')
+      assert.equal(aggregator['name'], 'someFilter')
       assert.deepEqual(aggregator['args'], ['a', 123])
     })
   })

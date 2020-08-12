@@ -12,11 +12,14 @@ import { internal } from './package-internal'
  * Sums up numeric values extracted from a set of entries in a Map. All the
  * extracted Number objects will be treated as Java <tt>double</tt> values.
  *
- * @param <T>  the type of the value to extract from
+ * @typeParam T  the type of the value to extract from
  */
 export class CountAggregator<K, V>
   extends EntryAggregator<K, V, any, any, number> {
 
+  /**
+   * Constructs a new `CountAggregator`.
+   */
   constructor () {
     super(internal.aggregatorName('Count'))
   }

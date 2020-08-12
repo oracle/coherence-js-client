@@ -9,7 +9,7 @@ import { EntryAggregator } from '.'
 import { internal } from './package-internal'
 
 /**
- * CompositeAggregator provides an ability to execute a collection of
+ * `CompositeAggregator` provides an ability to execute a collection of
  * aggregators against the same subset of the entries in an
  * Map, resulting in a list of corresponding aggregation
  * results. The size of the returned list will always be equal to the
@@ -19,8 +19,19 @@ export class CompositeAggregator<K = any, V = any>
   extends EntryAggregator<K, V, any, any, Array<any>> {
   aggregators: Array<EntryAggregator<any, any, any, any, any>>
 
+  /**
+   * Construct a CompositeAggregator based on a specified {@link EntryAggregator}
+   * array.
+   *
+   * @param aggregators  an array of EntryAggregator objects; may not be `null`
+   */
   constructor (aggregators: Array<EntryAggregator<any, any, any, any, any>>,) {
     super(internal.aggregatorName('CompositeAggregator'))
-    this.aggregators = aggregators
+
+    if (aggregators) {
+      this.aggregators = aggregators
+    } else {
+      throw new Error('no aggregators provided')
+    }
   }
 }
