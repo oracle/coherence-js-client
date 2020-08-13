@@ -9,17 +9,47 @@
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
 import { RequestStateEvent } from '../event/events'
-import { ValueExtractor } from '../extractor'
 import { NamedCacheClient } from '../named-cache-client'
 import { MapEntry } from '../net'
 import { EntryResult } from '../net/grpc/messages_pb'
 import { Serializer } from './serializer'
 
+/**
+ * A drop-in replacement for the default ECMA Map implementation that uses
+ * hashes keys based on the string view of an Object.
+ *
+ * Unlike the default ECMA Map implementation, this version does not maintain
+ * insertion order and does not make any guarantees on iteration order nor does
+ * enforce key identity equivalency when attempting to look up a mapping.  This allows
+ * this implementation to store and compare objects that are equal, but not necessarily
+ * the same instance.
+ *
+ * The hashing algorithm is based on that of Java's HashMap.
+ *
+ * @typeParam K  the type of the key
+ * @typeParam V  the type of the value
+ */
 export class Map<K, V> {
 
+  /**
+   * The buckets for storing key/value pairs.
+   * The outer array is the bucket location, with the inner array being
+   * the bucket for the entries.
+   */
   protected readonly buckets: [K, V][][]
 
-  constructor (iterable?: Iterable<[K, V]>, size: number = 16) {
+  /**
+   * The current size of this map.
+   */
+  protected _size: number = 0
+
+  /**
+   * Constructs a new Map.
+   *
+   * @param size      the number of buckets to spread entries across
+   * @param iterable  initial entries to add to the map.
+   */
+  constructor (size: number = 32, iterable?: Iterable<[K, V]>) {
     this.buckets = []
     for (let i = 0; i < size; i++) {
       this.buckets.push([])
@@ -31,23 +61,23 @@ export class Map<K, V> {
     }
   }
 
-  private _size: number = 0
-
+  /**
+   * Returns the size of this map.
+   *
+   * @return the size of this map
+   */
   get size () {
     return this._size
   }
 
-  private static hash (str: string): number {
-    let hash = 0
-    if (str.length == 0) return hash
-    for (let i = 0; i < str.length; i++) {
-      let char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32bit integer
-    }
-    return hash
-  }
-
+  /**
+   * Sets the value for the key in the Map object. Returns the Map object.
+   *
+   * @param key    the key of the element to add to the Map object
+   * @param value  the value of the element to add to the Map object
+   *
+   * @return this
+   */
   set (key: K, value: V): Map<K, V> {
     const bucket = this.buckets[this.getBucket(key)]
     const existing = bucket.find(entry => entry[0] === key)
@@ -60,32 +90,58 @@ export class Map<K, V> {
     return this
   }
 
-  forEach (callback: (value: V, key: K) => void): void {
+  /**
+   * Calls `callbackFn` once for each key-value pair present in the Map object.
+   *
+   * @param callbackFn  the Function to execute for each element
+   */
+  forEach (callbackFn: (value: V, key: K) => void): void {
     const entries = this.entries()
     for (const entry of entries) {
-      callback(entry[1], entry[0])
+      callbackFn(entry[1], entry[0])
     }
   }
 
+  /**
+   * Returns a boolean asserting whether a value has been associated to the key in the Map object or not.
+   *
+   * @param key  the key of the element to test for presence in the Map object
+   *
+   * @return `true` if the key is currently associated with a value within the map, otherwise returns `false`
+   */
   has (key: K): boolean {
     const bucket = this.buckets[this.getBucket(key)]
     return bucket.find(entry => entry[0] === key) !== undefined
   }
 
+  /**
+   * Returns a new Iterator object that contains an array of [key, value] for each element in the Map object.
+   */
   entries (): Iterable<[K, V]> {
     return new EntryIterator(this.buckets)
   }
 
+  /**
+   * Returns a new Iterator object that contains the keys for each element in the Map object.
+   */
   keys (): Iterable<K> {
     return new KeyIterator(this.buckets)
   }
 
-  get (key: K): V | null {
+  /**
+   * Returns the value associated to the key, or `undefined` if there is none.
+   *
+   * @param key  the key of the element to return from the Map object
+   */
+  get (key: K): V | undefined {
     const bucket = this.buckets[this.getBucket(key)]
     const existing = bucket.find(entry => entry[0] === key)
-    return existing ? existing[1] : null
+    return existing ? existing[1] : undefined
   }
 
+  /**
+   * Removes all key-value pairs from the Map object.
+   */
   clear (): void {
     for (let i = 0, len = this.buckets.length; i < len; i++) {
       this.buckets[i] = []
@@ -93,53 +149,122 @@ export class Map<K, V> {
     this._size = 0
   }
 
-  delete (key: K): V | null {
+  /**
+   * Removes the specified element from a Map object by key.
+   *
+   * @param key  the key of the element to remove from the Map object
+   */
+  delete (key: K): boolean {
     const bucket = this.buckets[this.getBucket(key)]
     const existing = bucket.find(entry => entry[0] === key)
-    let oldValue = null
     if (existing) {
-      oldValue = existing[1]
       bucket.splice(bucket.indexOf(existing), 1)
       this._size--
+      return true
     }
-
-    return oldValue
+    return existing !== undefined
   }
 
+  /**
+   * Returns a new Iterator object that contains an array of [key, value] for each element in the Map object.
+   *
+   * @return a new Iterator object that contains an array of [key, value] for each element in the Map object
+   */
   [Symbol.iterator] (): IterableIterator<[K, V]> {
     return new EntryIterator(this.buckets)
   }
 
+  /**
+   * Hashing function.
+   *
+   * @param str the string to hash
+   * @hidden
+   */
+  private static hash (str: string): number {
+    let hash = 0
+    if (str.length == 0) return hash
+    for (let i = 0; i < str.length; i++) {
+      let char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return hash
+  }
+
+  /**
+   * Helper function to obtain the bucket to store the key/value pair in.
+   *
+   * @param key  the key to obtain the bucket for
+   * @hidden
+   */
   private getBucket (key: any) {
     return Math.abs(Map.hash(key.toString()) % this.buckets.length)
   }
 }
 
+/**
+ * This is a local implementation of {@link RemoteSet} for cases when entries are cannot
+ * be scrolled through on the server and must instead be cached on the client.
+ */
 export class LocalSet<T> implements RemoteSet<T> {
 
-  private map: Map<T, any>
+  /**
+   * Element storage.
+   */
+  private map: Map<T, boolean>
 
-  constructor (size: number = 16) {
-    this.map = new Map(undefined, size)
+  /**
+   * Constructs a new `LocalSet`.
+   *
+   * @param size
+   * @param iterable
+   */
+  constructor (size: number = 32, iterable?: Iterable<T>) {
+    this.map = new Map<T, boolean>(size)
+    if (iterable) {
+      for (const element of iterable) {
+        this.map.set(element, true)
+      }
+    }
   }
 
+  /**
+   * @inheritDoc
+   */
   get size () {
     return Promise.resolve(this.map.size)
   }
 
+  /**
+   * @inheritDoc
+   */
   clear (): Promise<boolean> {
     return Promise.resolve(false)
   }
 
+  /**
+   * Adds value to the Set object. Returns the Set object.
+   *
+   * @param val  the value of the element to add to the Set object
+   *
+   * @return this
+   * @hidden
+   */
   add (val: T): LocalSet<T> {
     this.map.set(val, true)
     return this
   }
 
+  /**
+   * @inheritDoc
+   */
   delete (val: T): Promise<boolean> {
     return Promise.resolve(false)
   }
 
+  /**
+   * @inheritDoc
+   */
   has (val: T): Promise<boolean> {
     return Promise.resolve(this.map.has(val))
   }
@@ -148,56 +273,104 @@ export class LocalSet<T> implements RemoteSet<T> {
    * @inheritDoc
    */
   [Symbol.iterator] (): IterableIterator<T> {
-    throw new Error('only async iterator supported.')
+    // @ts-ignore
+    return new KeyIterator(this.map.buckets)
   }
 
-  [Symbol.asyncIterator] () {
-    // @ts-ignore
+  /**
+   * @inheritDoc
+   */
+  [Symbol.asyncIterator] (): IterableIterator<T> {
+    // @ts-ignore  --  bypass protection to access map buckets
     return new KeyIterator(this.map.buckets)
   }
 }
 
+/**
+ * {@link IterableIterator} implementation for {@link Map} entries.
+ */
 class EntryIterator<K, V> implements IterableIterator<[K, V]> {
 
-  private readonly buckets!: [K, V][][]
-  private outer: number = 0
-  private inner: number = 0
+  /**
+   * The buckets from the map this iterator will be processing.
+   */
+  protected readonly buckets: [K, V][][]
 
+  /**
+   * The current bucket index.
+   */
+  protected bucketsIdx: number = 0
+
+  /**
+   * The current index within the bucket.
+   */
+  protected bucketContentsIdx: number = 0
+
+  /**
+   * Constructs a new `EntryIterator`.
+   *
+   * @param buckets  the buckets to iterator over
+   */
   constructor (buckets: [K, V][][]) {
     this.buckets = buckets
   }
 
+  /**
+   * @inheritDoc
+   */
   next (...args: [] | [undefined]): IteratorResult<[K, V]> {
     const bc = this.buckets.length
-    while (this.outer < bc) {
-      const bucket = this.buckets[this.outer]
-      if (this.inner < bucket.length) {
-        return this.result(bucket[this.inner++])
+    while (this.bucketsIdx < bc) {
+      const bucket = this.buckets[this.bucketsIdx]
+      if (this.bucketContentsIdx < bucket.length) {
+        return this.result(bucket[this.bucketContentsIdx++])
       } else {
-        this.inner = 0
-        this.outer++
+        this.bucketContentsIdx = 0
+        this.bucketsIdx++
       }
     }
     return {done: true, value: null}
   }
 
+  /**
+   * @inheritDoc
+   */
   [Symbol.iterator] (): IterableIterator<[K, V]> {
     return this
   }
 
+  /**
+   * Return the iteration result appropriate to this iterator type.
+   *
+   * @param entry  the map entry
+   */
   protected result (entry: [K, V]): IteratorResult<any> {
     return {done: false, value: entry}
   }
 }
 
+/**
+ * {@link IterableIterator} implementation for {@link Map} entries.
+ */
 class KeyIterator<K> implements IterableIterator<K> {
 
-  private readonly entryIterator: EntryIterator<K, any>
+  /**
+   * The wrapped {@link EntryIterator}.
+   */
+  protected readonly entryIterator: EntryIterator<K, any>
 
+  /**
+   * Constructs a new `EntryIterator`.
+   *
+   * @param buckets  the buckets to iterator over
+   */
   constructor (buckets: [K, any][][]) {
     this.entryIterator = new EntryIterator<K, any>(buckets)
   }
 
+  /**
+   * @inheritDoc
+   */
   next (...args: [] | [undefined]): IteratorResult<K> {
     const result = this.entryIterator.next()
     if (result.value) {
@@ -206,35 +379,42 @@ class KeyIterator<K> implements IterableIterator<K> {
     return result as IteratorResult<K>
   }
 
+  /**
+   * @inheritDoc
+   */
   [Symbol.iterator] (): IterableIterator<K> {
     return this
   }
 }
 
 /**
- * A `RemoteSet` is similar to the standard Javascript set
- *
+ * A `RemoteSet` is similar to the standard Javascript set, however, operations against it
+ * *may* result in a network operation.  Also note, that no mutation is allowed aside from clearing all or removing
+ * elements, though even in these cases removal may not be guaranteed; be sure to check the return value from the
+ * `clear` and `delete` function to verify if deletion actually occurred.
  */
 export interface RemoteSet<T> {
 
   /**
-   * Signifies the number of elements within this Set.
+   * Returns the number of values in the Set object.
    *
-   * @return the number of key-value mappings in this map
+   * @return the number of values in the Set object
    */
   readonly size: Promise<number>
 
   /**
-   * Removes all of the elements from this set (optional operation).
+   * Removes all elements from the Set object.
+   *
+   * @returns a `Promise` resolving to `true` if the elements were removed from this set, otherwise resolves to `false`
    */
   clear (): Promise<boolean>
 
   /**
-   * Removes the specified element from this set if it is present (optional operation).
+   * Removes the specified element from this set if it is present.
    *
    * @param value  the value to be removed from this set, if present
    *
-   * @return a `Promise` resolving to `true` if the value was deleted, or `false` if not
+   * @return a `Promise` resolving to `true` if the elements were removed from this set, otherwise resolves to `false`
    */
   delete (value: T): Promise<boolean>
 
@@ -398,7 +578,7 @@ export class EntrySet<K, V>
    */
   has (value: NamedCacheEntry<K, V>): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      return this.namedCache.containsEntry(value.getKey(), value.getValue())
+      return this.namedCache.hasEntry(value.getKey(), value.getValue())
         .then((v) => {
           resolve(v)
         }).catch(e => reject(e))
@@ -491,7 +671,7 @@ class EntrySetHelper<K, V>
    * @inheritDoc
    */
   handleEntry (e: EntryResult): MapEntry<K, V> {
-    return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8(), this.namedCache.getRequestFactory().getSerializer())
+    return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8(), this.namedCache.getRequestFactory().serializer)
   }
 
   /**
@@ -529,7 +709,7 @@ class ValueSetHelper<K, V>
    * @inheritDoc
    */
   handleEntry (e: EntryResult): V {
-    return this.namedCache.getRequestFactory().getSerializer().deserialize(e.getValue_asU8())
+    return this.namedCache.getRequestFactory().serializer.deserialize(e.getValue_asU8())
   }
 
   /**
@@ -567,7 +747,7 @@ class KeySetHelper<K, V>
    * @inheritDoc
    */
   handleEntry (e: BytesValue): K {
-    return this.namedCache.getRequestFactory().getSerializer().deserialize(e.getValue_asU8())
+    return this.namedCache.getRequestFactory().serializer.deserialize(e.getValue_asU8())
   }
 
   /**

@@ -154,7 +154,7 @@ export class MapEvent<K = any, V = any> {
       this.key = this.serializer.deserialize(this.keyBytes)
     }
     if (!this.key) {
-      throw new Error('unable to deserialize key using format: ' + this.serializer.format())
+      throw new Error('unable to deserialize key using format: ' + this.serializer.format)
     }
     return this.key
   }

@@ -6,35 +6,30 @@
  */
 
 /**
- * Serializer defines the set of methods for serializing
- * and deserializing objects. Additionally, the format()
- * method describes the serialization format that this
- * Serializer is capable of handling.
- *
- * Each Serializer implementation is registered with
- * the SerializerRegistry.
+ * The `Serializer` interfaces defines the set of methods for serializing
+ * and deserializing objects.
  */
 export interface Serializer {
 
   /**
-   * Returns the serialization format that this
-   * Serializer is capable of handling.
+   * The serializer format.
    */
-  format (): string;
+  readonly format: string;
 
   /**
    * Serializes the specified object and returns the
-   * Buffer containing te\he serialized data.
-   * @param obj The object to be serialized.
+   * {@link Buffer} containing the serialized data.
    *
-   * @returns The Buffer containing the serialized data.
+   * @param obj  the object to be serialized
+   *
+   * @returns the {@link Buffer} containing the serialized data.
    */
   serialize (obj: any): Buffer;
 
   /**
-   * Deserializes the specified object and returns the
-   * deserialized object.
-   * @param obj The object to be deserialized.
+   * Deserializes and returns a new Javascript object.
+   *
+   * @param value The object to be deserialized.
    *
    * @returns The deserialized object.
    */
@@ -43,17 +38,23 @@ export interface Serializer {
 }
 
 /**
- * A Serializer that serializes and deserializes objects
- * as JSON.
+ * A Serializer implementation supporting `JSON` as payload format.
  */
 class JSONSerializer
   implements Serializer {
-  private static JSON_SERIALIZER_PREFIX: number = 21
+  protected static JSON_SERIALIZER_PREFIX: number = 21
+  private readonly _format: string = 'json'
 
-  public format (): string {
-    return 'json'
+  /**
+   * @inheritDoc
+   */
+  get format (): string {
+    return this._format
   }
 
+  /**
+   * @inheritDoc
+   */
   public serialize (obj: any): Buffer {
     const str = JSON.stringify(obj)
     const buf = Buffer.alloc(str.length + 1)
@@ -64,6 +65,9 @@ class JSONSerializer
     return buf
   }
 
+  /**
+   * @inheritDoc
+   */
   public deserialize (value: any): any {
     if (value && value.length > 0) {
       let buf = Buffer.from(value)
@@ -80,18 +84,19 @@ class JSONSerializer
 
 /**
  * A singleton object that holds the collection of
- * avaliable Serializers.
+ * available {@link Serializer}s.
  */
 export class SerializerRegistry {
-  private static singleton = new SerializerRegistry()
+  static readonly singleton = new SerializerRegistry()
 
-  private serializers = new Map<string, Serializer>()
+  /**
+   * Mapping between ID and Serializer implementation.
+   */
+  protected serializers = new Map<string, Serializer>()
 
   private constructor () {
-    // Create and register all available serilizers.
-
     const jsonSerializer = new JSONSerializer()
-    this.serializers.set(jsonSerializer.format(), jsonSerializer)
+    this.serializers.set(jsonSerializer.format, jsonSerializer)
   }
 
   /**
@@ -105,7 +110,8 @@ export class SerializerRegistry {
 
   /**
    * Returns the Serializer for the specified format.
-   * @param format The required serialization format.
+   *
+   * @param format  the required serialization format.
    *
    * @returns The Serializer that is capable of Serializing
    *          objects in the specified format.

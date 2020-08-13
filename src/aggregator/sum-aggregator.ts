@@ -25,7 +25,7 @@ export class SumAggregator<T>
    *                            returns numeric values to aggregate; this parameter can also be a dot-delimited
    *                            sequence of method names which would result in an aggregator based on the
    *                            {@link ChainedExtractor} that is based on an array of corresponding
-   *                            {@link ReflectionExtractor} objects.  May not be null
+   *                            {@link UniversalExtractor} objects.  May not be null
    */
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
     super(internal.aggregatorName('BigDecimalSum'), extractorOrProperty)

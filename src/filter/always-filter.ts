@@ -11,14 +11,19 @@ import { internal } from './package-internal'
 /**
  * Filter which always evaluates to `true`.
  *
- * @param <T> the type of the input argument to the filter.
+ * @typeParam T  the type of the input argument to the filter.
  */
 export class AlwaysFilter<T = any>
   extends Filter<T> {
   /**
+   * Singleton `AlwaysFilter` instance.
+   */
+  static readonly INSTANCE: AlwaysFilter = new AlwaysFilter();
+
+  /**
    * Construct an AlwaysFilter.
    */
-  constructor () {
+  protected constructor () {
     super(internal.filterName('AlwaysFilter'))
   }
 }

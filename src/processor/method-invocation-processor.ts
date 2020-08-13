@@ -17,12 +17,12 @@ import { EntryProcessor } from '.'
 export class MethodInvocationProcessor<K = any, V = any, R = any>
   extends EntryProcessor<K, V, R> {
   /**
-   * The Method name.
+   * The name of the method to invoke.
    */
   methodName: string
 
   /**
-   * The args for the MethodInvocation.
+   * Method arguments.
    */
   args: Array<any>
 
@@ -32,11 +32,15 @@ export class MethodInvocationProcessor<K = any, V = any, R = any>
   mutator: boolean
 
   /**
-   * Construct a MethodInvocation EntryProcessor.
+   * Construct MethodInvocationProcessor instance.
    *
-   * @param args  The args for the MethodInvocation.
+   * @param methodName  the name of the method to invoke
+   * @param mutator     the flag specifying whether the method mutates the
+   *                     state of a target object, which implies that the
+   *                     entry value should be updated after method invocation
+   * @param args        the method arguments
    */
-  constructor (methodName: string, mutator: boolean, args: any[]) {
+  constructor (methodName: string, mutator: boolean, args: any[] = []) {
     super(internal.processorName('MethodInvocationProcessor'))
     this.methodName = methodName
     this.mutator = mutator

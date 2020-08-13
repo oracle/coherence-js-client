@@ -41,7 +41,7 @@ export abstract class EntryAggregator<K, V, T, E, R> {
    *                             could be invoked via Java reflection and that returns values to aggregate; this
    *                             parameter can also be a dot-delimited sequence of method names which would
    *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-   *                             an array of corresponding {@link ReflectionExtractor} objects; must not be `null`
+   *                             an array of corresponding {@link UniversalExtractor} objects; must not be `null`
    */
   protected constructor (clz: string, extractorOrProperty?: ValueExtractor<T, E> | string) {
     this['@class'] = clz
@@ -81,7 +81,7 @@ export abstract class AbstractComparableAggregator<T, R>
    *                             could be invoked via Java reflection and that returns values to aggregate; this
    *                             parameter can also be a dot-delimited sequence of method names which would
    *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-   *                             an array of corresponding {@link ReflectionExtractor} objects
+   *                             an array of corresponding {@link UniversalExtractor} objects
    */
   protected constructor (clz: string, extractorOrProperty: ValueExtractor<T, R> | string) {
     super(clz, extractorOrProperty)
@@ -108,7 +108,7 @@ export abstract class AbstractDoubleAggregator<T>
    *                             could be invoked via Java reflection and that returns values to aggregate; this
    *                             parameter can also be a dot-delimited sequence of method names which would
    *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-   *                             an array of corresponding {@link ReflectionExtractor} objects
+   *                             an array of corresponding {@link UniversalExtractor} objects
    */
   protected constructor (clz: string, extractorOrProperty: ValueExtractor<T, number> | string) {
     super(clz, extractorOrProperty);

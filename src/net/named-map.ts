@@ -74,7 +74,7 @@ export interface NamedMap<K, V> {
    *
    * @param keys  an {@link Iterable} of keys that may be in this map
    *
-   * @returns a `Promise` eventually returning a Map of keys to values for the specified keys
+   * @returns a `Promise`resolving to a Map of keys to values for the specified keys
    *          passed in `keys`
    */
   getAll (keys: Iterable<K>): Promise<Map<K, V>>
@@ -95,6 +95,17 @@ export interface NamedMap<K, V> {
    *         to a value, or `false` if it does not
    */
   has (key: K): Promise<boolean>
+
+  /**
+   * Returns `true` if the specified key is mapped to the specified value within the cache.
+   *
+   * @param key   the key
+   * @param value the value
+   *
+   * @return a `Promise` resolving to `true` if the key is mapped
+   *         to the specified value value, or `false` if it does not
+   */
+  hasEntry(key: K, value: V): Promise<boolean>
 
   /**
    * Returns `true` if the specified value is mapped to some key.
@@ -310,20 +321,91 @@ export interface NamedMap<K, V> {
    */
   invokeAll<R> (filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
 
-  on (event_name: CacheLifecycleEvent.RELEASED | CacheLifecycleEvent.TRUNCATED | CacheLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
-
-  addMapListener (listener: MapListener<K, V>, isLite?: boolean): void
-
-  addMapListener (listener: MapListener<K, V>, key: K, isLite?: boolean): void
-
-  addMapListener (listener: MapListener<K, V>, filter: MapEventFilter, isLite?: boolean): void
+  /**
+   * Allows registration of a handler to be notified of cache lifecycle events.
+   *
+   * @param eventName  the event
+   * @param handler    the event handler
+   */
+  on (eventName: CacheLifecycleEvent.RELEASED | CacheLifecycleEvent.TRUNCATED | CacheLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
 
   /**
-   * Add an index to this QueryMap.
+   * Add a standard map listener that will receive all events (inserts,
+   * updates, deletes) that occur against the map, with the key, old-value
+   * and new-value included. This has the same result as the following call:
+   * ```
+   *   addMapListener(listener, (Filter) null, false);
+   * ```
+   *
+   * @param listener the {@link MapEvent} listener to add
+   */
+  addMapListener (listener: MapListener<K, V>): void
+
+  /**
+   * Remove a standard map listener that previously signed up for all
+   * events. This has the same result as the following call:
+   * ```
+   *   removeMapListener(listener, (Filter) null);
+   * ```
+   *
+   * @param listener the listener to remove
+   */
+  removeMapListener (listener: MapListener<K, V>): Promise<void>;
+
+  /**
+   * Add a map listener for a specific key.
+   *
+   * The listeners will receive {@link MapEvent} objects, but if `isLite` is passed as
+   * `true`, they *might* not contain the `OldValue` and `NewValue`
+   * properties.
+   *
+   * To unregister the {@link MapListener], use the `NamedMap.removeMapListener(MapListener, K)` method.
+   *
+   * @param listener  the {@link MapEvent} listener to add
+   * @param key       the key that identifies the entry for which to raise
+   *                  events
+   * @param isLite    `true` to indicate that the {@link MapEvent} objects do
+   *                  not have to include the `OldValue` and `NewValue`
+   *                  property values in order to allow optimizations
+   */
+  addMapListener (listener: MapListener<K, V>, key: K, isLite?: boolean): void
+
+  /**
+   * Remove a map listener that previously signed up for events about a
+   * specific key.
+   *
+   * @param listener  the listener to remove
+   * @param key       the key that identifies the entry for which to raise
+   *                  events
+   */
+  removeMapListener (listener: MapListener<K, V>, key: K): Promise<void>;
+
+  /**
+   * Add a map listener that receives events based on a filter evaluation.
+   *
+   * The listeners will receive {@link MapEvent} objects, but if `isLite` is passed as
+   * `true`, they *might* not contain the `OldValue` and `NewValue`
+   * properties.
+   *
+   * To unregister the {@link MapListener}, use the `NamedMap.remoteMapListener(MapListener, Filter)`
+   *
+   * @param listener  the {@link MapEvent} listener to add
+   * @param filter    a filter that will be passed MapEvent objects to select
+   *                  from; a {@link MapEvent} will be delivered to the listener only
+   *                  if the filter evaluates to true for that MapEvent (see {@link MapEventFilter});
+   *                  `null` is equivalent to a filter that always returns `true`
+   * @param isLite    `true` to indicate that the {@link MapEvent} objects do
+   *                  not have to include the `OldValue` and `NewValue`
+   *                  property values in order to allow optimizations
+   */
+  addMapListener (listener: MapListener<K, V>, filter: MapEventFilter<K, V>, isLite?: boolean): void
+
+  /**
+   * Add an index to this map.
    *
    * @remarks
-   * Adds an index to this QueryMap. Example:
-   * ```ts
+   * Adds an index to this map. Example:
+   * ```javascript
    * cache.addIndex(Extractors.extract('name'))
    * ```
    *
@@ -350,11 +432,7 @@ export interface NamedMap<K, V> {
    * while an iteration over the set is in progress (except through
    * the iterator's own <tt>remove</tt> operation), the results of
    * the iteration are undefined.  The set supports element removal,
-   * which removes the corresponding mapping from the map, via the
-   * <tt>Iterator.remove</tt>, <tt>Set.remove</tt>,
-   * <tt>removeAll</tt>, <tt>retainAll</tt>, and <tt>clear</tt>
-   * operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
-   * operations.
+   * which removes the corresponding mapping from the map.
    *
    * @return a set view of the keys contained in this map
    */
@@ -363,51 +441,99 @@ export interface NamedMap<K, V> {
   /**
    * Return a set view of the keys contained in this map for entries that
    * satisfy the criteria expressed by the filter.
-   * <p>
+   *
    * Unlike the {@link keySet()} method, the set returned by this method may
    * not be backed by the map, so changes to the set may not reflected in the
    * map, and vice-versa.
-   * <p>
-   * <b>Note: When using the Coherence Enterprise Edition or Grid Edition, the
-   * Partitioned Cache implements the QueryMap interface using the Parallel
-   * Query feature. When using Coherence Standard Edition, the Parallel Query
-   * feature is not available, resulting in lower performance for most
-   * queries, and particularly when querying large data sets.</b>
    *
-   * @param filter the Filter object representing the criteria that the
-   *               entries of this map should satisfy
-   * @param comparator  TODO(rlubke)
+   * @param filter      the Filter object representing the criteria that the
+   *                    entries of this map should satisfy
+   * @param comparator  the comparator for sorting
    *
    * @return a set of keys for entries that satisfy the specified criteria
    */
   keys (filter: Filter, comparator?: Comparator): Promise<RemoteSet<K>>
 
+  /**
+   * Returns a {@link Set} view of the mappings contained in this map.
+   * The set is backed by the map, so changes to the map are
+   * reflected in the set, and vice-versa.  If the map is modified
+   * while an iteration over the set is in progress (except through
+   * the iterator's own `remove` operation) the results of the iteration
+   * are undefined.  The set supports element removal, which removes
+   * the corresponding mapping from the map.
+   *
+   * @return a set view of the mappings contained in this map
+   */
   entries (): Promise<RemoteSet<MapEntry<K, V>>>
 
-  entries (filter: Filter, comp?: Comparator): Promise<RemoteSet<MapEntry<K, V>>>
+  /**
+   * Return a set view of the entries contained in this map that satisfy the
+   * criteria expressed by the filter.  Each element in the returned set is a
+   * {@link MapEntry}.
+   *
+   * Unlike the `entrySet()` method, the set returned by this method
+   * may not be backed by the map, so changes to the set may not be reflected
+   * in the map, and vice-versa.
+   *
+   * @param filter      the Filter object representing the criteria that the
+   *                    entries of this map should satisfy
+   * @param comparator  the {@link Comparator} object which imposes an ordering on
+   *                    entries in the resulting set; or `null` if the
+   *                    entries' values natural ordering should be used
+   *
+   * @return a set of entries that satisfy the specified criteria
+   */
+  entries (filter: Filter, comparator?: Comparator): Promise<RemoteSet<MapEntry<K, V>>>
 
   /**
-   * Remove an index from this QueryMap.
+   * Remove an index from this `NamedMap`.
    *
-   * @remarks
-   * Removes an index to this QueryMap. Example:
-   * ```ts
+   * Removes an index to this `NamedMap`. Example:
+   * ```javascript
    * cache.removeIndex(Extractors.extract('name'))
    * ```
    *
-   * @param extractor - The ValueExtractor object that is used to extract
-   *                    an indexable Object from a value stored in the
-   *                    indexed Map. Must not be null.
-   * @typeparam <T>   - The type of the value to extract from.
-   * @typeparam <E>   - The type of value that will be extracted.
+   * @typeParam T  The type of the value to extract from.
+   * @typeParam E  The type of value that will be extracted.
    *
-   * @returns           A Promise<void> that resolves when the operation
-   *                    completes.
+   * @param extractor  The ValueExtractor object that is used to extract
+   *                   an indexable Object from a value stored in the
+   *                   indexed Map. Must not be `null`.
+   *
+   * @return  A `Promise` that resolves when the operation completes.
    */
   removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void>
 
+  /**
+   * Returns a Set view of the values contained in this map.
+   * The collection is backed by the map, so changes to the map are
+   * reflected in the collection, and vice-versa.  If the map is
+   * modified while an iteration over the collection is in progress
+   * (except through the iterator's own `remove` operation),
+   * the results of the iteration are undefined.
+   *
+   * @return a `Promise` that resolves to the values in the set
+   */
   values (): Promise<RemoteSet<V>>
 
+  /**
+   * Return a Set of the values contained in this map that satisfy the
+   * criteria expressed by the filter.
+   * <p>
+   * Unlike the `values()` method, the collection returned by this
+   * method may not be backed by the map, so changes to the collection may not
+   * be reflected in the map, and vice-versa.
+   *
+   * @param filter     the {@link Filter} object representing the criteria that the
+   *                   entries of this map should satisfy
+   * @param comparator the {@link Comparator} object which imposes an ordering on
+   *                   entries in the resulting set; or <tt>null</tt> if the
+   *                   entries' values natural ordering should be used
+   *
+   * @return a `Promise` that resolves to the values in the set that satisfy
+   *         the specified criteria
+   */
   values (filter: Filter, comparator?: Comparator): Promise<RemoteSet<V>>
 
   /**

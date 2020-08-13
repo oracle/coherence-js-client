@@ -5,22 +5,21 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from '../util/'
 import { internal } from './package-internal'
 import { ValueUpdater } from './value-updater'
 
 /**
  * Universal ValueUpdater implementation.
- * <p>
- * Either a property-based and method-based {@link com.tangosol.util.ValueUpdater}
- * based on whether constructor parameter <code>sName</code> is evaluated to be a property or method.
- * Depending on the <code>target</code> parameter of {@link #update(Object, Object)} <code>target</code>,
- * the property can reference a JavaBean property or {@link Map} key.
  *
+ * Either a property-based and method-based {@link ValueUpdater}
+ * based on whether constructor parameter *name* is evaluated to be a property or method.
  */
 export class UniversalUpdater<T, E>
   extends ValueUpdater<T, E> {
-  name: string
+  /**
+   * The method or property name.
+   */
+  protected readonly name: string
 
   /**
    * Construct a UniversalUpdater for the provided name.

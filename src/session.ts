@@ -15,7 +15,7 @@ import { Channel, ChannelCredentials, credentials } from 'grpc'
 import { NamedCacheClient } from './named-cache-client'
 
 /**
- * A builder for {@link Session | sessions}.
+ * A builder for creating Sessions.
  */
 export class SessionBuilder {
   /**

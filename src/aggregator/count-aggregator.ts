@@ -9,10 +9,7 @@ import { EntryAggregator } from '.'
 import { internal } from './package-internal'
 
 /**
- * Sums up numeric values extracted from a set of entries in a Map. All the
- * extracted Number objects will be treated as Java <tt>double</tt> values.
- *
- * @typeParam T  the type of the value to extract from
+ * Calculates a number of values in an entry set.
  */
 export class CountAggregator<K, V>
   extends EntryAggregator<K, V, any, any, number> {

@@ -20,19 +20,25 @@ export class NumberMultiplier<K = any, V = any>
   /**
    The number to multiply by.
    */
-  multiplier: number
+  protected multiplier: number
 
   /**
-   * Whether to return the value before it was multiplied ("post-factor") or
-   * after it is multiplied ("pre-factor").
+   * Whether to return the value before it was multiplied (`post-factor`) or
+   * after it is multiplied (`pre-factor`).
    */
-  postMultiplication: boolean
+  protected postMultiplication: boolean
 
   /**
-   * Construct a NumberMultiplier EntryProcessor.
+   * Construct an NumberMultiplier processor that will multiply a property
+   * value by a specified factor, returning either the old or the new value
+   * as specified.
    *
-   * @param filter  The number to multiply by.
-   * @param value   a value to update an entry with
+   * @param nameOrManipulator   the ValueManipulator or the property name
+   * @param multiplier          the Number representing the magnitude and sign of
+   *                            the multiplier
+   * @param postMultiplication  pass true to return the value as it was before
+   *                            it was multiplied, or pass false to return the
+   *                            value as it is after it is multiplied
    */
   constructor (nameOrManipulator: ValueManipulator<V, number> | string, multiplier: number, postMultiplication: boolean = false) {
     super(internal.processorName('NumberMultiplier'),
@@ -49,15 +55,17 @@ export class NumberMultiplier<K = any, V = any>
     return new CompositeUpdater(new UniversalExtractor(name), new UniversalUpdater(name))
   }
 
-  // TODO(rlubke) test
+  /**
+   * Configure the processor to return the value of the property *before* being multiplied.
+   */
   returnOldValue (): this {
     this.postMultiplication = true
     return this
   }
 
-  // Since we are using JSON format cannot use ReflectionExtractor and ReflectionUpdater
-  // (which are used by PropertyManipulator). So we create a CompositeUpdater that
-
+  /**
+   * Configure the processor to return the value of the property *after* being incremented.
+   */
   returnNewValue (): this {
     this.postMultiplication = false
     return this

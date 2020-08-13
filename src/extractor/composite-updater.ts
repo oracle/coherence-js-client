@@ -6,24 +6,39 @@
  */
 
 import { ValueManipulator } from '../processor/'
-import { Util } from '../util/'
 import { ChainedExtractor, IdentityExtractor, UniversalUpdater, ValueExtractor, ValueUpdater } from '.'
+import { Util } from '../util/util' // not exported by default
 import { internal } from './package-internal'
 
-export class CompositeUpdater<T, U>
-  extends ValueUpdater<T, U>
-  implements ValueManipulator {
-  '@class': string
+/**
+ * A ValueUpdater implementation based on an extractor-updater pair that could
+ * also be used as a ValueManipulator.
+ */
+export class CompositeUpdater
+  extends ValueUpdater<any, any>
+  implements ValueManipulator<any, any> {
 
-  extractor: ValueExtractor<T, U>
+  /**
+   * The ValueExtractor part.
+   */
+  protected readonly extractor: ValueExtractor<any, any>
 
-  updater: ValueUpdater<T, U>
+  /**
+   * The ValueUpdater part.
+   */
+  protected readonly updater: ValueUpdater<any, any>
 
-  constructor (methodOrExtractor: string | ValueExtractor<T, U>, updater?: ValueUpdater<T, U>) {
+  /**
+   * Constructs a new `CompositeUpdater`.
+   *
+   * @param methodOrExtractor  the {@link ValueExtractor} or the name of the method to invoke via reflection
+   * @param updater            the {@link ValueUpdater}
+   */
+  constructor (methodOrExtractor: string | ValueExtractor<any, any>, updater?: ValueUpdater<any, any>) {
     super(internal.extractorName(('CompositeUpdater')))
     if (updater) {
       // Two arg constructor
-      this.extractor = methodOrExtractor as ValueExtractor<T, U>
+      this.extractor = methodOrExtractor as ValueExtractor<any, any>
       this.updater = updater
     } else {
       // One arg with method name
@@ -38,11 +53,17 @@ export class CompositeUpdater<T, U>
     }
   }
 
-  getExtractor (): ValueExtractor<T, U> {
+  /**
+   * @inheritDoc
+   */
+  getExtractor (): ValueExtractor<any, any> {
     return this.extractor
   }
 
-  getUpdater (): ValueUpdater<T, U> {
+  /**
+   * @inheritDoc
+   */
+  getUpdater (): ValueUpdater<any, any> {
     return this.updater
   }
 }

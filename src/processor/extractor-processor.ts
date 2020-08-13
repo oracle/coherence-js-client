@@ -10,31 +10,45 @@ import { internal } from './package-internal'
 import { EntryProcessor } from '.'
 
 /**
- * An invocable agent that operates against the entry objects within a
- * {@link module:coherence-js/cache/NamedCache}.  Several of the methods
- * on `NamedCache` that accept a processor can also accept filter to
- * constrain the set of entries to which the processor will be applied.
+ * `ExtractorProcessor` is an {@link EntryProcessor} implementation that extracts a
+ * value from an object cached a NamedMap. A common usage pattern is:
+ * ```javascript
+ *   cache.invoke(oKey, new ExtractorProcessor(extractor));
+ * ```
+ * For clustered caches using the ExtractorProcessor could significantly reduce the amount of network
+ * traffic.
  *
- * @param <K> the type of the NamedCache entry key.
- * @param <V> the type of the NamedCache entry value.
- * @param <R> the type of value returned by the EntryProcessor.
- *
+ * @typeParam K  the type of the Map entry keys
+ * @typeParam V  the type of the Map entry values
+ * @typeParam T  the type of the value to extract from
+ * @typeParam E  the type of the extracted value
  */
 export class ExtractorProcessor<K = any, V = any, T = any, E = any>
   extends EntryProcessor<K, V, T> {
-  name?: string
 
+  /**
+   * The underlying value extractor.
+   */
   extractor: ValueExtractor<T, E | any> // This is because ChainedExtractor doesnt guarantee <T, E>
 
-  constructor (methodName?: string) {
+  /**
+   * Construct an ExtractorProcessor using the given extractor or method name.
+   *
+   * @param extractorOrMethod  the ValueExtractor to use by this filter or the name of the method to
+   *                           invoke via reflection
+   */
+  constructor (extractorOrMethod: ValueExtractor<T, E> | string | undefined) {
     super(internal.processorName('ExtractorProcessor'))
-    // this.name = methodName;
-    if (!methodName) {
-      this.extractor = IdentityExtractor.INSTANCE
+    if (extractorOrMethod instanceof ValueExtractor) {
+      this.extractor = extractorOrMethod
     } else {
-      this.extractor = (methodName.indexOf('.') < 0)
-        ? new UniversalExtractor(methodName) // ?? fails ==> new ReflectionExtractor(methodName)
-        : new ChainedExtractor(methodName)
+      if (!extractorOrMethod) {
+        this.extractor = IdentityExtractor.INSTANCE
+      } else {
+        this.extractor = (extractorOrMethod.indexOf('.') < 0)
+          ? new UniversalExtractor(extractorOrMethod)
+          : new ChainedExtractor(extractorOrMethod)
+      }
     }
   }
 }

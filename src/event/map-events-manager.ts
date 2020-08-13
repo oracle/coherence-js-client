@@ -63,7 +63,7 @@ export class MapEventsManager<K, V> {
   /**
    * A singleton MapEventFilter for an Always filter.
    */
-  private static DEFAULT_FILTER = new MapEventFilter(MapEventFilter.E_ALL, new AlwaysFilter())
+  private static DEFAULT_FILTER = new MapEventFilter(MapEventFilter.E_ALL, AlwaysFilter.INSTANCE)
 
   /**
    * The map name for which events are received.
@@ -113,7 +113,7 @@ export class MapEventsManager<K, V> {
   /**
    * The Map of MapEventFilter => set of listeners (ListenerGroup).
    */
-  private filterMap: Map<MapEventFilter, ListenerGroup<K, V>>
+  private filterMap: Map<MapEventFilter<K, V>, ListenerGroup<K, V>>
 
   /**
    * A Map of filter ID =>  ListenerGroup.
@@ -292,7 +292,7 @@ export class MapEventsManager<K, V> {
    * @param isLite     `true` if the event should only include the key, or `false`
    *                   if the event should include old and new values as well as the key
    */
-  registerFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter | null, isLite: boolean = false): Promise<void> {
+  registerFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter<K, V> | null, isLite: boolean = false): Promise<void> {
     const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
 
     let group = this.filterMap.get(filter)
@@ -310,7 +310,7 @@ export class MapEventsManager<K, V> {
    * @param listener   the listener to remove
    * @param mapFilter  the {@link MapEventFilter} associated with the listener
    */
-  removeFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter | null): Promise<void> {
+  removeFilterListener (listener: MapListener<K, V>, mapFilter: MapEventFilter<K, V> | null): Promise<void> {
     const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
 
     const group = this.filterMap.get(filter)
@@ -393,7 +393,7 @@ export class MapEventsManager<K, V> {
    * @param filterId  the filter ID
    * @param filter    the filter
    */
-  filterGroupUnsubscribed (filterId: number, filter: MapEventFilter): void {
+  filterGroupUnsubscribed (filterId: number, filter: MapEventFilter<K, V>): void {
     this.filterId2ListenerGroup.delete(filterId)
     this.filterMap.delete(filter)
   }
@@ -449,7 +449,7 @@ abstract class ListenerGroup<K, V> {
    * The key or the filter for which this group of MapListener will
    * receive events.
    */
-  keyOrFilter: K | MapEventFilter
+  keyOrFilter: K | MapEventFilter<K, V>
 
   /**
    * The current value of isLite that is registered with the cache.
@@ -486,7 +486,7 @@ abstract class ListenerGroup<K, V> {
    * @param helper       the {@link MapEventsManager}
    * @param keyOrFilter  the key or filter for this group of listeners
    */
-  protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | MapEventFilter) {
+  protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | MapEventFilter<K, V>) {
     this.helper = helper
     this.keyOrFilter = keyOrFilter
   }
@@ -672,7 +672,7 @@ class FilterListenerGroup<K, V>
    * @param helper  the {@link MapEventsManager}
    * @param filter  the group filter
    */
-  constructor (helper: MapEventsManager<K, V>, filter: MapEventFilter) {
+  constructor (helper: MapEventsManager<K, V>, filter: MapEventFilter<K, V>) {
     super(helper, filter)
   }
 
@@ -687,6 +687,6 @@ class FilterListenerGroup<K, V>
    * @inheritDoc
    */
   postUnsubscribe (request: MapListenerRequest): void {
-    this.helper.filterGroupUnsubscribed(request.getFilterid(), this.keyOrFilter as MapEventFilter)
+    this.helper.filterGroupUnsubscribed(request.getFilterid(), this.keyOrFilter as MapEventFilter<K, V>)
   }
 }

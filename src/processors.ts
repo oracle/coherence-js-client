@@ -8,108 +8,215 @@
 import { ValueUpdater } from './extractor'
 import { Filter } from './filter/'
 import {
-  ConditionalPutAllProcessor,
-  ConditionalPutProcessor,
-  ConditionalRemoveProcessor,
+  ConditionalPutAll,
+  ConditionalPut,
+  ConditionalRemove,
   EntryProcessor,
   ExtractorProcessor,
-  GetOrDefaultProcessor,
-  GetProcessor,
   MethodInvocationProcessor,
   NullProcessor,
   NumberIncrementor,
   NumberMultiplier,
-  PreloadRequestProcessor,
-  PutAllProcessor,
-  PutIfAbsentProcessor,
-  PutProcessor,
-  RemoveBlindProcessor,
-  RemoveProcessor,
-  RemoveValueProcessor,
-  ReplaceProcessor,
-  ReplaceValueProcessor,
+  PreloadRequest,
+  PutIfAbsent,
   TouchProcessor,
   UpdaterProcessor,
-  VersionedPutAllProcessor,
-  VersionedPutProcessor
+  VersionedPutAll,
+  VersionedPut, ValueManipulator, ScriptProcessor
 } from './processor'
+import { Map } from './util'
 
 export class Processors {
-  static conditionalPut<K, V> (filter: Filter<V>, value: V, returnValue?: boolean): ConditionalPutProcessor<K, V> {
-    return new ConditionalPutProcessor(filter, value, returnValue)
+
+  /**
+   * Construct a {@link ConditionalPut} that updates an entry with a new value if
+   * and only if the filter applied to the entry evaluates to `true`. This
+   * processor optionally returns the current value as a result of the
+   * invocation if it has not been updated (the filter evaluated to `false`).
+   *
+   * @typeParam V  the type of the Map entry value
+   *
+   * @param filter       the filter to evaluate an entry
+   * @param value        a value to update an entry with
+   * @param returnValue  specifies whether or not the processor should return
+   *                     the current value in case it has not been updated
+   *
+   * @return a put processor that updates an entry with a new value if
+   *         and only if the filter applied to the entry evaluates to `true`.
+   */
+  static conditionalPut<K, V> (filter: Filter<V>, value: V, returnValue?: boolean): ConditionalPut<K, V> {
+    return new ConditionalPut(filter, value, returnValue)
   }
 
-  static conditionalPutAll<K, V> (filter: Filter<V>, values: Map<K, V>): ConditionalPutAllProcessor<K, V> {
-    return new ConditionalPutAllProcessor(filter, values)
+  /**
+   * Construct a {@link ConditionalPutAll} that updates an entry with a
+   * new value if and only if the filter applied to the entry evaluates to
+   * `true`. The new value is extracted from the specified map based on the
+   * entry's key.
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   *
+   * @param filter  the filter to evaluate all supplied entries
+   * @param map     a map of values to update entries with
+   *
+   * @return a {@link ConditionalPutAll}  processor that updates an entry with a new value
+   *         if and only if the filter applied to the entry evaluates to
+   *         `true`.
+   */
+  static conditionalPutAll<K, V> (filter: Filter<V>, map: Map<K, V>): ConditionalPutAll<K, V> {
+    return new ConditionalPutAll(filter, map)
   }
 
-  static conditionalRemove<K, V> (filter: Filter<V>): ConditionalRemoveProcessor<K, V> {
-    return new ConditionalRemoveProcessor(filter)
+  /**
+   * Construct a {@link ConditionalRemove} processor that removes an InvocableMap
+   * entry if and only if the filter applied to the entry evaluates to `true`.
+   * This processor may optionally return the current value as a result of
+   * the invocation if it has not been removed (the filter evaluated to
+   * `false`).
+   *
+   * @param filter       the filter to evaluate an entry
+   * @param returnValue  specifies whether or not the processor should return
+   *                     the current value if it has not been removed
+   *
+   * @return a remove processor that removes an InvocableMap entry
+   *         if and only if the filter applied to the entry evaluates to `true`.
+   */
+  static conditionalRemove<K, V> (filter: Filter<V>, returnValue?: boolean): ConditionalRemove<K, V> {
+    return new ConditionalRemove(filter, returnValue)
   }
 
-  static extract<K, V, R> (fieldName?: string): EntryProcessor<K, V, R> {
-    return new ExtractorProcessor(fieldName)
+  /**
+   * Construct an extract processor based on the specified {@link ValueExtractor}.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam R  the type of the extracted value
+   *
+   * @param extractorOrFieldName  a Extractor object; passing null is equivalent
+   *                              to using the {@link IdentityExtractor} or the property
+   *                              or method name to invoke to provide a value
+   *
+   * @return an extract processor based on the specified extractor.
+   *
+   * @see ExtractorProcessor
+   */
+  static extract<K, V, R> (extractorOrFieldName?: string): EntryProcessor<K, V, R> {
+    return new ExtractorProcessor(extractorOrFieldName)
   }
 
-  static get<K, V> (): EntryProcessor<K, V> {
-    return new GetProcessor()
+  /**
+   * Construct an increment processor that will increment a property
+   * value by a specified amount, returning either the old or the new value
+   * as specified.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   *
+   * @param propertyOrManipulator  the Manipulator or property to manipulate
+   * @param value                  the Number representing the magnitude and sign of
+   *                               the increment
+   * @param returnOldValue         pass `true` to return the value as it was before
+   *                               it was incremented, or pass` false` to return the
+   *                               value as it is after it is incremented
+   *
+   * @return an increment processor
+   */
+  static increment<K, V> (propertyOrManipulator: ValueManipulator<V, number> | string, value: number, returnOldValue: boolean = false): NumberIncrementor<K, V> {
+    return new NumberIncrementor(propertyOrManipulator, value, returnOldValue)
   }
 
-  // ?? Optional<V>
-  static getOrDefault<K, V> (): EntryProcessor<K, V> {
-    return new GetOrDefaultProcessor()
+  /**
+   * Construct {@link MethodInvocationProcessor} appropriate for invoking an accessor.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam R  the type of the extracted value
+   *
+   * @param methodName  the name of the method to invoke
+   * @param args        the method arguments
+   */
+  static invokeAccessor<K, V, R> (methodName: string, ...args: any[]): EntryProcessor<K, V, R> {
+    return new MethodInvocationProcessor(methodName, false, args)
   }
 
-  static increment<K, V> (property: string, value: number, returnOldValue: boolean = false): NumberIncrementor<K, V> {
-    return new NumberIncrementor(property, value, returnOldValue)
+  /**
+   * Construct {@link MethodInvocationProcessor} appropriate for invoking a mutating method.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam R  the type of the extracted value
+   *
+   * @param methodName  the name of the method to invoke
+   * @param args        the method arguments
+   */
+  static invokeMutator<K, V, R> (methodName: string, ...args: any[]): EntryProcessor<K, V, R> {
+    return new MethodInvocationProcessor(methodName, true, args)
   }
 
-  static invokeAccessor<K, V, R> (method: string, ...args: any[]): EntryProcessor<K, V, R> {
-    return new MethodInvocationProcessor(method, false, args)
+  /**
+   * Construct a {@link NumberMultiplier} processor that will multiply a property
+   * value by a specified factor, returning either the old or the new value
+   * as specified.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   *
+   * @param propertyOrManipulator  the Manipulator or property to manipulate
+   * @param numFactor              the Number representing the magnitude and sign of
+   *                               the multiplier
+   * @param returnOldValue         pass `true` to return the value as it was before
+   *                               it was multiplied, or pass `false` to return the
+   *                               value as it is after it is multiplied
+   *
+   * @return a multiply processor that will multiply a property value
+   *         by a specified factor, returning either the old or the
+   *         new value as specified
+   */
+  static multiply<K, V> (propertyOrManipulator: string, numFactor: number, returnOldValue: boolean = false): NumberMultiplier<K, V> {
+    return new NumberMultiplier(propertyOrManipulator, numFactor, returnOldValue)
   }
 
-  static invokeMutator<K, V, R> (method: string, ...args: any[]): EntryProcessor<K, V, R> {
-    return new MethodInvocationProcessor(method, true, args)
-  }
-
-  static multiply<K, V> (property: string, value: number, returnOldValue: boolean = false): NumberMultiplier<K, V> {
-    return new NumberMultiplier(property, value, returnOldValue)
-  }
-
+  /**
+   * Return an {@link EntryProcessor} that does nothing and returns `true` as a result of execution.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   *
+   * @return an {@link EntryProcessor} that does nothing and returns `true` as a result of execution
+   */
   static nop<K, V> (): EntryProcessor<K, V> {
-    return new NullProcessor()
+    return NullProcessor.INSTANCE
   }
 
-  static put<K, V> (value: V, ttl?: number): EntryProcessor<K, V> {
-    return new PutProcessor(value, ttl)
-  }
-
-  static putAll<K, V, P extends K, Q extends V> (entries: Map<P, Q>): EntryProcessor<K, V> {
-    return new PutAllProcessor(entries)
-  }
-
+  /**
+   * Constructs a new {@link PutIfAbsent} processor.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   *
+   * @param value  the value to insert if not already present
+   *
+   * @return a new {@link PutIfAbsent} processor
+   */
   static putIfAbsent<K, V> (value: V): EntryProcessor<K, V> {
-    return new PutIfAbsentProcessor(value)
+    return new PutIfAbsent(value)
   }
 
-  static remove<K, V> (): EntryProcessor<K, V>;
-  static remove<K, V> (value: V): EntryProcessor<K, V>;
-  static remove<K, V> (value?: V): EntryProcessor<K, V> {
-    return value ? new RemoveValueProcessor(value) : new RemoveProcessor()
-  }
-
-  static removeBlind<K, V> (): EntryProcessor<K, V> {
-    return new RemoveBlindProcessor()
-  }
-
-  static replace<K, V> (value: V): EntryProcessor<K, V>;
-  static replace<K, V> (oldValue: V, newValue: V): EntryProcessor<K, V>;
-  static replace<K, V> (value: V, newValue?: V): EntryProcessor<K, V> {
-    return newValue ? new ReplaceValueProcessor(value, newValue) : new ReplaceProcessor(value)
-  }
-
-  static update<K, V, T> (property: string, value: T): UpdaterProcessor<K, V, T>;
-  static update<K, V, T> (updater: ValueUpdater<V, T>, value: T): UpdaterProcessor<K, V, T>;
+  /**
+   * Construct an update processor for a given method name. The method
+   * must have a single parameter of a Java type compatible with the
+   * specified value type.
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   * @typeParam T  the return type of the `ValueUpdater`
+   *
+   * @param propertyOrUpdater  a ValueUpdater object the property or method name to invoke to provide a value
+   * @param value             the value to update the target entry with
+   *
+   * @return an update processor for a given method name
+   */
   static update<K, V, T> (propertyOrUpdater: string | ValueUpdater<V, T>, value: T): UpdaterProcessor<K, V, T> {
     if (typeof propertyOrUpdater === 'string') {
       return new UpdaterProcessor<K, V, T>(propertyOrUpdater, value)
@@ -118,28 +225,88 @@ export class Processors {
     }
   }
 
-  static versionedPut<K, V> (value: V): VersionedPutProcessor<K, V>;
-  static versionedPut<K, V> (value: V, allowInsert: boolean): VersionedPutProcessor<K, V>;
-  static versionedPut<K, V> (value: V, allowInsert: boolean, returnCurrent: boolean): VersionedPutProcessor<K, V>;
-  static versionedPut<K, V> (value: V, allowInsert: boolean = false, returnCurrent: boolean = false): VersionedPutProcessor<K, V> {
-    return new VersionedPutProcessor(value, allowInsert, returnCurrent)
+  /**
+   * Construct a {@link VersionedPut} processor that updates an entry with
+   * a new value if and only if the version of the new value matches
+   * to the version of the current entry's value. This processor
+   * optionally returns the current value as a result of the invocation
+   * if it has not been updated (the versions did not match).
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   *
+   * @param value          a value to update an entry with
+   * @param allowInsert    specifies whether or not an insert should be
+   *                       allowed (no currently existing value)
+   * @param returnCurrent  specifies whether or not the processor should
+   *                       return the current value in case it has not been
+   *                       updated
+   */
+  static versionedPut<K, V> (value: V, allowInsert: boolean = false, returnCurrent: boolean = false): VersionedPut<K, V> {
+    return new VersionedPut(value, allowInsert, returnCurrent)
   }
 
-  static versionedPutAll<K, V> (entries: Map<K, V>): VersionedPutAllProcessor<K, V>;
-  static versionedPutAll<K, V> (entries: Map<K, V>, allowInsert: boolean): VersionedPutAllProcessor<K, V>;
-  static versionedPutAll<K, V> (entries: Map<K, V>, allowInsert: boolean, returnCurrent: boolean): VersionedPutAllProcessor<K, V>;
-  static versionedPutAll<K, V> (entries: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false): VersionedPutAllProcessor<K, V> {
-    return new VersionedPutAllProcessor(entries, allowInsert, returnCurrent)
+  /**
+   * Construct a {@link VersionedPutAll} processor that updates an entry with a new
+   * value if and only if the version of the new value matches to the
+   * version of the current entry's value (which must exist). This processor
+   * optionally returns a map of entries that have not been updated (the
+   * versions did not match).
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   *
+   * @param map            a map of values to update entries with
+   * @param allowInsert    specifies whether or not an insert should be
+   *                       allowed (no currently existing value)
+   * @param returnCurrent  specifies whether or not the processor should
+   *                       return the entries that have not been updated
+   *
+   * @return a {@link VersionedPutAll} processor
+   */
+  static versionedPutAll<K, V> (map: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false): VersionedPutAll<K, V> {
+    return new VersionedPutAll(map, allowInsert, returnCurrent)
   }
 
-  static preload<K, V> (): PreloadRequestProcessor<K, V> {
-    return new PreloadRequestProcessor()
+  /**
+   * Construct the preload request processor.
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   *
+   * @return a preload request processor
+   */
+  static preload<K, V> (): PreloadRequest<K, V> {
+    return new PreloadRequest()
   }
 
-  static script<K, V> (script: string, ...args: any[]): TouchProcessor<K, V> {
-    return new TouchProcessor()
+  /**
+   * Return a new {@link ScriptProcessor}.
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   *
+   * @param language  the language the script is written. Currently, only
+   *                  `js` (for JavaScript) is supported
+   * @param name      the name of the {@link EntryProcessor} that needs to
+   *                  be executed
+   * @param args      the arguments to be passed to the {@link EntryProcessor}
+   *
+   * @return a new  {@link ScriptProcessor}
+   */
+  static script<K, V, R> (language: string, name: string, ...args: any[]): ScriptProcessor<K, V, R> {
+    return new ScriptProcessor(language, name, args)
   }
 
+  /**
+   * Constructs a {@link TouchProcessor} that `touches` an entry (if present) in order to
+   * trigger interceptor re-evaluation and possibly increment expiry time.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   *
+   * @return a new {@link TouchProcessor}
+   */
   static touch<K, V> (): TouchProcessor<K, V> {
     return new TouchProcessor()
   }

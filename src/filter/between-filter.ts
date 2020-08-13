@@ -17,23 +17,40 @@ import { internal } from './package-internal'
  * are equal to null, the <tt>evaluate</tt> test yields <tt>false</tt>.
  * This approach is equivalent to the way the NULL values are handled by SQL.
  *
- * @param <T> the type of the input argument to the filter
- * @param <E> the type of the extracted attribute to use for comparison
+ * @typeParam T  the type of the input argument to the filter
+ * @typeParam E  the type of the extracted attribute to use for comparison
  */
 export class BetweenFilter<T = any, E = any>
   extends AndFilter {
-  private from: E
 
-  private to: E
+  /**
+   * Lower bound of range.
+   */
+  protected from: E
 
-  constructor (extractor: ValueExtractor<T, E>, from: E, to: E,
+  /**
+   * Upper bound of range.
+   */
+  protected to: E
+
+  /**
+   * Construct a BetweenFilter for testing "Between" condition.
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param from               the lower bound of the range
+   * @param to                 the upper bound of the range
+   * @param includeLowerBound  a flag indicating whether values matching the lower bound evaluate to true
+   * @param includeUpperBound  a flag indicating whether values matching the upper bound evaluate to true
+   */
+  constructor (extractorOrMethod: ValueExtractor<T, E> | string, from: E, to: E,
                includeLowerBound: boolean = false, includeUpperBound: boolean = false) {
     super(includeLowerBound
-      ? new GreaterEqualsFilter(extractor, from)
-      : new GreaterFilter(extractor, from),
+      ? new GreaterEqualsFilter(extractorOrMethod, from)
+      : new GreaterFilter(extractorOrMethod, from),
       includeUpperBound
-        ? new LessEqualsFilter(extractor, to)
-        : new LessFilter(extractor, to)
+        ? new LessEqualsFilter(extractorOrMethod, to)
+        : new LessFilter(extractorOrMethod, to)
     )
 
     this['@class'] = internal.filterName('BetweenFilter')

@@ -9,14 +9,15 @@ import { EntryProcessor } from '.'
 import { internal } from './package-internal'
 
 /**
- * Touch entry processor.
+ * Touches an entry (if present) in order to trigger interceptor re-evaluation
+ * and possibly increment expiry time.
  */
 export class TouchProcessor<K, V>
   extends EntryProcessor<K, V, void> {
   /**
-   * Construct a Touch EntryProcessor.
+   * Construct a `Touch` {@link EntryProcessor}.
    */
   constructor () {
-    super(internal.processorName('Touch'))
+    super(internal.processorName('TouchProcessor'))
   }
 }

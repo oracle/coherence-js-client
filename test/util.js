@@ -39,7 +39,7 @@ module.exports = {
         }
 
         if (foundKey) {
-          break;
+          break
         }
       }
 

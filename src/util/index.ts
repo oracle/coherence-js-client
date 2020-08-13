@@ -6,5 +6,4 @@
  */
 
 export * from './serializer'
-export * from './util'
 export { Comparator, Map, RemoteSet } from './collections'

@@ -195,8 +195,6 @@ describe('processor.Processors IT Test Suite', function () {
       const processor = Processors.conditionalPut(Filters.always(), 'someValue')
 
       assert.equal(processor['@class'], 'processor.ConditionalPut')
-      assert.equal(processor.doesReturnValue(), true)
-      assert.equal(processor.getValue(), 'someValue')
     })
 
     it('should be able to be invoked against a value associated with a key', async () => {
@@ -554,7 +552,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
   })
 
-  describe('A NumberMultiple processor', () => {
+  describe('A NumberMultiplier processor', () => {
     it('should have the proper internal type', async () => {
       const processor = Processors.multiply('ival', 2)
 

@@ -37,7 +37,7 @@ export class TopAggregator<K, V, T, E>
    * The extractor to obtain the values to aggregate.  If not explicitly set,
    * this will default to an {@link IdentityExtractor}.
    */
-  protected extractor: IdentityExtractor<E> = new IdentityExtractor()
+  protected extractor: IdentityExtractor<E> = IdentityExtractor.INSTANCE
 
   /**
    * The {@link Comparator} to apply against the extracted values.

@@ -8,9 +8,20 @@
 import { Filter } from '.'
 import { internal } from './package-internal'
 
+/**
+ * Filter which always evaluates to `false`.
+ */
 export class NeverFilter
   extends Filter {
-  constructor () {
+  /**
+   * Singleton `NeverFilter` instance.
+   */
+  static readonly INSTANCE: NeverFilter = new NeverFilter()
+
+  /**
+   * Construct a NeverFilter.
+   */
+  protected constructor () {
     super(internal.filterName('NeverFilter'))
   }
 }

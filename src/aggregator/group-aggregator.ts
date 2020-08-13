@@ -65,7 +65,7 @@ export class GroupAggregator<K, V, T, E, R>
    *                              subsets; may not be `null`. This parameter can also be a dot-delimited
    *                              sequence of method names which would result in an aggregator based on the
    *                              {@link ChainedExtractor} that is based on an array of corresponding
-   *                              {@link ReflectionExtractor} objects; may not be `null`
+   *                              {@link UniversalExtractor} objects; may not be `null`
    * @param aggregator  an EntryAggregator object; may not be null
    * @param filter      an optional Filter object used to filter out
    *                    results of individual group aggregation results

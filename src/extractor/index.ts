@@ -5,10 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-export { ChainedExtractor, ReflectionExtractor, ValueExtractor, AbstractCompositeExtractor, IdentityExtractor, Target} from './value-extractor'
+export { ChainedExtractor, ValueExtractor, UniversalExtractor, AbstractCompositeExtractor, IdentityExtractor, Target} from './value-extractor'
 export * from './value-updater'
 export * from './composite-updater'
 export * from './multi-extractor'
-export * from './reflection-updater'
-export * from './universal-extractor'
 export * from './universal-updater'

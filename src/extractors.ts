@@ -5,8 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { Util } from './util'
-import { ChainedExtractor, IdentityExtractor, MultiExtractor, UniversalExtractor, ValueExtractor} from './extractor'
+import { ChainedExtractor, IdentityExtractor, MultiExtractor, UniversalExtractor, ValueExtractor } from './extractor'
 
 /**
  * Simple Extractor DSL.
@@ -25,33 +24,24 @@ export class Extractors {
    * field extraction is the input to the next extractor. The result
    * returned is the result of the final extractor in the chain.
    *
-   * @param extractorsOrFields  If extractorsOrFields is a string[] type, then the
-   *                field names to extract (if any field name contains a dot '.'
-   *                that field name is split into multiple field names delimiting on
-   *                the dots. If extractorsOrFields is of ValueExtractor[] type,
-   *                then the {@link ValueExtractor}s are used to extract the values.
+   * @typeParam T  the type of the object to extract from
    *
-   * @param <T> the type of the object to extract from
+   * @param extractorsOrFields  If extractorsOrFields is a string type, then the
+   *                            field names to extract (if any field name contains a dot '.'
+   *                            that field name is split into multiple field names delimiting on
+   *                            the dots. If extractorsOrFields is of ValueExtractor[] type,
+   *                            then the {@link ValueExtractor}s are used to extract the values
    *
    * @return an extractor that extracts the value(s) of the specified field(s)
-   *
-   * @throws IllegalArgumentException if the fields parameter is null or an
-   *         empty array
-   *
-   * @see UniversalExtractor
    */
-  static chained<T, R> (...extractors: ValueExtractor<any, any>[]): ValueExtractor<T, R>;
-  static chained<T, R> (...fields: string[]): ValueExtractor<T, R>;
-  static chained<T, R> (...extractorsOrFields: ValueExtractor<any, any>[] | string[]): ValueExtractor<T, R> {
+  static chained<T, R> (extractorsOrFields: ValueExtractor<any, any>[] | string): ValueExtractor<T, R> {
     let extractors = new Array<ValueExtractor<T, R>>()
-    Util.ensureNotEmpty(extractorsOrFields, 'The extractors or fields parameter cannot be null or empty')
 
-    if (extractorsOrFields && (typeof extractorsOrFields[0] === 'string')) {
-      for (const e of (extractorsOrFields as string[])) {
-        if (e && e.length > 0) {
-          for (const fieldName of e.split('.')) {
-            extractors.push(Extractors.extract<T, R>(fieldName))
-          }
+    if (extractorsOrFields && (typeof extractorsOrFields === 'string')) {
+      const s = extractorsOrFields as string
+      if (s.length > 0) {
+        for (const fieldName of s.split('.')) {
+          extractors.push(Extractors.extract<T, R>(fieldName))
         }
       }
     } else {
@@ -67,14 +57,13 @@ export class Extractors {
   /**
    * Returns an extractor that extracts the value of the specified field.
    *
+   * @typeParam T  the type of the object to extract from
+   * @typeParam E  the type of the extracted value
+   *
    * @param from    the name of the field or method to extract the value from.
    * @param params  the parameters to pass to the method.
-   * @param <T>     the type of the object to extract from.
-   * @param <E>     the type of the extracted value.
    *
    * @return an extractor that extracts the value of the specified field.
-   *
-   * @see UniversalExtractor
    */
   static extract<T, E> (from: string, params?: any[]): ValueExtractor<T, E> {
     if (params) {
@@ -83,26 +72,25 @@ export class Extractors {
       }
     }
 
-    // return new UniversalExtractor(from, params);
     return new UniversalExtractor(from, params)
   }
 
   /**
    * Returns an extractor that always returns its input argument.
    *
-   * @param <T> the type of the input and output objects to the function
+   * @typeParam T  the type of the input and output objects to the function
    *
    * @return an extractor that always returns its input argument
    */
   static identity<T> (): ValueExtractor<T, T> {
-    return new IdentityExtractor<T>()
+    return IdentityExtractor.INSTANCE
   }
 
   /**
    * Returns an extractor that casts its input argument.
    *
-   * @param <T> the type of the input objects to the function
-   * @param <E> the type of the output objects to the function
+   * @typeParam T  the type of the input objects to the function
+   * @typeParam E  the type of the output objects to the function
    *
    * @return an extractor that always returns its input argument
    */
@@ -110,23 +98,26 @@ export class Extractors {
     return IdentityExtractor.INSTANCE
   }
 
-  // static multi<T> (...fields: string[]): ValueExtractor;
-  // static multi<T> (...extractors: ValueExtractor[]): ValueExtractor;
-  // static multi<T> (...fieldsOrExtractors: ValueExtractor[] | string[]): ValueExtractor {
-  //   Util.ensureNotEmpty(fieldsOrExtractors, 'fields or extractors array must not be null or empty')
-  //   let extractors: ValueExtractor[] = new Array<ValueExtractor>()
-  //   if (typeof fieldsOrExtractors[0] === 'string') {
-  //     for (const f in fieldsOrExtractors) {
-  //       extractors.push(Extractors.chained(f))
-  //     }
-  //   } else {
-  //     extractors = fieldsOrExtractors as ValueExtractor[]
-  //   }
-  //
-  //   return new MultiExtractor('', extractors) // ??
-  // }
+  /**
+   * Returns an extractor that extracts the specified fields
+   * and returns the extracted values in an array.
+   *
+   * @typeParam T the type of the object to extract from
+   *
+   * @param extractorOrFields  the field names to extract
+   *
+   * @return an extractor that extracts the value(s) of the specified field(s)
+   */
+  static multi<T> (extractorOrFields: ValueExtractor<T, any>[] | string): ValueExtractor<T, any[]> {
+    let extractors: ValueExtractor<T, any>[] = new Array<ValueExtractor<T, any>>()
+    if (typeof extractorOrFields[0] === 'string') {
+      for (const f in extractorOrFields as String) {
+        extractors.push(Extractors.chained(f))
+      }
+    } else {
+      extractors = extractorOrFields as ValueExtractor<T, any>[]
+    }
 
-  private static isValueExtractor (e: any): e is ValueExtractor<any, any> {
-    return (e as ValueExtractor<any, any>).getTarget !== undefined
+    return new MultiExtractor(extractors)
   }
 }

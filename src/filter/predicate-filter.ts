@@ -7,6 +7,7 @@
 
 import { ValueExtractor } from '../extractor/'
 import { ExtractorFilter } from '.'
+import { Extractors } from '../extractors'
 import { internal } from './package-internal'
 
 /**
@@ -25,8 +26,8 @@ export class PredicateFilter<T = any, E = any>
    * @param predicate  predicate for testing the value. The object must
    *                   have an '@class' attribute.
    */
-  constructor (predicate: { '@class': string }, extractor?: ValueExtractor<T, E> | undefined) {
-    super(internal.filterName('PredicateFilter'), extractor || ValueExtractor.identityCast())
+  constructor (predicate: { '@class': string }, extractorOrMethod: ValueExtractor<T, E> | string | undefined) {
+    super(internal.filterName('PredicateFilter'), extractorOrMethod || Extractors.identityCast())
     this.predicate = predicate
   }
 }

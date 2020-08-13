@@ -10,25 +10,25 @@ import { internal } from './package-internal'
 import { EntryProcessor } from '.'
 
 /**
- * RemoveValue entry processor.
+ * PutIfAbsent entry processor.
  *
- * @param <K> the type of the Map entry key
- * @param <V> the type of the Map entry value
+ * @typeParam K  the type of the Map entry key
+ * @typeParam V  the type of the Map entry value
  */
-export class RemoveValueProcessor<K, V>
+export class PutIfAbsent<K, V>
   extends EntryProcessor<K, V, void> {
   /**
-   * Specifies the value that shopuld exist in the Cache.
+   * Specifies the new value to update an entry with.
    */
-  value: V
+  protected value: V
 
   /**
-   * Construct a Put EntryProcessor.
+   * Construct a PutIfAbsent EntryProcessor.
    *
-   * @param value   The value that must exiost in the Cache.
+   * @param value  the value to update an entry with
    */
   constructor (value: V) {
-    super(internal.processorName('RemoveValue'))
+    super(internal.processorName('PutIfAbsent'))
 
     this.value = value
   }

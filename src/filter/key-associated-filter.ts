@@ -30,18 +30,24 @@ import { internal } from './package-internal'
  */
 export class KeyAssociatedFilter<T = any>
   extends Filter<T> {
-  filter: Filter<T>
 
+  /**
+   * The underlying filter.
+   */
+  protected filter: Filter<T>
+
+  /**
+   * The association host key.
+   */
   hostKey: any
 
   /**
    * Filter which limits the scope of another filter according to the key
    * association information.
    *
-   * @param {Filter} filter the other filter whose scope to limit
-   *
-   * @param {Object} hostKey the `filter` argument will only be applied to
-   * cache service nodes that contain this key.
+   * @param filter   the other filter whose scope to limit
+   * @param hostKey  the `filter` argument will only be applied to
+   *                 cache service nodes that contain this key.
    */
   constructor (filter: Filter, hostKey: any) {
     super(internal.filterName('KeyAssociatedFilter'))

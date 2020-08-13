@@ -9,22 +9,25 @@ import { Filter } from '.'
 import { internal } from './package-internal'
 
 /**
- * Filter which returns true for {@link com.tangosol.util.InvocableMap.Entry}
- * objects that currently exist in a Map.
- * <p>
+ * Filter which returns true for entries that currently exist in a map.
+ *
  * This Filter is intended to be used solely in combination with a
- * {@link com.tangosol.util.processor.ConditionalProcessor} and is unnecessary
- * for standard {@link com.tangosol.util.QueryMap} operations.
+ * {@link ConditionalProcessor} and is unnecessary
+ * for standard {@link NamedMap} operations.
  *
- * @param <T> the type of the input argument to the filter
- *
- * @see com.tangosol.util.InvocableMap.Entry#isPresent()
+ * @typeParam T  the type of the input argument to the filter
  */
 export class PresentFilter<T = any>
   extends Filter<T> {
-  public static INSTANCE = new PresentFilter()
+  /**
+   * Singleton `PresentFilter` instance
+   */
+  static readonly INSTANCE = new PresentFilter()
 
-  constructor () {
+  /**
+   * Construct a PresentFilter.
+   */
+  protected constructor () {
     super(internal.filterName('PresentFilter'))
   }
 }

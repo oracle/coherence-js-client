@@ -9,12 +9,28 @@ import { ValueExtractor, ValueUpdater } from '../extractor/'
 import { ValueManipulator } from '.'
 import { internal } from './package-internal'
 
-export class PropertyManipulator<T = any, V = any>
-  implements ValueManipulator<T, V> {
-  '@class': string
+/**
+ * `PropertyManipulator` is a reflection based ValueManipulator implementation
+ * based on the JavaBean property name conventions.
+ *
+ * @typeParam V  the type of value manipulate
+ * @typeParam R  the return type of manipulation
+ */
+export class PropertyManipulator<V, R>
+  implements ValueManipulator<V, R> {
+  /**
+   * Server-side {@link PropertyManipulator} implementation type identifier
+   */
+  protected '@class': string
 
-  name: string
+  /**
+   * The property name, never `null`.
+   */
+  protected name: string
 
+  /**
+   * The getter prefix flag.
+   */
   useIsPrefix: boolean
 
   /**
@@ -34,11 +50,17 @@ export class PropertyManipulator<T = any, V = any>
     this.useIsPrefix = useIs
   }
 
-  getExtractor (): ValueExtractor<T, V> {
+  /**
+   * @inheritDoc
+   */
+  getExtractor (): ValueExtractor<V, R> {
     throw new Error('Method not implemented.')
   }
 
-  getUpdater (): ValueUpdater<T, V> {
+  /**
+   * @inheritDoc
+   */
+  getUpdater (): ValueUpdater<V, R> {
     throw new Error('Method not implemented.')
   }
 }

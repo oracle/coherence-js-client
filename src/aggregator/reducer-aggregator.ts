@@ -36,7 +36,7 @@ export class ReducerAggregator<K, V, T, E>
    *                             could be invoked via Java reflection and that returns values to aggregate; this
    *                             parameter can also be a dot-delimited sequence of method names which would
    *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-   *                             an array of corresponding {@link ReflectionExtractor} objects
+   *                             an array of corresponding {@link UniversalExtractor} objects
    */
   constructor (extractorOrProperty: ValueExtractor<T, number> | string) {
     super(internal.aggregatorName('ReducerAggregator'), extractorOrProperty)

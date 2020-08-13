@@ -5,6 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
+import { Map } from '../util'
 /**
  * @hidden
  */
@@ -17,7 +18,7 @@ export module internal {
     entries: Array<{ key: any, value: any }>
 
     constructor (entries: Map<K, V>) {
-      this.entries = new Array<{ key: any, value: any }>()
+      this.entries = new Array<{ key: K, value: V }>()
       for (const [k, v] of entries) {
         this.entries.push({key: k, value: v})
       }

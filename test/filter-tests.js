@@ -8,13 +8,13 @@
 const { Filters, SessionBuilder } = require('@oracle/coherence')
 const t = require('./util')
 const assert = require('assert').strict
-const { describe, it, after, beforeEach } = require('mocha');
+const { describe, it, after, beforeEach } = require('mocha')
 
 describe('Filter IT Test Suite', function () {
-  const val123 = {id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1}
-  const val234 = {id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null'}
-  const val345 = {id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5], group: 2}
-  const val456 = {id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null'}
+  const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
+  const val234 = { id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null' }
+  const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5], group: 2 }
+  const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null' }
 
   const session = new SessionBuilder().build()
   const cache = session.getCache('cache-client')
@@ -106,11 +106,11 @@ describe('Filter IT Test Suite', function () {
   })
 
   describe('Filters.between()', () => {
-    it('should return results excluding upper and lower boundaries (default)', async () => {
+    it('should return results including upper and lower boundaries (default)', async () => {
       const f1 = Filters.between('ival', 123, 345)
       const entries = await cache.entries(f1)
 
-      await t.compareEntries([[val234, val234]], entries)
+      await t.compareEntries([[val123, val123], [val234, val234], [val345, val345]], entries)
     })
 
     it('should return results excluding upper and lower boundaries (explicit)', async () => {
@@ -124,7 +124,7 @@ describe('Filter IT Test Suite', function () {
       const f1 = Filters.between('ival', 123, 345, true)
       const entries = await cache.entries(f1)
 
-      await t.compareEntries([[val123, val123], [val234, val234]], entries)
+      await t.compareEntries([[val123, val123], [val234, val234], [val345, val345]], entries)
     })
 
     it('should be possible to include results matching upper boundary', async () => {

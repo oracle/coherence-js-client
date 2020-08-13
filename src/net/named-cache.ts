@@ -27,7 +27,7 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
    * @param value  the value to be associated with the specified key
    * @param ttl    the expiry time in millis (optional)
    *
-   * @return a `Promise` eventually returning the previous value associated with specified key,
+   * @return a `Promise` resolving to the previous value associated with specified key,
    *         or `null` if there was no mapping for key. A `null` return can also indicate that the map
    *         previously associated `null` with the specified key, if the implementation supports `null` values
    */
@@ -41,7 +41,7 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
    * @param value  the value to be associated with the specified key
    * @param ttl    the expiry time in millis
    *
-   * @return a `Promise` eventually returning the previous value associated with the specified key, or
+   * @return a `Promise` resolving to the the previous value associated with the specified key, or
    *         `null` if there was no mapping for the key. (A `null` return can also indicate that the map previously
    *         associated `null` with the key, if the implementation supports `null` values.)
    */

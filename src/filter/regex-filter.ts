@@ -10,20 +10,22 @@ import { ComparisonFilter } from '.'
 import { internal } from './package-internal'
 
 /**
- * Filter which returns true for {@link com.tangosol.util.InvocableMap.Entry}
- * objects that currently exist in a Map.
- * <p>
- * This Filter is intended to be used solely in combination with a
- * {@link com.tangosol.util.processor.ConditionalProcessor} and is unnecessary
- * for standard {@link com.tangosol.util.QueryMap} operations.
+ * Filter which uses the regular expression pattern match defined by the
+ * Java's `String.matches` contract. This implementation is not index
+ * aware and will not take advantage of existing indexes.
  *
- * @param <T> the type of the input argument to the filter
- *
- * @see com.tangosol.util.InvocableMap.Entry#isPresent()
+ * @typeParam T  the type of the input argument to the filter
+ * @typeParam E  the type of the extracted attribute to use for comparison
  */
 export class RegexFilter<T = any, E = any>
   extends ComparisonFilter<T, E, string> {
-  constructor (methodOrExtractor: string | ValueExtractor<T, E>, regex: string) {
-    super(internal.filterName('RegexFilter'), methodOrExtractor, regex)
+  /**
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param regex              the regular expression to match the result with
+   */
+  constructor (extractorOrMethod: ValueExtractor<T, E> | string, regex: string) {
+    super(internal.filterName('RegexFilter'), extractorOrMethod, regex)
   }
 }

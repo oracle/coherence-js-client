@@ -48,9 +48,9 @@ describe('Extractor IT Test Suite', function () {
     it('should be composable using multiple extractors', async () => {
       const f1 = Filters.equal(
         Extractors.chained(
-          Extractors.extract('t'),   // t field
+          [Extractors.extract('t'),   // t field
           Extractors.extract('r'),   // r field of t
-          Extractors.extract('word') // word field of r
+          Extractors.extract('word')] // word field of r
         ), 'Trie')
       await test.compareEntries([[trieKey, trieObj]], await cache.entries(f1))
     })

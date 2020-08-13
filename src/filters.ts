@@ -28,7 +28,6 @@ import {
   NeverFilter,
   NotEqualsFilter,
   NotFilter,
-  PredicateFilter,
   PresentFilter,
   RegexFilter
 } from './filter'
@@ -44,22 +43,17 @@ import {
  * it makes the code more readable.
  */
 export class Filters {
-  private static NEVER_INSTANCE = new NeverFilter()
-
-  private static ALWAYS_INSTANCE = new AlwaysFilter()
 
   /**
-   * Return a composite filter representing logical AND of all specified
+   * Return a composite filter representing logical `AND` of all specified
    * filters.
    *
    * @param filters  a variable number of filters
    *
-   * @return  a composite filter representing logical AND of all specified
+   * @return  a composite filter representing logical `AND` of all specified
    *          filters
-   *
-   * @see AllFilter
    */
-  static all<T, K extends T> (...filters: Filter<K>[]): Filter {
+  static all<T> (...filters: Filter<T>[]): Filter {
     return new AllFilter(filters)
   }
 
@@ -71,7 +65,7 @@ export class Filters {
    * @link AlwaysFilter
    */
   static always<T> (): Filter<T> {
-    return Filters.ALWAYS_INSTANCE
+    return AlwaysFilter.INSTANCE
   }
 
   /**
@@ -85,201 +79,161 @@ export class Filters {
    *
    * @see AnyFilter
    */
-  static any<T, K extends T> (...filters: Filter<K>[]): Filter {
+  static any<T> (...filters: Filter<T>[]): Filter {
     return new AnyFilter(filters)
   }
 
   /**
-   * Return a filter that tests if the extracted array contains the
-   * specified value.
+   * Return a filter that tests if the extracted array contains the specified value.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param value      the value to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the input argument to the filter
+   * @typeParam E  the type of the extracted attribute to use for comparison
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the object that a Collection or Object array is tested
+   *                           to contain
    *
    * @return  a filter that tests if the extracted array contains the
-   *          specified value.
-   *
-   * @see ContainsFilter
+   *          specified value
    */
-  static arrayContains<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, value: E): Filter<T> {
-    return new ContainsFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static arrayContains<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): Filter<T> {
+    return new ContainsFilter(extractorOrMethod, value)
   }
 
   /**
-   * Return a filter that tests if the extracted array contains all of
-   * the specified values.
+   * Return a filter that tests if the extracted array contains `all` of the specified values.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param setValues  the values to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.value
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the input argument to the filter
+   * @typeParam E  the type of the extracted attribute to use for comparison
    *
-   * @return  a filter that tests if the extracted array contains all of
-   *          the specified values.
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param values             the object that a Collection or Object array is tested
+   *                           to contain
    *
-   * @see ContainsAllFilter
+   * @return  a filter that tests if the extracted array contains the
+   *          specified values
    */
-  static arrayContainsAll<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, ...value: E[]): Filter<T>;
-  static arrayContainsAll<T, E, K extends E> (extractorOrString: ValueExtractor<T, E[]> | string, values: Set<K>): Filter<T>;
-  static arrayContainsAll<T, E, K> (extractorOrString: ValueExtractor<T, E[]> | string, value: E[] | Set<K>): Filter<T> {
-    return new ContainsAllFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static arrayContainsAll<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, values: Set<any>): Filter<T> {
+    return new ContainsAllFilter(extractorOrMethod, values)
   }
 
   /**
-   * Return a filter that tests if the extracted array contains any of
-   * the specified values.
+   * Return a filter that tests if the extracted array contains `any` of the specified values.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param setValues  the values to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.value
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the input argument to the filter
+   * @typeParam E  the type of the extracted attribute to use for comparison
    *
-   * @return  a filter that tests if the extracted array contains any of
-   *          the specified values.
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param values             the object that a Collection or Object array is tested
+   *                           to contain
    *
-   * @see ContainsAllFilter
+   * @return  a filter that tests if the extracted array contains the
+   *          specified values
    */
-  static arrayContainsAny<T, E> (extractorOrString: ValueExtractor<T, E[]> | string, ...value: E[]): Filter<T>;
-  static arrayContainsAny<T, E, K extends E> (extractorOrString: ValueExtractor<T, E[]> | string, values: Set<K>): Filter<T>;
-  static arrayContainsAny<T, E, K> (extractorOrString: ValueExtractor<T, E[]> | string, value: E[] | Set<K>): Filter<T> {
-    return new ContainsAnyFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static arrayContainsAny<T, E> (extractorOrMethod: ValueExtractor<T, E[]> | string, values: Set<any>): Filter<T> {
+    return new ContainsAnyFilter(extractorOrMethod, values)
   }
 
   /**
-   * Return a filter that tests if the extracted value is between
-   * the specified values (inclusive).
+   * Return a filter that tests if the extracted value is `between` the specified values (inclusive).
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param from       the lower bound to compare the extracted value with.
-   * @param to         the upper bound to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return  a filter that tests if the extracted value is between the
-   *          specified values.
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param from               the lower bound to compare the extracted value with
+   * @param to                 the upper bound to compare the extracted value with
+   * @param includeLowerBound  a flag indicating whether values matching the lower bound evaluate to `true`
+   * @param includeUpperBound a flag indicating whether values matching the upper bound evaluate to `true`
    *
-   * @see BetweenFilter
+   * @return  a filter that tests if the extracted value is between the specified values
    */
-  static between<T, E> (extractorOrString: ValueExtractor<T, E> | string, from: E, to: E,
-                        includeLowerBound: boolean = false, includeUpperBound: boolean = false): Filter<T> {
-    return new BetweenFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), from, to, includeLowerBound, includeUpperBound)
+  static between<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, from: E, to: E,
+                        includeLowerBound: boolean = true, includeUpperBound: boolean = true): Filter<T> {
+    return new BetweenFilter(extractorOrMethod, from, to, includeLowerBound, includeUpperBound)
   }
 
   /**
-   * Return a filter that tests if the extracted collection contains the
-   * specified value.
+   * Return a filter that tests if the extracted collection contains the specified value.
    *
-   * @param extractor  the ValueExtractor to use
-   * @param value      the value to compare the extracted value with
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
-   * @param <C>        the type of value that will be extracted by the extractor
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the object that a Collection or Object array is tested
+   *                           to contain
    *
    * @return  a filter that tests if the extracted collection contains the
    *          specified value
-   *
-   * @see ContainsFilter
    */
-  static contains<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): ContainsFilter<T, E> {
-    return new ContainsFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static contains<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): ContainsFilter<T, E> {
+    return new ContainsFilter(extractorOrMethod, value)
   }
 
   /**
-   * Return a filter that tests if the extracted array contains all of
-   * the specified values.
+   * Return a filter that tests if the extracted collection contains `all` of the specified values.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param values     the values to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return  a filter that tests if the extracted array contains all of
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param values             the object that a Collection or Object array is tested
+   *                           to contain
+   *
+   * @return  a filter that tests if the extracted collection contains `all` of
    *          the specified values.
-   *
-   * @see ContainsAllFilter
    */
-  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: any[]): Filter<T>;
-  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<any>): Filter<T>;
-  static containsAll<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: any[] | Set<any>): Filter<T> {
-    return new ContainsAllFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), values)
+  static containsAll<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, values: Set<any>): Filter<T> {
+    return new ContainsAllFilter(extractorOrMethod, values)
   }
 
   /**
-   * Return a filter that tests if the extracted array contains any of
-   * the specified values.
+   * Return a filter that tests if the extracted collection contains `any` of the specified values.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param values     the values to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return  a filter that tests if the extracted array contains all of
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param values             the object that a Collection or Object array is tested
+   *                           to contain
+   *
+   * @return  a filter that tests if the extracted collection contains `any` of
    *          the specified values.
-   *
-   * @see ContainsAllFilter
    */
-  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: any[]): Filter<T>;
-  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<any>): Filter<T>;
-  static containsAny<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: any[] | Set<any>): Filter<T> {
-    return new ContainsAnyFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), values)
+  static containsAny<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, values: Set<any>): Filter<T> {
+    return new ContainsAnyFilter(extractorOrMethod, values)
   }
 
   /**
-   * Return a filter that tests for equality using a {@link filter.UniversalExtractor}
-   * instance to extract the specified field.
+   * Return a filter that tests for equality against the extracted value.
    *
-   * @param fieldName  the name of the field to use.
-   * @param value      the value to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return a filter that tests for equality.
-   *
-   * @see EqualsFilter
-   * @see com.tangosol.util.extractor.UniversalExtractor
-   */
-  static equal<T, E> (fieldName: string, value: E): EqualsFilter<T, E>;
-
-  /**
-   * Return a filter that tests for equality.
-   *
-   * @param extractor  the Extractor to use
-   * @param value      the value to compare the extracted value with
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return a filter that tests for equality
-   *
-   * @see EqualsFilter
    */
-  static equal<T, E> (extractor: ValueExtractor<T, E>, value: E): EqualsFilter<T, E>;
-  static equal<T, E> (arg: string | ValueExtractor<T, E>, value: E): EqualsFilter<T, E> {
-    return new EqualsFilter(arg instanceof ValueExtractor
-      ? arg
-      : new UniversalExtractor(arg), value)
+  static equal<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): EqualsFilter<T, E> {
+    return new EqualsFilter(extractorOrMethod, value)
   }
 
   /**
-   * TODO(rlubke) docs
-   * @param filter
+   * Return a {@link MapEventFilter} using the provided filter and {@link MapEventFilter} mask.
+   *
+   * @param filter  the event filter
+   * @param mask    the event mask
    */
-  static event<T, E> (filter: Filter, mask: number = MapEventFilter.E_KEYSET): MapEventFilter<T> {
+  static event<K, V> (filter: Filter<V>, mask: number = MapEventFilter.E_KEYSET): MapEventFilter<K, V> {
     return new MapEventFilter(mask, filter)
   }
 
@@ -287,178 +241,165 @@ export class Filters {
    * Return a filter that tests if the extracted value is greater than the
    * specified value.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param value      the value to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return  a filter that tests if the extracted value is greater than the
    *          specified value.
-   *
-   * @see GreaterFilter
    */
-  static greater<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
-    return new GreaterFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static greater<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
+    return new GreaterFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is greater than or equal
    * to the specified value.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param value      the value to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return  a filter that tests if the extracted value is greater than or
    *          equal to the specified value.
-   *
-   * @see GreaterEqualsFilter
    */
-  static greaterEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
-    return new GreaterEqualsFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static greaterEqual<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): GreaterFilter<T, E> {
+    return new GreaterEqualsFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is contained in the
    * specified array.
    *
-   * @param extractor  the ValueExtractor to use.
-   * @param values     the values to compare the extracted value with.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param values             the values to compare the extracted value with
    *
    * @return  a filter that tests if the extracted value is contained in the
    *          specified array.
    *
    * @see ContainsAnyFilter
    */
-  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, ...values: E[]): Filter<T>;
-  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: Set<E>): Filter<T>;
-  static in<T, E> (extractorOrString: ValueExtractor<T, E> | string, values: E[] | Set<E>): Filter<T> {
-    return new InFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), (values instanceof Set) ? values : new Set(values))
+  static in<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, values: Set<E>): Filter<T> {
+    return new InFilter(extractorOrMethod, values)
   }
 
   /**
-   * Return a filter that evaluates to true for non-null values.
+   * Return a filter that evaluates to true for `non-null` values.
    *
-   * @param extractor  the Extractor to use.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return a filter that evaluates to true for non-null values.
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
    *
-   * @see IsNotNullFilter
+   * @return a filter that evaluates to true for `non-null` values.
    */
-  static isNotNull<T, E> (extractorOrString: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
-    return new IsNotNullFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString))
+  static isNotNull<T, E> (extractorOrMethod: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
+    return new IsNotNullFilter(extractorOrMethod)
   }
 
   /**
    * Return a filter that evaluates to true for null values.
    *
-   * @param extractor  the Extractor to use.
-   * @param <T>        the type of the object to extract value from.
-   * @param <E>        the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
    *
    * @return a filter that evaluates to true for null values.
-   *
-   * @see IsNullFilter
    */
-  static isNull<T, E> (extractorOrString: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
-    return new IsNullFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString))
+  static isNull<T, E> (extractorOrMethod: ValueExtractor<T, E> | string): IsNotNullFilter<T, E> {
+    return new IsNullFilter(extractorOrMethod)
   }
 
   /**
    * Return a filter that tests if the extracted value is less than the
    * specified value.
    *
-   * @param extractor  the ValueExtractor to use
-   * @param value      the value to compare the extracted value with
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return  a filter that tests if the extracted value is less than the
    *          specified value
-   *
-   * @see LessFilter
    */
-  static less<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): LessFilter<T, E> {
-    return new LessFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static less<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): LessFilter<T, E> {
+    return new LessFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is less than or equal
    * to the specified value.
    *
-   * @param extractor  the ValueExtractor to use
-   * @param value      the value to compare the extracted value with
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return  a filter that tests if the extracted value is less than or equal
    *          to the specified value
-   *
-   * @see LessEqualsFilter
    */
-  static lessEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): Filter<T> {
-    return new LessEqualsFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static lessEqual<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): Filter<T> {
+    return new LessEqualsFilter(extractorOrMethod instanceof ValueExtractor
+      ? extractorOrMethod
+      : new UniversalExtractor(extractorOrMethod), value)
   }
 
   /**
    * Return a LikeFilter for pattern match.
    *
-   * @param extractor  the ValueExtractor to use by this filter
-   * @param pattern    the string pattern to compare the result with
-   * @param escape     the escape character for escaping '%' and '_'
-   * @param ignoreCase true to be case-insensitive
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param pattern            the string pattern to compare the result with
+   * @param escape             the escape character for escaping '%' and '_'
+   * @param ignoreCase         true to be case-insensitive
    *
    * @return a LikeFilter
    */
-  static like<T, E> (extractorOrString: ValueExtractor<T, E> | string, pattern: string, escape: string, ignoreCase: boolean): Filter<T> {
-    return new LikeFilter(extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), pattern, escape, ignoreCase)
+  static like<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, pattern: string, escape: string, ignoreCase: boolean): Filter<T> {
+    return new LikeFilter(extractorOrMethod instanceof ValueExtractor
+      ? extractorOrMethod
+      : new UniversalExtractor(extractorOrMethod), pattern, escape, ignoreCase)
   }
 
   /**
-   * Return a filter that always evaluates to false.
+   * Return a filter that always evaluates to `false`.
    *
-   * @return a filter that always evaluates to false.
-   *
-   * @see NeverFilter
+   * @return a filter that always evaluates to `false`.
    */
   static never<T> (): Filter<T> {
-    return Filters.NEVER_INSTANCE
+    return NeverFilter.INSTANCE
   }
 
   /**
    * Return a filter that represents the logical negation of the specified
    * filter.
    *
-   * @param <T>     the type of the input argument to the filter.
-   * @param filter  the filter.
+   * @typeParam T     the type of the input argument to the filter
+   *
+   * @param filter    the filter.
    *
    * @return  a filter that represents the logical negation of the specified
    *          filter.
-   *
-   * @see NotFilter
    */
   static not<T> (filter: Filter<T>): Filter<T> {
     return new NotFilter(filter)
@@ -467,39 +408,23 @@ export class Filters {
   /**
    * Return a filter that tests for non-equality.
    *
-   * @param extractor  the ValueExtractor to use
-   * @param value      the value to compare the extracted value with
-   * @param <T>        the type of the object to extract value from
-   * @param <E>        the type of extracted value
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
+   *
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param value              the value to compare the extracted value with
    *
    * @return a filter that tests for non-equality
-   *
-   * @see NotEqualsFilter
    */
-  static notEqual<T, E> (extractorOrString: ValueExtractor<T, E> | string, value: E): Filter<T> {
-    return new NotEqualsFilter('NotEqualsFilter', extractorOrString instanceof ValueExtractor
-      ? extractorOrString
-      : new UniversalExtractor(extractorOrString), value)
+  static notEqual<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): Filter<T> {
+    return new NotEqualsFilter(extractorOrMethod, value)
   }
 
   /**
-   * Return a PredicateFilter for a given {@code Predicate}.
+   * Return a filter that evaluates to `true` if an entry is present in the cache.
    *
-   * @param predicate the predicate to evaluate.
-   * @param <T>       the type of the object to evaluate.
-   *
-   * @return a PredicateFilter.
-   *
-   * @see PredicateFilter
-   */
-  static predicate<T, E> (predicate: { '@class': string }, extractorOrNull?: ValueExtractor<T, E> | undefined): Filter<T> {
-    return new PredicateFilter(predicate, extractorOrNull)
-  }
-
-  /**
-   * Return a filter that evaluates to true if an entry is present in the cache.
-   *
-   * @return a filter that evaluates to true if an entry is present
+   * @return a filter that evaluates to `true` if an entry is present
    *
    * @see PresentFilter
    */
@@ -510,14 +435,14 @@ export class Filters {
   /**
    * Return a RegexFilter for pattern match.
    *
-   * @param extractor the ValueExtractor to use by this filter.
-   * @param regex     the regular expression to match the result with.
-   * @param <T>       the type of the object to extract value from.
-   * @param <E>       the type of extracted value.
+   * @typeParam T  the type of the object to extract value from
+   * @typeParam E  the type of extracted value
    *
-   * @return a RegexFilter
+   * @param extractorOrMethod  the {@link ValueExtractor} used by this filter or the name of the method to invoke
+   *                           via reflection
+   * @param regex              the Java regular expression to match the result with
    */
-  static regex<T, E> (extractor: ValueExtractor<T, E>, regex: string): Filter<T> {
-    return new RegexFilter(extractor, regex)
+  static regex<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, regex: string): Filter<T> {
+    return new RegexFilter(extractorOrMethod, regex)
   }
 }

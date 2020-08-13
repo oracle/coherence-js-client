@@ -12,18 +12,20 @@ import { EntryProcessor } from '.'
 /**
  * Put entry processor.
  *
- * @param <K> the type of the Map entry key
- * @param <V> the type of the Map entry value
+ * An implementation of an EntryProcessor that does nothing and returns
+ * `true` as a result of execution.
  */
-export class NullProcessor<K = any, V = any>
-  extends EntryProcessor<K, V, void> {
+export class NullProcessor
+  extends EntryProcessor<any, any, void> {
+  /**
+   * Singleton `NullProcessor` instance.
+   */
+  static readonly INSTANCE: NullProcessor = new NullProcessor();
+
   /**
    * Construct a Null EntryProcessor.
-   *
-   * @param filter  the filter to evaluate an entry
-   * @param value   a value to update an entry with
    */
-  constructor () {
-    super(internal.processorName('Null'))
+  protected constructor () {
+    super(internal.processorName('NullEntryProcessor'))
   }
 }

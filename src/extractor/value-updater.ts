@@ -8,12 +8,20 @@
 /**
  * ValueUpdater is used to update an object's state.
  *
- * @param <T>  the type of object
- * @param <U>  the type of value used to update the object
+ * @typeParam T  the type of object
+ * @typeParam U  the type of value used to update the object
  */
 export abstract class ValueUpdater<T, U> {
-  '@class': string
+  /**
+   * The server-side `ValueUpdater` type identifier.
+   */
+  protected readonly '@class': string
 
+  /**
+   * Constructs a new `ValueUpdater`.
+   *
+   * @param clz  the server-side `ValueUpdater` type identifier
+   */
   protected constructor (clz: string) {
     this['@class'] = clz
   }

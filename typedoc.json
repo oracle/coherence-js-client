@@ -1,0 +1,20 @@
+{
+  "inputFiles": [
+    "./src"
+  ],
+  "out": "docs",
+  "excludeNotExported": true,
+  "excludePrivate": true,
+  "module": "commonjs",
+  "target": "ES6",
+  "name": "Oracle Coherence Javascript Client",
+  "includeVersion": true,
+  "readme": "README.md",
+  "hideGenerator": true,
+  "includeDeclarations": true,
+  "excludeExternals": true,
+  "stripInternal": true,
+  "exclude": [
+    "**/*+(index|package-internal).ts"
+  ]
+}

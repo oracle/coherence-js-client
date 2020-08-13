@@ -20,8 +20,8 @@ import { internal } from './package-internal'
  * @author mk 2019.09.24
  * @since 14.1.1.0
  */
-export class ScriptAggregator<K, V, T, R>
-  extends EntryAggregator<K, V, T, any, R> {
+export class ScriptAggregator<K, V, P, R>
+  extends EntryAggregator<K, V, P, any, R> {
 
   /**
    * The language with which the script is written in.
@@ -29,7 +29,7 @@ export class ScriptAggregator<K, V, T, R>
   protected language: string
 
   /**
-   * The name of the {@link Filter} that needs to be evaluated.
+   * The name of the {@link EntryAggregator} that needs to be evaluated.
    */
   protected name: string
 

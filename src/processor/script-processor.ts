@@ -9,30 +9,45 @@ import { EntryProcessor } from '.'
 import { internal } from './package-internal'
 
 /**
- * Script is an entry processor that performs a remove
- * operation if the specified condition is satisfied.
+ * ScriptProcessor wraps a script written in one of the languages supported by Graal VM.
  *
+ * @typeParam K  the type of the Map entry key
+ * @typeParam V  the type of the Map entry value
+ * @typeParma R  the type of value returned by the processor
  */
-export class ScriptProcessor<K, V>
-  extends EntryProcessor<K, V, V> {
+export class ScriptProcessor<K, V, R>
+  extends EntryProcessor<K, V, R> {
   /**
    * The script name.
    */
-  script: string
+  protected readonly name: string
 
   /**
-   * The args for the script.
+   * The scripting language identifier.
    */
-  args: any[]
+  protected readonly language: string
 
   /**
-   * Construct a Script EntryProcessor.
+   * The arguments to pass to the script
+   */
+  protected args: any[]
+
+  /**
+   * Create a {@link ScriptProcessor} that wraps a script written in the
+   * specified language and identified by the specified name. The specified
+   * args will be passed during execution of the script.
    *
-   * @param args  The args for the script.
+   * @param language  the language the script is written. Currently, only
+   *                  `js` (for JavaScript) is supported
+   * @param name      the name of the {@link EntryProcessor} that needs to
+   *                  be executed
+   * @param args      the arguments to be passed to the {@link EntryProcessor}
+   *
    */
-  constructor (script: string, ...args: any[]) {
-    super(internal.processorName('Script'))
-    this.script = script
-    this.args = args
+  constructor (language: string, name: string, args?: any[]) {
+    super(internal.processorName('ScriptProcessor'))
+    this.language = language
+    this.name = name
+    this.args = args ? args : new Array<any>()
   }
 }

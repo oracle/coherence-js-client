@@ -8,7 +8,7 @@
 const { event, Filters, Extractors, SessionBuilder } = require('@oracle/coherence')
 const test = require('./util')
 const assert = require('assert').strict
-const { describe, it, after, beforeEach } = require('mocha');
+const { describe, it, after, beforeEach } = require('mocha')
 
 describe('NamedCacheClient IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
@@ -85,18 +85,18 @@ describe('NamedCacheClient IT Test Suite', function () {
       })
     })
 
-    describe('containsEntry', () => {
+    describe('hasEntry', () => {
       it('should return true for an existing entry', async () => {
-        assert.equal(await cache.containsEntry(val123, val123), true)
+        assert.equal(await cache.hasEntry(val123, val123), true)
       })
 
       it('should return false for a non-existing entry', async () => {
-        assert.equal(await cache.containsEntry(val345, { id: 123, str: '123' }), false)
+        assert.equal(await cache.hasEntry(val345, { id: 123, str: '123' }), false)
       })
 
       it('should return false after clear using previously existing value', async () => {
         await cache.clear()
-        assert.equal(await cache.containsEntry(val123, val123), false)
+        assert.equal(await cache.hasEntry(val123, val123), false)
       })
     })
 

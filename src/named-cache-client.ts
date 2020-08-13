@@ -15,7 +15,7 @@ import { CacheLifecycleEvent, RequestStateEvent } from './event/events' // Reque
 import { MapEventsManager } from './event/map-events-manager' // MapEventsManager not exported
 import { ValueExtractor } from './extractor'
 import { Filter, MapEventFilter } from './filter'
-import { MapEntry, NamedCache, RemoteSet } from './net'
+import { MapEntry, NamedCache, NamedMap, RemoteSet } from './net'
 import {
   Entry,
   Entry as GrpcEntry,
@@ -27,9 +27,10 @@ import {
 import { NamedCacheServiceClient } from './net/grpc/services_grpc_pb'
 // none of these are exported
 import { EntryProcessor } from './processor'
-import { Comparator, Map, Serializer, Util } from './util'
+import { Comparator, Map, Serializer } from './util'
 import { EntrySet, KeySet, LocalSet, NamedCacheEntry, ValueSet } from './util/collections' // These collections are not exported
 import { RequestFactory } from './util/request-factory' // RequestFactory not exported
+import { Util } from './util/util' // Util not exported
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -45,6 +46,8 @@ import { RequestFactory } from './util/request-factory' // RequestFactory not ex
  * 2. {@link CacheLifecycleEvent.TRUNCATED}: when the underlying cache is truncated
  * 3. {@link CacheLifecycleEvent.RELEASED}: when the underlying cache is released
  *
+ * @typeParam K  the type of the cache keys
+ * @typeParam V  the type of the cache values
  */
 export class NamedCacheClient<K = any, V = any>
   extends EventEmitter
@@ -145,7 +148,7 @@ export class NamedCacheClient<K = any, V = any>
     this.setupEventHandlers()
 
     // Now open the events channel.
-    this.mapEventsHandler = new MapEventsManager(this, this.client, this.serializer, this.internalEmitter)
+    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>, this.client, this.serializer, this.internalEmitter)
   }
 
   // ----- public functions -------------------------------------------------
@@ -169,15 +172,9 @@ export class NamedCacheClient<K = any, V = any>
   }
 
   /**
-   * Returns `true` if this cache contains a mapping for the specified key.
-   *
-   * @param key    the key whose presence in this cache is to be tested
-   * @param value  the value expected to be associated with the specified key
-   *
-   * @return a `Promise` that eventually resolves to `true` if the mapping exists,
-   *         or `false` if it does not
+   * @inheritDoc
    */
-  containsEntry (key: K, value: V): Promise<boolean> {
+  hasEntry (key: K, value: V): Promise<boolean> {
     const self = this
     return new Promise((resolve, reject) => {
       const request = self.requestFactory.containsEntry(key, value)
@@ -187,12 +184,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  aggregate<R, T, E> (keys: Iterable<K>, agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
-
-  aggregate<R, T, E> (filter: Filter<V>, agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
-
-  aggregate<R, T, E> (agg: EntryAggregator<K, V, T, E, R>): Promise<any>;
-
+  /**
+   * @inheritDoc
+   */
   aggregate<R, T, E> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, T, E, R>, agg?: EntryAggregator<K, V, T, E, R>): Promise<any> {
     const self = this
     const request = this.requestFactory.aggregate(kfa, agg)
@@ -217,6 +211,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   invoke<R> (key: K, processor: EntryProcessor<K, V, R>): Promise<R | null> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -230,12 +227,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  invokeAll<R = any> (processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-
-  invokeAll<R = any> (keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-
-  invokeAll<R = any> (filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>;
-
+  /**
+   * @inheritDoc
+   */
   invokeAll<R = any> (keysOrFilterOrProcessor: Iterable<K> | Filter<V> | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
     const self = this
     let keysOrFilter: Iterable<K> | Filter
@@ -258,6 +252,9 @@ export class NamedCacheClient<K = any, V = any>
     return this.doInvokeAll(call)
   }
 
+  /**
+   * @inheritDoc
+   */
   forEach (keys: Iterable<K>, action: (key: K, value: V) => void): Promise<void> {
       return new Promise((resolve, reject) => {
           this.getAll(keys as Iterable<K>)
@@ -267,13 +264,10 @@ export class NamedCacheClient<K = any, V = any>
       })
   }
 
-  addMapListener (listener: MapListener<K, V>, isLite?: boolean): Promise<void>;
-
-  addMapListener (listener: MapListener<K, V>, key: K, isLite?: boolean): Promise<void>;
-
-  addMapListener (listener: MapListener<K, V>, filter: MapEventFilter, isLite?: boolean): Promise<void>;
-
-  addMapListener (listener: MapListener<K, V>, keyOrFilterOrLite?: MapEventFilter | K | boolean, isLite?: boolean): Promise<void> {
+  /**
+   * @inheritDoc
+   */
+  addMapListener (listener: MapListener<K, V>, keyOrFilterOrLite?: MapEventFilter<K, V> | K | boolean, isLite?: boolean): Promise<void> {
     let lite = false
 
     if (isLite !== undefined) {
@@ -295,14 +289,10 @@ export class NamedCacheClient<K = any, V = any>
     return this.mapEventsHandler.registerFilterListener(listener, null, lite)
   }
 
-  // TODO(rlubke) Fix - this should be inherited
-  removeMapListener (listener: MapListener<K, V>): Promise<void>;
-
-  removeMapListener (listener: MapListener<K, V>, key: K): Promise<void>;
-
-  removeMapListener (listener: MapListener<K, V>, filter: MapEventFilter): Promise<void>;
-
-  removeMapListener (listener: MapListener<K, V>, keyOrFilter?: MapEventFilter | K | null): Promise<void> {
+  /**
+   * @inheritDoc
+   */
+  removeMapListener (listener: MapListener<K, V>, keyOrFilter?: MapEventFilter<K, V> | K | null): Promise<void> {
     if (keyOrFilter) {
       return (keyOrFilter instanceof MapEventFilter)
         ? this.mapEventsHandler.removeFilterListener(listener, keyOrFilter)
@@ -311,8 +301,9 @@ export class NamedCacheClient<K = any, V = any>
     return this.mapEventsHandler.removeFilterListener(listener, null)
   }
 
-  // ----- QueryMap interface -----------------------------------------------
-
+  /**
+   * @inheritDoc
+   */
   addIndex<T, E> (extractor: ValueExtractor<T, E>, ordered?: boolean, comparator?: Comparator): Promise<void> {
     const self = this
     const request = this.requestFactory.addIndex(extractor, ordered, comparator)
@@ -323,10 +314,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  entries (): Promise<RemoteSet<MapEntry<K, V>>>;
-
-  entries (filter: Filter, comp?: Comparator): Promise<RemoteSet<MapEntry<K, V>>>;
-
+  /**
+   * @inheritDoc
+   */
   entries (filter?: Filter, comp?: Comparator): Promise<RemoteSet<MapEntry<K, V>>> {
     const self = this
     if (!filter) {
@@ -339,7 +329,7 @@ export class NamedCacheClient<K = any, V = any>
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (e: GrpcEntry) {
-        const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8(), self.getRequestFactory().getSerializer())
+        const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8(), self.getRequestFactory().serializer)
         set.add(entry)
       })
       call.on(RequestStateEvent.COMPLETE, () => resolve(set))
@@ -349,10 +339,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  keys (): Promise<RemoteSet<K>>;
-
-  keys (filter: Filter, comparator?: Comparator): Promise<RemoteSet<K>>;
-
+  /**
+   * @inheritDoc
+   */
   keys (filter?: Filter, comparator?: Comparator): Promise<RemoteSet<K>> {
     const self = this
     if (!filter) {
@@ -365,7 +354,7 @@ export class NamedCacheClient<K = any, V = any>
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (r: BytesValue) {
-        const k = self.getRequestFactory().getSerializer().deserialize(r.getValue_asU8())
+        const k = self.getRequestFactory().serializer.deserialize(r.getValue_asU8())
         if (k) {
           set.add(k)
         }
@@ -377,6 +366,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void> {
     const self = this
     const request = this.requestFactory.removeIndex(extractor)
@@ -387,6 +379,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   values (filter?: Filter, comparator?: Comparator): Promise<RemoteSet<V>> {
     const self = this
     if (!filter) {
@@ -399,7 +394,7 @@ export class NamedCacheClient<K = any, V = any>
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (b: BytesValue) {
-        set.add(self.getRequestFactory().getSerializer().deserialize(b.getValue_asU8()))
+        set.add(self.getRequestFactory().serializer.deserialize(b.getValue_asU8()))
       })
       call.on(RequestStateEvent.COMPLETE, () => resolve(set))
       call.on(RequestStateEvent.ERROR, (e) => {
@@ -408,8 +403,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-  // ----- RemoteMap interface ----------------------------------------------
-
+  /**
+   * @inheritDoc
+   */
   clear (): Promise<void> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -419,6 +415,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   has (key: K): Promise<boolean> {
     const self = this
     const request = self.requestFactory.containsKey(key)
@@ -429,6 +428,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   hasValue (value: V): Promise<boolean> {
     const self = this
     const request = this.requestFactory.containsValue(value)
@@ -446,13 +448,19 @@ export class NamedCacheClient<K = any, V = any>
     return this.getOrDefault(key, null)
   }
 
+  /**
+   * @inheritDoc
+   */
   getAll (keys: Iterable<K>): Promise<Map<K, V>> {
     const self = this
     const call = self.client.getAll(self.requestFactory.getAll(keys), this.callOptions())
     return this.doInvokeAll(call)
   }
 
-  async getOrDefault (key: K, defaultValue: V | null): Promise<V | null> {
+  /**
+   * @inheritDoc
+   */
+  getOrDefault (key: K, defaultValue: V | null): Promise<V | null> {
     const self = this
     return new Promise((resolve, reject) => {
       self.client.get(self.requestFactory.get(key), this.callOptions(), (err, resp) => {
@@ -465,6 +473,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   get empty (): Promise<boolean> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -476,8 +487,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
-
-
+  /**
+   * @inheritDoc
+   */
   set (key: K, value: V, ttl?: number): Promise<V> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -487,6 +499,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   setIfAbsent (key: K, value: V, ttl?: number): Promise<V> {
     const self = this
     const request = self.requestFactory.putIfAbsent(key, value, ttl)
@@ -497,6 +512,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   delete (key: K): Promise<V> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -506,6 +524,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   removeMapping (key: K, value: V): Promise<boolean> {
     const self = this
     const request = this.requestFactory.removeMapping(key, value)
@@ -516,6 +537,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   replace (key: K, value: V): Promise<V> {
     const self = this
     const request = this.requestFactory.replace(key, value)
@@ -526,6 +550,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   replaceMapping (key: K, value: V, newValue: V): Promise<boolean> {
     const self = this
     const request = this.requestFactory.replaceMapping(key, value, newValue)
@@ -537,6 +564,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   get size() {
     return new Promise<number>((resolve, reject) => {
       const request = new SizeRequest()
@@ -551,6 +581,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   destroy (): Promise<void> {
     const self = this
 
@@ -578,22 +611,37 @@ export class NamedCacheClient<K = any, V = any>
     return Promise.resolve()
   }
 
+  /**
+   * @inheritDoc
+   */
   get name() {
     return this.cacheName
   }
 
+  /**
+   * @inheritDoc
+   */
   get active () {
     return !this.released && !this.destroyed
   }
 
+  /**
+   * @inheritDoc
+   */
   get destroyed () {
     return this._destroyed
   }
 
+  /**
+   * @inheritDoc
+   */
   get released () {
     return this._released
   }
 
+  /**
+   * @inheritDoc
+   */
   release (): Promise<void> {
     const self = this
     return new Promise((resolve) => {
@@ -610,6 +658,9 @@ export class NamedCacheClient<K = any, V = any>
     })
   }
 
+  /**
+   * @inheritDoc
+   */
   truncate (): Promise<void> {
     const self = this
     return new Promise((resolve, reject) => {
@@ -694,7 +745,7 @@ export class NamedCacheClient<K = any, V = any>
       if (cacheName == self.cacheName) {
         self.mapEventsHandler.closeEventStream()
         self._released = true
-        self.emit(CacheLifecycleEvent.RELEASED, cacheName, this.serializer.format()) // notify NamedCacheClient level listeners
+        self.emit(CacheLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners
       }
     })
   }
@@ -728,7 +779,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   protected toValue<V> (value: Uint8Array): V {
     return (value && value.length > 0)
-      ? this.getRequestFactory().getSerializer().deserialize(value)
+      ? this.getRequestFactory().serializer.deserialize(value)
       : null
   }
 
