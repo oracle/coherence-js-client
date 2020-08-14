@@ -297,7 +297,7 @@ export class MapEventsManager<K, V> {
 
     let group = this.filterMap.get(filter)
     if (!group) {
-      group = new FilterListenerGroup(this, filter)
+      group = new FilterListenerGroup<K, V>(this, filter)
       this.filterMap.set(filter, group)
     }
 
