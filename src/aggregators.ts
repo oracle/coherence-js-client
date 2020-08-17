@@ -211,7 +211,7 @@ export class Aggregators {
    * @return an aggregator that is implemented in a script using the specified
    *         language
    */
-  static script<K, V, P, R>(language: string, name: string, args: [object]): ScriptAggregator<K, V, P, R> {
+  static script<K, V, P, R> (language: string, name: string, args: any[]): ScriptAggregator<K, V, P, R> {
     return new ScriptAggregator<K, V, P, R>(language, name, args)
   }
 

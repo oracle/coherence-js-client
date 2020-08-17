@@ -97,6 +97,7 @@ describe('processor.Processors IT Test Suite', function () {
       const composite = Processors.nop().andThen(Processors.nop())
 
       assert.equal(composite['@class'], 'processor.CompositeProcessor')
+      // noinspection JSAccessibilityCheck
       assert.deepEqual(composite.processors, [Processors.nop(), Processors.nop()])
     })
 
@@ -167,7 +168,7 @@ describe('processor.Processors IT Test Suite', function () {
   describe('A ConditionalProcessor', () => {
     it('should be able to be invoked against a value associated with a key', async () => {
       const ep = Processors.extract('str')
-        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2]))
+        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([1, 2])))
       const value = await cache.invoke(val123, ep)
 
       assert.equal(value, '123')
@@ -175,7 +176,7 @@ describe('processor.Processors IT Test Suite', function () {
 
     it('should be able to be invoked against all entries using a filter', async () => {
       const ep = Processors.extract('str')
-        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [2, 3]))
+        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([2, 3])))
       const result = await cache.invokeAll(Filters.always(), ep)
 
       await t.compareEntries([[val123, '123'], [val234, '234']], result)
@@ -183,7 +184,7 @@ describe('processor.Processors IT Test Suite', function () {
 
     it('should be able to be invoked against entries matching a set of keys', async () => {
       const ep = Processors.extract('str')
-        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), [2, 3]))
+        .when(Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([2, 3])))
       const result = await cache.invokeAll([val123, val234, val345], ep)
 
       await t.compareEntries([[val123, '123'], [val234, '234']], result)
@@ -198,7 +199,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against a value associated with a key', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([1, 2]))
       const ep = Processors.conditionalPut(f1, val234).returnCurrent()
 
       await cache.invoke(val123, ep)
@@ -208,7 +209,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a filter', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([3, 4]))
       const ep = Processors.conditionalPut(Filters.always(), val123).returnCurrent()
 
       await cache.invokeAll(f1, ep)
@@ -218,7 +219,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a set of keys', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([3, 4]))
       const ep = Processors.conditionalPut(f1, val123).returnCurrent()
 
       await cache.invokeAll([val123, val234], ep)
@@ -266,7 +267,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against a value associated with a key', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [1, 2])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([1, 2]))
       const ep = Processors.conditionalRemove(f1).returnCurrent()
 
       const result = await cache.invoke(val123, ep)
@@ -276,7 +277,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a filter', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([3, 4]))
       const ep = Processors.conditionalRemove(Filters.always()).returnCurrent()
 
       const result = await cache.invokeAll(f1, ep)
@@ -286,7 +287,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a set of keys', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([3, 4]))
       const ep = Processors.conditionalRemove(f1).returnCurrent()
 
       await cache.invokeAll([val123, val234], ep)
@@ -416,6 +417,7 @@ describe('processor.Processors IT Test Suite', function () {
 
       assert.equal(processor['@class'], 'processor.UpdaterProcessor')
       assert.notDeepEqual(processor.value, undefined)
+      // noinspection JSAccessibilityCheck
       assert.notDeepEqual(processor.updater, undefined)
     })
 
@@ -437,7 +439,7 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a filter', async () => {
-      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), [3, 4])
+      const f1 = Filters.arrayContainsAll(Extractors.extract('iarr'), new Set([3, 4]))
       const ep = Processors.update('str', '123000')
         .andThen(Processors.update('ival', 123000))
 
@@ -557,10 +559,13 @@ describe('processor.Processors IT Test Suite', function () {
       const processor = Processors.multiply('ival', 2)
 
       assert.equal(processor['@class'], 'processor.NumberMultiplier')
+      // noinspection JSAccessibilityCheck
       assert.equal(processor.multiplier, 2)
+      // noinspection JSAccessibilityCheck
       assert.equal(processor.postMultiplication, false)
 
       const processor2 = Processors.multiply('ival', 2, true)
+      // noinspection JSAccessibilityCheck
       assert.equal(processor2.postMultiplication, true)
     })
 
@@ -607,10 +612,13 @@ describe('processor.Processors IT Test Suite', function () {
       const processor = Processors.increment('ival', 2)
 
       assert.equal(processor['@class'], 'processor.NumberIncrementor')
+      // noinspection JSAccessibilityCheck
       assert.equal(processor.increment, 2)
+      // noinspection JSAccessibilityCheck
       assert.equal(processor.postIncrement, false)
 
       const processor2 = Processors.increment('ival', 2, true)
+      // noinspection JSAccessibilityCheck
       assert.equal(processor2.postIncrement, true)
     })
 

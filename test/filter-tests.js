@@ -89,7 +89,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.arrayContainsAll()', () => {
     it('should return results based on the value of a multiple array elements; entries must contain all elements', async () => {
-      const f1 = Filters.arrayContainsAll('iarr', [2, 3])
+      const f1 = Filters.arrayContainsAll('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
       await t.compareEntries([[val123, val123], [val234, val234]], entries)
@@ -98,7 +98,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.arrayContainsAny()', () => {
     it('should return results based on the value of a multiple array elements; entries must contain any of the elements', async () => {
-      const f1 = Filters.arrayContainsAny('iarr', [2, 3])
+      const f1 = Filters.arrayContainsAny('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
       await t.compareEntries([[val123, val123], [val234, val234], [val345, val345]], entries)
@@ -153,7 +153,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.containsAll()', () => {
     it('should return results based on the value of a multiple collection elements; entries must contain all elements', async () => {
-      const f1 = Filters.containsAll('iarr', [2, 3])
+      const f1 = Filters.containsAll('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
       await t.compareEntries([[val123, val123], [val234, val234]], entries)
@@ -162,7 +162,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.containsAny()', () => {
     it('should return results based on the value of a multiple collection elements; entries must contain any of the elements', async () => {
-      const f1 = Filters.containsAny('iarr', [2, 3])
+      const f1 = Filters.containsAny('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
       await t.compareEntries([[val123, val123], [val234, val234], [val345, val345]], entries)
@@ -198,7 +198,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.in()', () => {
     it('should return results for those entries that have matching field values', async () => {
-      const f1 = Filters.in('ival', [234, 345])
+      const f1 = Filters.in('ival', new Set([234, 345]))
       const entries = await cache.entries(f1)
 
       await t.compareEntries([[val234, val234], [val345, val345]], entries)

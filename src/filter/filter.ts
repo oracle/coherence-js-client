@@ -164,7 +164,7 @@ export abstract class ComparisonFilter<T, E, C>
    */
   protected constructor (typeName: string, extractorOrMethod: ValueExtractor<T, E> | string, value: C) {
     super(typeName, extractorOrMethod)
-    this.value = value
+    this.value = value instanceof Set ? Array.from(value as Set<any>) as unknown as C : value
   }
 }
 
