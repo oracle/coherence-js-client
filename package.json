@@ -32,7 +32,6 @@
     "compile": "tsc -p src",
     "src-clean": "rm -rf lib; bin/npm-post-install.sh",
     "full-clean": "rm -rf lib; npm unlink; rm -rf node_modules",
-    "link": "npm unlink; npm link; npm link @oracle/coherence",
     "test": "mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
