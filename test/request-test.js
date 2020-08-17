@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Filters, Extractors } = require('@oracle/coherence')
+const { Filters, Extractors } = require('../lib/index')
 const assert = require('assert').strict
 const req = require('../lib/util/request-factory')
 const ser = require('../lib/util/serializer')

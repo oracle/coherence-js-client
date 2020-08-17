@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { event, SessionBuilder, Session } = require('@oracle/coherence')
+const { event, SessionBuilder, Session } = require('../lib/index')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
 

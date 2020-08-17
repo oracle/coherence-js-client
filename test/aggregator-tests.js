@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Aggregators, Filters, SessionBuilder, aggregator } = require('@oracle/coherence')
+const { Aggregators, Filters, SessionBuilder, aggregator } = require('../lib/index')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
