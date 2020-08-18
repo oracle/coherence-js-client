@@ -12,7 +12,7 @@ import { AlwaysFilter, MapEventFilter } from '../filter'
 import { NamedMap } from '../net'
 import { MapListenerRequest, MapListenerResponse } from '../net/grpc/messages_pb'
 import { NamedCacheServiceClient } from '../net/grpc/services_grpc_pb'
-import { Serializer, Map } from '../util/'
+import { Map, Serializer } from '../util/'
 import { RequestFactory } from '../util/request-factory' // RequestFactory not exported
 import { CacheLifecycleEvent } from './events'
 
@@ -362,7 +362,7 @@ export class MapEventsManager<K, V> {
             resolve()
           }
         })
-        bidiStream.cancel()
+        bidiStream.end()
       })
     }
     return Promise.resolve()
