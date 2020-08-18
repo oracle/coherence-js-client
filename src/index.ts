@@ -5,12 +5,6 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-/**
- * Coherence Javascript Client
- *
- * @packageDocumentation
- * @module coherence-js-client
- */
 export * as aggregator from './aggregator/'
 export * as extractor from './extractor/'
 export * as filter from './filter/'
