@@ -36,6 +36,6 @@
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
-    "coverage": "nyc --reporter=html mocha 'test/**.js'"
+    "coverage": "nyc mocha 'test/**.js'"
   }
 }
