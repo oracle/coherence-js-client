@@ -2,6 +2,7 @@
   "inputFiles": [
     "./src"
   ],
+  "mode": "file",
   "out": "docs",
   "excludeNotExported": true,
   "excludePrivate": true,
@@ -14,7 +15,14 @@
   "includeDeclarations": true,
   "excludeExternals": true,
   "stripInternal": true,
+  "disableSources": true,
   "exclude": [
     "**/*+(index|package-internal).ts"
+  ],
+  "toc": [
+    "Aggregators",
+    "Session",
+    "aggregator",
+    "filter"
   ]
 }

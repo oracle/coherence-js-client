@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { UniversalExtractor, ValueExtractor } from './extractor/'
+import { ValueExtractor } from './extractor/'
 import {
   AllFilter,
   AlwaysFilter,
@@ -356,9 +356,7 @@ export class Filters {
    *          to the specified value
    */
   static lessEqual<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, value: E): Filter<T> {
-    return new LessEqualsFilter(extractorOrMethod instanceof ValueExtractor
-      ? extractorOrMethod
-      : new UniversalExtractor(extractorOrMethod), value)
+    return new LessEqualsFilter(extractorOrMethod, value)
   }
 
   /**
@@ -376,9 +374,7 @@ export class Filters {
    * @return a LikeFilter
    */
   static like<T, E> (extractorOrMethod: ValueExtractor<T, E> | string, pattern: string, escape: string, ignoreCase: boolean): Filter<T> {
-    return new LikeFilter(extractorOrMethod instanceof ValueExtractor
-      ? extractorOrMethod
-      : new UniversalExtractor(extractorOrMethod), pattern, escape, ignoreCase)
+    return new LikeFilter(extractorOrMethod, pattern, escape, ignoreCase)
   }
 
   /**

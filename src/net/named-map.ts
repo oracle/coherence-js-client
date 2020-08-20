@@ -152,7 +152,7 @@ export interface NamedMap<K, V> {
 
   /**
    * If the specified key is not already associated with a value (or is mapped to `null`) associates
-   * it with the given value and returns `nul`l, else returns the current value.
+   * it with the given value and returns `null`, else returns the current value.
    *
    * @param key    the key with which the specified value is to be associated
    * @param value  the value to be associated with the specified key

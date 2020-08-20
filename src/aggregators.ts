@@ -76,9 +76,6 @@ export class Aggregators {
    * @return an aggregator that calculates the set of distinct values from the entries in a Map
    */
   static distinct<K, V, T> (extractorOrProperty: ValueExtractor<T, number> | string): EntryAggregator<K, V, T, number, number> {
-    if (extractorOrProperty instanceof ValueExtractor) {
-      return new DistinctValuesAggregator(extractorOrProperty as ValueExtractor<T, number>)
-    }
     return new DistinctValuesAggregator(extractorOrProperty)
   }
 
@@ -117,9 +114,6 @@ export class Aggregators {
    *         from a set of entries in a Map
    */
   static min<K, V, T> (extractorOrProperty: ValueExtractor<T, number> | string): EntryAggregator<K, V, T, number, number> {
-    if (extractorOrProperty instanceof ValueExtractor) {
-      return new MinAggregator(extractorOrProperty as ValueExtractor<T, number>)
-    }
     return new MinAggregator(extractorOrProperty)
   }
 
@@ -137,9 +131,6 @@ export class Aggregators {
    *         from a set of entries in a Map
    */
   static max<T> (extractorOrProperty: ValueExtractor<T, number> | string): MaxAggregator<T> {
-    if (extractorOrProperty instanceof ValueExtractor) {
-      return new MaxAggregator(extractorOrProperty as ValueExtractor<T, number>)
-    }
     return new MaxAggregator(extractorOrProperty)
   }
 
@@ -227,9 +218,6 @@ export class Aggregators {
    *         from a set of entries in a Map
    */
   static sum<T> (extractorOrProperty: ValueExtractor<T, number> | string): SumAggregator<T> {
-    if (extractorOrProperty instanceof ValueExtractor) {
-      return new SumAggregator(extractorOrProperty as ValueExtractor<T, number>)
-    }
     return new SumAggregator(extractorOrProperty)
   }
 

@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ValueExtractor } from '../extractor/'
 import { ComparisonFilter } from '.'
+import { ValueExtractor } from '../extractor/'
 import { internal } from './package-internal'
 
 /**
@@ -36,7 +36,7 @@ export class LikeFilter<T = any, E = any>
    * @param escapeChar         the escape character for escaping `%` and `_`
    * @param ignoreCase         `true` to be case-insensitive
    */
-  constructor (extractorOrMethod: ValueExtractor<T, E>, pattern: string, escapeChar: string = '0', ignoreCase: boolean = false) {
+  constructor (extractorOrMethod: ValueExtractor<T, E> | string, pattern: string, escapeChar: string = '0', ignoreCase: boolean = false) {
     super(internal.filterName('LikeFilter'), extractorOrMethod, pattern)
 
     this.escapeChar = escapeChar.length === 1 ? escapeChar : '0'
