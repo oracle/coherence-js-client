@@ -8,7 +8,7 @@ http://oss.oracle.com/licenses/upl.
 # Coherence JavaScript Client
 
 Coherence JavaScript Client allows Node applications to act as
-cache clients to a Coherence Cluster using `gRPC` framework as
+cache clients to a Coherence Cluster using gRPC framework as
 the network transport.
 
 ### Features
@@ -18,7 +18,7 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 20.12 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
+* Coherence CE 20.06.1 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
 * Node 14
 * NPM 6.x
 
@@ -27,15 +27,13 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is availble.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.06
+docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.06.1
 ```
-
-For more details on the image, see [here](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
 
 ### Declare Your Dependency
 
 To use the Coherence gRPC Javascript Client, simply declare it as a dependency in your
-project's `project.json`:
+project's `package.json`:
 ```json
 ...
 "dependencies": {
@@ -50,13 +48,13 @@ project's `project.json`:
 
 #### Establishing a Session
 
-The Coherence uses the concept of a `Session` to manage a set of related Coherence resources, such as maps and/or caches. When using the Coherence JavaScript Client, a `Session` connects to a specific `gRPC` endpoint and uses a specific serialization format to marshal requests and responses. This means that different sessions using different serializers may connect to the same server endpoint. Typically, for efficiency the client and server would be configured to use matching serialization formats to avoid deserialization of data on the server but this does not have to be the case. If the server is using a different serializer for the server side caches it must be able
+The Coherence uses the concept of a `Session` to manage a set of related Coherence resources, such as maps and/or caches. When using the Coherence JavaScript Client, a `Session` connects to a specific gRPC endpoint and uses a specific serialization format to marshal requests and responses. This means that different sessions using different serializers may connect to the same server endpoint. Typically, for efficiency the client and server would be configured to use matching serialization formats to avoid deserialization of data on the server but this does not have to be the case. If the server is using a different serializer for the server side caches it must be able
 to deserialize the client's requests, so there must be a serializer configured on the server to match that used by the client.
 
-> NOTE: Currently, the Coherence JavaScript client only supports `JSON` serialization
+> NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
 
 A `Session` is constructed using a `SessionBuilder`.  The builder exposes configuration such as:
-* Address of the Coherence `gRPC` proxy (defaults to `localhost:1408`)
+* Address of the Coherence gRPC proxy (defaults to `localhost:1408`)
 * TLS configuration
 * Serialization format
 * Request timeout
@@ -85,16 +83,16 @@ Once the session has been constructed, it will now be possible to create maps an
 
 #### Basic Map Operations
 
-The map (`NamedMap`) and cache (`NamedCache`) implementations provide the same basic features as the Map defined provided by Javascript except for the following differences:
+The map (`NamedMap`) and cache (`NamedCache`) implementations provide the same basic features as the Map  provided by JavaScript except for the following differences:
 
 * key equality isn't restricted to reference equality
 * insertion order is not maintained
 
 > NOTE:  The only difference between `NamedCache` and `NamedMap` is that the cache allows associating a time-to-live on the cache entry, while the map does not
 
-For the following examples, let's assume that we have a cache defined with Coherence named 'Test'.  To get access to the cache from the client:
+For the following examples, let's assume that we have a map defined within Coherence named `Test`.  To get access to the map from the client:
 
-> NOTE: If using the Docker image previously mentioned for testing, you don't need to worry about the details of the cache name.  Any name will work.
+> NOTE: If using the Docker image previously mentioned for testing, you don't need to worry about the details of the map name.  Any name will work.
 
 ```javascript
 let map = session.getMap('Test')
@@ -137,7 +135,7 @@ map.forEach(entry => console.log(entry))
 #### Querying the Map
 
 Coherence provides a rich set of primitives that allow developers to create advanced queries against
-a set of entries returning only those keys and/or values matching the filtered critera.  See the documentation for details on the Filters provided by this client.
+a set of entries returning only those keys and/or values matching the specified critera.  See the documentation for details on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
 
@@ -149,12 +147,12 @@ Let's assume we have a `NamedMap` in which we're storing `string` keys and some 
 }
 ```
 
-Insert a few objects ...
+First, let's insert a few objects:
 
 ```javascript
-map.set('0001', '{name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}')
-map.set('0002', '{name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}')
-map.set('0003', '{name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}')
+map.set('0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]})
+map.set('0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]})
+map.set('0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]})
 ```
 
 Using a filter we can limit the result set returned by the map:
@@ -170,14 +168,14 @@ map.entries(Filters.greater('age', 40))
 map.keys(Filters.arrayContains('hobbies', 'gardening'))  
 // ['0001', '0003']
 
-map.values(Filters.not(Filters.arrayContains('hobbies', 'gargending')
+map.values(Filters.not(Filters.arrayContains('hobbies', 'gardending')
 // [{name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}]
 ```
 
 #### Aggregation
 
-Coherence provides developers with the ability to process some subset of the entries in an cache, 
-resulting in a aggregated result. See the documentation for aggregators provided by this client.
+Coherence provides developers with the ability to process some subset of the entries in a map, 
+resulting in an aggregated result. See the documentation for aggregators provided by this client.
 
 Assuming the same set of keys and values are present from the filtering example:
 
@@ -196,11 +194,11 @@ map.aggregate(Filters.greater('age', 40), Aggregators.count())
 // 2
 ```
 
-#### Entry Processing
+#### In-place Processing
 
-An entry processor allows manipulation of cache entries locally within the cluster instead of bringing the entire object to the client, updating, and pushing the value back.  See the documentation for the processors provided by this client.
+An entry processor allows mutation of map entries in-place within the cluster instead of bringing the entire object to the client, updating, and pushing the value back.  See the documentation for the processors provided by this client.
 
-Assuming the same set of keeys and values are present from the filtering and aggregation examples:
+Assuming the same set of keys and values are present from the filtering and aggregation examples:
 
 ```javascript
 const { Filters, Processors } = require('@oracle/coherence')
@@ -213,15 +211,15 @@ map.invoke('0001', Processors.extract('age'))
 
 // target all entries across the cluster
 map.invokeAll(Processors.extract('age'))
-// returns: [38, 56, 48]
+// returns: [['0001`, 38], ['0002', 56], ['0003', 48]]
 
 // target all entries matching filtered critera
-map.invoke(Filters.greater('age', 40), Processors.extract('age'))
-// returns: [56, 48]
+map.invokeAll(Filters.greater('age', 40), Processors.extract('age'))
+// returns: [['0002', 56], ['0003', 48]]
 
 // updating a value 'in-place'
-map.invoke(Filters.greater('age', 40), Processors.increment('age', 1))
-// returns [57, 49]
+map.invokeAll(Filters.greater('age', 40), Processors.increment('age', 1))
+// returns [['0002', 57], ['0003', 49]]
 ```
 
 
