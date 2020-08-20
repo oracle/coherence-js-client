@@ -18,11 +18,5 @@
   "disableSources": true,
   "exclude": [
     "**/*+(index|package-internal).ts"
-  ],
-  "toc": [
-    "Aggregators",
-    "Session",
-    "aggregator",
-    "filter"
   ]
 }
