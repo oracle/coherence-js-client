@@ -233,7 +233,7 @@ export interface NamedMap<K, V> {
    *                exist within the Map
    * @param action  the action to be performed for each entry
    */
-  forEach (keys: Iterable<K>, action: (key: K, value: V) => void): Promise<void>
+  forEach (keys: Iterable<K>, action: (value: V, key: K) => void): Promise<void>
 
   /**
    * Perform an aggregating operation against the entries specified by the passed keys.

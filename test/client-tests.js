@@ -182,8 +182,12 @@ describe('NamedCacheClient IT Test Suite', function () {
     describe('forEach()', () => {
       it('should iterate over the entries associated with the key and invoke the callback', async () => {
         const entriesSeen = new Set()
-        await cache.forEach([val123, val456], (key, value) => entriesSeen.add([key, value]))
-        await test.compareElements([[val123, val123], [val456, val456]], entriesSeen)
+        await cache.clear()
+        await cache.set('123', val123).then(() => cache.set('234', val234))
+        await cache.set('345', val345)
+        await cache.set('456', val456)
+        await cache.forEach(['123', '456'], (value, key) => entriesSeen.add([value, key]))
+        await test.compareElements([[val123, '123'], [val456, '456']], entriesSeen)
       })
     })
 

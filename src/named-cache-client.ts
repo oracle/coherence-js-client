@@ -255,13 +255,13 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  forEach (keys: Iterable<K>, action: (key: K, value: V) => void): Promise<void> {
-      return new Promise((resolve, reject) => {
-          this.getAll(keys as Iterable<K>)
-            .then(entries => entries.forEach((value: V, key: K) => action(key, value)))
-            .then(() => resolve(undefined))
-            .catch(error => reject(error))
-      })
+  forEach (keys: Iterable<K>, action: (value: V, key: K) => void): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.getAll(keys as Iterable<K>)
+        .then(entries => entries.forEach((value: V, key: K) => action(value, key)))
+        .then(() => resolve(undefined))
+        .catch(error => reject(error))
+    })
   }
 
   /**
