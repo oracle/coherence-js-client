@@ -8,7 +8,7 @@
   "excludePrivate": true,
   "module": "commonjs",
   "target": "ES6",
-  "name": "Oracle Coherence Javascript Client",
+  "name": "Oracle Coherence JavaScript Client",
   "includeVersion": true,
   "readme": "README.md",
   "hideGenerator": true,
