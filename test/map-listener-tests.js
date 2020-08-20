@@ -5,8 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
+const { MapEventResponse } = require('../lib/net/grpc/messages_pb')
 const { event, Filters, filter, SessionBuilder } = require('../lib/index')
 const events = require('events')
+const { MapEvent } = require('../lib/event/map-event')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
 
@@ -306,7 +308,111 @@ describe('MapListener IT Test Suite', function () {
         'order': [{ key: '123', new: { xyz: '123-xyz' } }, { key: '123', old: { xyz: '123-xyz' } }]
       })
     })
+  })
 
+  describe('A MapEvent', () => {
+    it('should have the correct source', async () => {
+      const cache = session.getCache('event-map')
+      const prom = new Promise((resolve) => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+          resolve()
+        })
+      })
+
+      await cache.addMapListener({
+        async entryInserted (event) {
+          assert.deepEqual(event.getSource(), cache)
+          await cache.destroy()
+        }
+        , entryDeleted (event) {
+        }, entryUpdated (event) {
+        }
+      })
+
+      await cache.set('a', 'b')
+      await prom.catch((error) => assert.fail(error))
+    })
+
+    it('should have the same name as the source cache', async () => {
+      const cache = session.getCache('event-map')
+      const prom = new Promise((resolve) => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+          resolve()
+        })
+      })
+
+      await cache.addMapListener({
+        async entryInserted (event) {
+          assert.equal(event.getName(), cache.name)
+          await cache.destroy()
+        }
+        , entryDeleted (event) {
+        }, entryUpdated (event) {
+        }
+      })
+
+      await cache.set('a', 'b')
+      await prom.catch((error) => assert.fail(error))
+    })
+
+    it('should produce a readable description of the event type', async () => {
+      const cache = session.getCache('event-map')
+      const prom = new Promise((resolve) => {
+        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+          resolve()
+        })
+      })
+
+      let count = 0
+      await cache.addMapListener({
+        async entryInserted (event) {
+          assert.equal(event.getDescription(), 'inserted')
+          if (++count === 3) {
+            await cache.destroy()
+          }
+        }
+        , async entryDeleted (event) {
+          assert.equal(event.getDescription(), 'deleted')
+          if (++count === 3) {
+            await cache.destroy()
+          }
+        }, async entryUpdated (event) {
+          assert.equal(event.getDescription(), 'updated')
+          if (++count === 3) {
+            await cache.destroy()
+          }
+        }
+      })
+
+      await cache.set('a', 'b')
+      await cache.set('a', 'c')
+      await cache.delete('a')
+      await prom.catch((error) => assert.fail(error))
+    })
+
+    it('should return unknown string for unknown event IDs', async () => {
+      const cache = session.getCache('event-map')
+      const response = new MapEventResponse()
+      response.setId(8)
+      const e = new MapEvent(cache.name, cache, response, null)
+      assert.equal(e.getDescription(), '<unknown: ' + 8 + '>')
+      await cache.destroy()
+    })
+
+    it('should throw if key cannot be deserialized', async () => {
+      const cache = session.getCache('event-map')
+      const response = new MapEventResponse()
+      response.setId(8)
+      const e = new MapEvent(cache.name, cache, response, {
+        deserialize () {
+          return undefined
+        }, serialize () {
+          return undefined
+        }, format: 'Lossy'
+      })
+      assert.throws(() => e.getKey())
+      await cache.destroy()
+    })
   })
 
   class CountingMapListener extends events.EventEmitter {
