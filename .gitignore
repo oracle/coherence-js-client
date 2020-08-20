@@ -9,3 +9,5 @@ src/net/grpc
 etc/proto
 .npmrc
 docs
+coverage
+/.nyc_output
