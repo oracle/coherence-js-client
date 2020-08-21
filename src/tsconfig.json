@@ -16,15 +16,5 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "strictBindCallApply": true
-    //    "baseUrl": "src",
-    //    "paths": {
-    //      "@aggregator/*": ["aggregator/*"],
-    //      "@cache/*": ["cache/*"],
-    //      "@event/*": ["event/*"],
-//      "@extractor/*": ["extractor/*"],
-//      "@filter/*": ["filter/*"],
-//      "@processor/*": ["processor/*"],
-//      "@util/*": ["util/*"]
-//    }
   }
 }

@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { event, SessionBuilder, Session } = require('../lib/index')
+const { event, SessionBuilder, Session } = require('../lib')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
 

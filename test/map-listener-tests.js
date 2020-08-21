@@ -5,12 +5,11 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { MapEventResponse } = require('../lib/net/grpc/messages_pb')
-const { event, Filters, filter, SessionBuilder } = require('../lib/index')
+const { MapEventResponse } = require('../lib/grpc/messages_pb')
+const { event, Filters, filter, SessionBuilder } = require('../lib')
 const events = require('events')
-const { MapEvent, MapListenerAdapter } = require('../lib/event')
 const assert = require('assert').strict
-const { describe, it } = require('mocha');
+const { describe, it } = require('mocha')
 
 describe('MapListener IT Test Suite', function () {
   const session = new SessionBuilder().build()
@@ -319,7 +318,7 @@ describe('MapListener IT Test Suite', function () {
         })
       })
 
-      const listener = new (class MyListener extends MapListenerAdapter {
+      const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
           assert.deepEqual(event.getSource(), cache)
           await cache.destroy()
@@ -340,7 +339,7 @@ describe('MapListener IT Test Suite', function () {
         })
       })
 
-      const listener = new (class MyListener extends MapListenerAdapter {
+      const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
           assert.deepEqual(event.getName(), cache.name)
           await cache.destroy()
@@ -362,7 +361,7 @@ describe('MapListener IT Test Suite', function () {
       })
 
       let count = 0
-      const listener = new (class MyListener extends MapListenerAdapter {
+      const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
           assert.equal(event.getDescription(), 'inserted')
           if (++count === 3) {
@@ -396,7 +395,7 @@ describe('MapListener IT Test Suite', function () {
       const cache = session.getCache('event-map')
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new MapEvent(cache.name, cache, response, null)
+      const e = new event.MapEvent(cache.name, cache, response, null)
       assert.equal(e.getDescription(), '<unknown: ' + 8 + '>')
       await cache.destroy()
     })
@@ -405,7 +404,7 @@ describe('MapListener IT Test Suite', function () {
       const cache = session.getCache('event-map')
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new MapEvent(cache.name, cache, response, {
+      const e = new event.MapEvent(cache.name, cache, response, {
         deserialize () {
           return undefined
         }, serialize () {

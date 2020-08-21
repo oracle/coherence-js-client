@@ -5,14 +5,14 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CacheLifecycleEvent, SessionLifecycleEvent } from './event/events'
-import { NamedCache, NamedMap } from './net' // SessionLifecycleEvent not exported
-import { SerializerRegistry } from './util'
 import { EventEmitter } from 'events'
 import { PathLike, readFileSync } from 'fs'
 import { Channel, ChannelCredentials, credentials } from 'grpc'
+import { event } from './events'
 
-import { NamedCacheClient } from './named-cache-client'
+import { NamedCacheClient, net } from './named-cache-client'
+import { util } from './util'
+
 
 /**
  * A builder for creating Sessions.
@@ -319,19 +319,19 @@ export class Session
 
     const self = this
     this.sessionClosedPromise = new Promise((resolve) => {
-      self.on(CacheLifecycleEvent.RELEASED, () => {
+      self.on(event.CacheLifecycleEvent.RELEASED, () => {
         if (self.markedForClose && self.caches.size == 0) {
           self.closed = true
           resolve(true)
         }
       })
-      self.on(CacheLifecycleEvent.DESTROYED, () => {
+      self.on(event.CacheLifecycleEvent.DESTROYED, () => {
         if (self.markedForClose && self.caches.size == 0) {
           self.closed = true
           resolve(true)
         }
       })
-      self.on(SessionLifecycleEvent.CLOSED, () => {
+      self.on(event.SessionLifecycleEvent.CLOSED, () => {
         if (self.markedForClose && self.caches.size == 0) {
           self.closed = true
           resolve(true)
@@ -444,7 +444,7 @@ export class Session
    * @param name    the cache name
    * @param format  the serialization format for keys and values stored within the cache
    */
-  getCache<K, V> (name: string, format: string=Session.DEFAULT_FORMAT): NamedCache<K, V> {
+  getCache<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): net.NamedCache<K, V> {
     if (this.markedForClose) {
       throw new Error('Session is closing')
     }
@@ -453,7 +453,7 @@ export class Session
     }
 
     const cacheKey = Session.makeCacheKey(name, format)
-    const serializer = SerializerRegistry.instance().serializer(format)
+    const serializer = util.SerializerRegistry.instance().serializer(format)
 
     let namedCache = this.caches.get(cacheKey)
     if (!namedCache) {
@@ -465,8 +465,8 @@ export class Session
     return namedCache
   }
 
-  getMap<K, V> (name: string, format: string=Session.DEFAULT_FORMAT): NamedMap<K, V> {
-    return this.getCache(name, format) as NamedMap<K, V>
+  getMap<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): net.NamedMap<K, V> {
+    return this.getCache(name, format) as net.NamedMap<K, V>
   }
 
   /**
@@ -483,7 +483,7 @@ export class Session
     }
     this.channel.close()
 
-    this.emit(SessionLifecycleEvent.CLOSED)
+    this.emit(event.SessionLifecycleEvent.CLOSED)
     return Promise.resolve()
   }
 
@@ -538,20 +538,20 @@ export class Session
    */
   private setupEventHandlers (cache: NamedCacheClient) {
     const self = this
-    cache.on(CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
+    cache.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
       // Our keys in caches Map are of the form cacheName:format.
       // We will destroy all caches whose key starts with 'cacheName:'
       for (const key of self.caches.keys()) {
         if (Session.isKeyForCacheName(key, cacheName)) {
           self.caches.delete(key)
-          self.emit(CacheLifecycleEvent.DESTROYED, cacheName)
+          self.emit(event.CacheLifecycleEvent.DESTROYED, cacheName)
         }
       }
     })
 
-    cache.on(CacheLifecycleEvent.RELEASED, (cacheName: string, format: string) => {
+    cache.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string, format: string) => {
       self.caches.delete(Session.makeCacheKey(cacheName, format))
-      self.emit(CacheLifecycleEvent.RELEASED, cacheName, format)
+      self.emit(event.CacheLifecycleEvent.RELEASED, cacheName, format)
     })
   }
 }

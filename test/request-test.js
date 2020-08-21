@@ -5,19 +5,18 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Filters, Extractors } = require('../lib/index')
+const { Filters, Extractors, util } = require('../lib')
 const assert = require('assert').strict
-const req = require('../lib/util/request-factory')
-const ser = require('../lib/util/serializer')
-const { ClearRequest, AddIndexRequest, ContainsEntryRequest, ContainsKeyRequest, ContainsValueRequest,
-  GetRequest, EntrySetRequest, KeySetRequest, ValuesRequest } = require('../lib/net/grpc/messages_pb')
+const {
+  ClearRequest, AddIndexRequest, ContainsEntryRequest, ContainsKeyRequest, ContainsValueRequest,
+  GetRequest, EntrySetRequest, KeySetRequest, ValuesRequest
+} = require('../lib/grpc/messages_pb')
 const { describe, it } = require('mocha');
-
-const serializer = ser.SerializerRegistry.instance().serializer('json')
-const reqFactory = new req.RequestFactory('States', serializer)
 
 describe('The RequestFactory', function () {
   this.timeout(10000)
+  const serializer = util.SerializerRegistry.instance().serializer('json')
+  const reqFactory = new util.RequestFactory('States', serializer)
 
   const states = {
     ca: {

@@ -28,8 +28,8 @@ function grab-proto-files() {
 function gen-compile-proto-files() {
 echo ${PWD}
     declare -r PROTO_SRC_DIR="${ROOT}/etc/proto"
-    declare -r PROTO_GEN_SRC_DIR="${ROOT}/src/net/grpc"
-    declare -r PROTO_GEN_OUT_DIR="${ROOT}/lib/net/grpc"
+    declare -r PROTO_GEN_SRC_DIR="${ROOT}/src/grpc"
+    declare -r PROTO_GEN_OUT_DIR="${ROOT}/lib/grpc"
 
     rm -rf ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}
     mkdir -p ${PROTO_GEN_SRC_DIR} ${PROTO_GEN_OUT_DIR}

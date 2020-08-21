@@ -12,11 +12,19 @@
   "includeVersion": true,
   "readme": "README.md",
   "hideGenerator": true,
-  "includeDeclarations": true,
-  "excludeExternals": true,
+  "includeDeclarations": false,
+  "excludeExternals": false,
   "stripInternal": true,
   "disableSources": true,
   "exclude": [
-    "**/*+(index|package-internal).ts"
+    "**/grpc/**"
+  ],
+  "toc": [
+    "Aggregators",
+    "Extractors",
+    "Filters",
+    "Processors",
+    "Session",
+    "SessionBuilder"
   ]
 }

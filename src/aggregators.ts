@@ -5,26 +5,804 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import {
-  AverageAggregator,
-  CountAggregator,
-  DistinctValuesAggregator,
-  EntryAggregator,
-  GroupAggregator,
-  MaxAggregator,
-  MinAggregator,
-  PriorityAggregator,
-  QueryRecorder,
-  RecordType,
-  ReducerAggregator,
-  Schedule,
-  ScriptAggregator,
-  SumAggregator,
-  Timeout,
-  TopAggregator
-} from './aggregator'
-import { ValueExtractor } from './extractor/'
-import { Filter } from './filter/'
+import { extractor, Extractors } from './extractors'
+import { filter } from './filters'
+import { net } from './named-cache-client'
+import { util } from './util'
+
+export namespace aggregator {
+
+  /**
+   * An EntryAggregator represents processing that can be directed to occur
+   * against some subset of the entries in an cache, resulting in a
+   * aggregated result. Common examples of aggregation include functions such
+   * as min(), max() and avg(). However, the concept of aggregation applies to
+   * any process that needs to evaluate a group of entries to come up with a
+   * single answer.
+   *
+   * @typeParam K  the type of the Map entry key
+   * @typeParam V  the type of the Map entry value
+   //  * @typeParam T  the type of the value to extract from
+   //  * @typeParam E  the type of the extracted value to aggregate
+   * @typeParam R  the type of the aggregation result
+   */
+  export abstract class EntryAggregator<K, V, T, E, R> {
+    /**
+     * Server-side EntryAggregator implementation type identifier.
+     */
+    protected '@class': string
+
+    /**
+     * The {@linkextractor.ValueExtractor} to apply when aggregating results.
+     *
+     */
+    protected extractor?: extractor.ValueExtractor<T, E>
+
+    /**
+     * Construct an AbstractAggregator that will aggregate values extracted from the cache entries.
+     *
+     * @param clz                  the server-side EntryAggregator implementation type identifier
+     * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
+     *                             could be invoked via Java reflection and that returns values to aggregate; this
+     *                             parameter can also be a dot-delimited sequence of method names which would
+     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
+     *                             an array of corresponding {@link UniversalExtractor} objects; must not be `null`
+     */
+    protected constructor (clz: string, extractorOrProperty?: extractor.ValueExtractor<T, E> | string) {
+      this['@class'] = clz
+      if (extractorOrProperty) {
+        if (extractorOrProperty instanceof extractor.ValueExtractor) {
+          this.extractor = extractorOrProperty
+        } else {
+          this.extractor = new extractor.UniversalExtractor(extractorOrProperty)
+        }
+      }
+    }
+  }
+
+  /**
+   * Abstract aggregator that processes values extracted from a set of entries
+   * in a Map, with knowledge of how to compare those values. There are two way
+   * to use the AbstractComparableAggregator:
+   * <ul>
+   * <li>All the extracted objects must implement the Java Comparable interface, or</li>
+   * <li>The AbstractComparableAggregator has to be provided with a
+   * {@link Comparator} object.</li>  This {@link Comparator} must exist on the server in order
+   * to be usable.
+   * </ul>
+   * If there are no entries to aggregate, the returned result will be `null`.
+   *
+   * @typeParam T  the type of the value to extract from
+   * @typeParam R  the type of the aggregation result
+   */
+  export abstract class AbstractComparableAggregator<T, R>
+    extends EntryAggregator<any, any, T, R, R> {
+    /**
+     * Construct an AbstractComparableAggregator that will aggregate Java-Comparable values extracted
+     * from the cache entries.
+     *
+     * @param clz                  the server-side EntryAggregator implementation type identifier
+     * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
+     *                             could be invoked via Java reflection and that returns values to aggregate; this
+     *                             parameter can also be a dot-delimited sequence of method names which would
+     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
+     *                             an array of corresponding {@link UniversalExtractor} objects
+     */
+    protected constructor (clz: string, extractorOrProperty: extractor.ValueExtractor<T, R> | string) {
+      super(clz, extractorOrProperty)
+    }
+  }
+
+  /**
+   * Abstract aggregator that processes numeric values extracted from a set of
+   * entries in a Map. All the extracted Number objects will be treated as Java
+   * <tt>double</tt> values and the result of the aggregator is a Double.
+   * If the set of entries is empty, a <tt>null</tt> result is returned.
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export abstract class AbstractDoubleAggregator<T>
+    extends EntryAggregator<any, any, T, number, number> {
+
+    /**
+     * Construct an AbstractComparableAggregator that will aggregate numeric values extracted
+     * from the cache entries.
+     *
+     * @param clz                  the server-side EntryAggregator implementation type identifier
+     * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
+     *                             could be invoked via Java reflection and that returns values to aggregate; this
+     *                             parameter can also be a dot-delimited sequence of method names which would
+     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
+     *                             an array of corresponding {@link UniversalExtractor} objects
+     */
+    protected constructor (clz: string, extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(clz, extractorOrProperty)
+    }
+  }
+
+  /**
+   * Calculates an average for values of any numeric type extracted from a
+   * set of entries in a Map in a form of a numerical value. All the
+   * extracted objects will be treated as numerical values. If the set of
+   * entries is empty, a `nul`l result is returned.
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export class AverageAggregator<T>
+    extends AbstractDoubleAggregator<T> {
+
+    /**
+     * Construct an AverageAggregator that will sum numeric values extracted
+     * from the cache entries.
+     *
+     * @param extractorOrProperty   the extractor that provides a value in the form of any numeric object or
+     *                              the name of the method that could be invoked via Java reflection and that
+     *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
+     *                              sequence of method names which would result in an aggregator based on the
+     *                              {@link ChainedExtractor} that is based on an array of corresponding
+     *                              {@link UniversalExtractor} objects.  May not be null
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('BigDecimalAverage'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * `CompositeAggregator` provides an ability to execute a collection of
+   * aggregators against the same subset of the entries in an
+   * Map, resulting in a list of corresponding aggregation
+   * results. The size of the returned list will always be equal to the
+   * length of the aggregators' array.
+   */
+  export class CompositeAggregator<K = any, V = any>
+    extends EntryAggregator<K, V, any, any, Array<any>> {
+    aggregators: Array<EntryAggregator<any, any, any, any, any>>
+
+    /**
+     * Construct a CompositeAggregator based on a specified {@link EntryAggregator}
+     * array.
+     *
+     * @param aggregators  an array of EntryAggregator objects; may not be `null`
+     */
+    constructor (aggregators: Array<EntryAggregator<any, any, any, any, any>>,) {
+      super(aggregatorName('CompositeAggregator'))
+
+      if (aggregators) {
+        this.aggregators = aggregators
+      } else {
+        throw new Error('no aggregators provided')
+      }
+    }
+  }
+
+  /**
+   * Calculates a number of values in an entry set.
+   */
+  export class CountAggregator<K, V>
+    extends EntryAggregator<K, V, any, any, number> {
+
+    /**
+     * Constructs a new `CountAggregator`.
+     */
+    constructor () {
+      super(aggregatorName('Count'))
+    }
+  }
+
+  /**
+   * Return the set of unique values extracted from a set of entries in a
+   * Map. If the set of entries is empty, an empty array is returned.
+   *
+   * This aggregator could be used in combination with {@link
+    * UniversalExtractor} allowing to collect all unique combinations
+   * (tuples) of a given set of attributes.
+   *
+   * The DistinctValues aggregator covers a simple case of a more generic
+   * aggregation pattern implemented by the `GroupAggregator`, which in
+   * addition to collecting all distinct values or tuples, runs an
+   * aggregation against each distinct entry set (group).
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export class DistinctValuesAggregator<T>
+    extends AbstractDoubleAggregator<T> {
+
+    /**
+     * Construct an AbstractComparableAggregator that will aggregate numeric values extracted
+     * from the cache entries.
+     *
+     * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
+     *                             could be invoked via Java reflection and that returns values to aggregate; this
+     *                             parameter can also be a dot-delimited sequence of method names which would
+     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
+     *                             an array of corresponding {@link UniversalExtractor} objects
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('DistinctValues'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * The `GroupAggregator` provides an ability to split a subset of entries
+   * in a Map into a collection of non-intersecting subsets and then
+   * aggregate them separately and independently. The splitting (grouping)
+   * is performed using the results of the underlying {@link
+    * UniversalExtractor} in such a way that two entries will belong to the
+   * same group if and only if the result of the corresponding extract
+   * call produces the same value or tuple (list of values). After the
+   * entries are split into the groups, the underlying aggregator is
+   * applied separately to each group. The result of the aggregation by
+   * the` GroupAggregator` is a Map that has distinct values (or tuples) as
+   * keys and results of the individual aggregation as
+   * values. Additionally, those results could be further reduced using an
+   * optional {@link Filter} object.
+   *
+   * Informally speaking, this aggregator is analogous to the SQL `group
+   * by` and `having` clauses. Note that the `having` Filter is applied
+   * independently on each server against the partial aggregation results;
+   * this generally implies that data affinity is required to ensure that
+   * all required data used to generate a given result exists within a
+   * single cache partition. In other words, the `group by` predicate
+   * should not span multiple partitions if the `having` clause is used.
+   *
+   * The `GroupAggregator` is somewhat similar to the DistinctValues
+   * aggregator, which returns back a list of distinct values (tuples)
+   * without performing any additional aggregation work.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam T  the type of the value to extract from
+   * @typeParam E  the type of the extracted value
+   * @typeParam R  the type of the group aggregator result
+   */
+  export class GroupAggregator<K, V, T, E, R>
+    extends EntryAggregator<K, V, any, any, Map<E, R>> {
+    /**
+     * The underlying {@link EntryAggregator}.
+     */
+    protected aggregator: EntryAggregator<K, V, any, any, R>
+
+    /**
+     * The {@link Filter} object representing the `having` clause of this `group by`
+     * aggregator.
+     */
+    protected filter?: filter.Filter
+
+    /**
+     * Construct a `GroupAggregator` based on a specified {@linkextractor.ValueExtractor} and
+     * underlying {@link EntryAggregator}.
+     *
+     * @param extractorOrProperty   aextractor.ValueExtractor object that is used to split entries into non-intersecting
+     *                              subsets; may not be `null`. This parameter can also be a dot-delimited
+     *                              sequence of method names which would result in an aggregator based on the
+     *                              {@link ChainedExtractor} that is based on an array of corresponding
+     *                              {@link UniversalExtractor} objects; may not be `null`
+     * @param aggregator  an EntryAggregator object; may not be null
+     * @param filter      an optional Filter object used to filter out
+     *                    results of individual group aggregation results
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, E> | string, aggregator: EntryAggregator<K, V, T, E, R>, filter?: filter.Filter) {
+      super(aggregatorName('GroupAggregator'), extractorOrProperty)
+
+      if (aggregator) {
+        this.aggregator = aggregator
+      } else {
+        throw new Error('no aggregator provided')
+      }
+      this.filter = filter
+    }
+  }
+
+  /**
+   * Calculates a maximum of numeric values extracted from a set of
+   * entries in a Map in a form of a numerical value. All the extracted
+   * objects will be treated as numerical values. If the set of entries is
+   * empty, a `null` result is returned.
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export class MaxAggregator<T>
+    extends AbstractComparableAggregator<T, number> {
+
+    /**
+     * Constructs a new `MaxAggregator`.
+     *
+     * @param extractorOrProperty   the extractor that provides a value in the form of any numeric object or
+     *                              the name of the method that could be invoked via Java reflection and that
+     *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
+     *                              sequence of method names which would result in an aggregator based on the
+     *                              {@link ChainedExtractor} that is based on an array of corresponding
+     *                              {@link UniversalExtractor} objects.  May not be null
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('ComparableMax'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * Calculates a minimum of numeric values extracted from a set of
+   * entries in a Map in a form of a numerical value. All the extracted
+   * objects will be treated as numerical values. If the set of entries is
+   * empty, a `null` result is returned.
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export class MinAggregator<T>
+    extends AbstractDoubleAggregator<T> {
+
+    /**
+     * Constructs a new `MinAggregator`.
+     *
+     * @param extractorOrProperty   the extractor that provides a value in the form of any numeric object or
+     *                              the name of the method that could be invoked via Java reflection and that
+     *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
+     *                              sequence of method names which would result in an aggregator based on the
+     *                              {@link ChainedExtractor} that is based on an array of corresponding
+     *                              {@link UniversalExtractor} objects.  May not be null
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('ComparableMin'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * `PriorityAggregator` is used to explicitly control the scheduling priority and
+   * timeouts for execution of EntryAggregator-based methods.
+   * <p>
+   * For example, let's assume that there is an `Orders`</i>` cache that belongs to
+   * a partitioned cache service configured with a *request-timeout* and
+   * *task-timeout* of 5 seconds.
+   * Also assume that we are willing to wait longer for a particular
+   * aggregation request that scans the entire cache. Then we could override the
+   * default timeout values by using the PriorityAggregator as follows:
+   *
+   * ```javascript
+   * const sumAggr = new SumAggregator('cost')
+   * const priorityAgg = new PriorityAggregator(sumAggr)
+   * priorityAgg.executionTimeout = Timeout.NONE
+   * priorityAgg.requestTimeout = Timeout.NONE
+   * cacheOrders.aggregate(aFilter, priorityAgg)
+   * ```
+   * <p>
+   * This is an advanced feature which should be used judiciously.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam P  the type of the partial result
+   * @typeParam R  the type of the final result
+   */
+  export class PriorityAggregator<K, V, R>
+    extends EntryAggregator<K, V, any, any, R> {
+
+    /**
+     * The wrapped {@link EntryAggregator}.
+     */
+    protected aggregator: EntryAggregator<K, V, any, any, R>
+    /**
+     * The task execution timeout value.
+     */
+    private _executionTimeout: number = Timeout.DEFAULT
+    /**
+     * The request timeout value.
+     */
+    private _requestTimeout: number = Timeout.DEFAULT
+
+    /**
+     * Construct a new `PriorityAggregator`.
+     *
+     * @param aggregator  the aggregator wrapped by this `PriorityAggregator`
+     */
+    constructor (aggregator: EntryAggregator<K, V, any, any, R>) {
+      super(aggregatorName('PriorityAggregator'))
+      this.aggregator = aggregator
+    }
+
+    /**
+     * The scheduling priority.
+     */
+    private _schedulingPriority: Schedule = Schedule.STANDARD
+
+    /**
+     * Return the scheduling priority or, if not explicitly set, the default is {@link Schedule.STANDARD}.
+     *
+     * @return the scheduling priority, if not explicitly set, the default is {@link Schedule.STANDARD}
+     */
+    get schedulingPriority (): Schedule {
+      return this._schedulingPriority
+    }
+
+    /**
+     * Set the scheduling priority.
+     *
+     * @param schedulingPriority the scheduling priority
+     */
+    set schedulingPriority (schedulingPriority: Schedule) {
+      this._schedulingPriority = schedulingPriority
+    }
+
+    /**
+     * Return the execution timeout in milliseconds.
+     *
+     * @return the execution timeout in milliseconds
+     */
+    get executionTimeoutInMillis (): number {
+      return this._executionTimeout
+    }
+
+    /**
+     * Sets the execution timeout.
+     *
+     * @param timeout the new execution timeout in milliseconds
+     */
+    set executionTimeoutInMillis (timeout: number) {
+      this._executionTimeout = timeout
+    }
+
+    /**
+     * Return the request timeout in milliseconds.
+     *
+     * @return the request timeout in milliseconds
+     */
+    get requestTimeoutInMillis (): number {
+      return this._requestTimeout
+    }
+
+    /**
+     * Sets the request timeout.
+     *
+     * @param timeout the new request timeout in milliseconds
+     */
+    set requestTimeoutInMillis (timeout: number) {
+      this._requestTimeout = timeout
+    }
+  }
+
+  /**
+   * This aggregator is used to produce an object that contains an estimated or
+   * actual cost of the query execution for a given {@link Filter}.
+   *
+   * For example, the following code will print a *QueryRecord*,
+   * containing the estimated query cost and corresponding execution steps.
+   *
+   * ```javascript
+   *   const agent  = new QueryRecorder(RecordType.EXPLAIN);
+   *   const record = (QueryRecord) cache.aggregate(someFilter, agent);
+   *   console.print(JSON.stringify(record));
+   * ```
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   */
+  export class QueryRecorder<K, V>
+    extends EntryAggregator<K, V, any, any, any> {
+
+    /**
+     * String constant for serialization purposes.
+     * @internal
+     */
+    private static readonly EXPLAIN: string = 'EXPLAIN'
+
+    /**
+     * String constant for serialization purposes.
+     * @internal
+     */
+    private static readonly TRACE: string = 'TRACE'
+
+    /**
+     * The type object to be sent to the remote cluster.
+     * @internal
+     */
+    protected readonly type: object
+
+    /**
+     * Construct a new `QueryRecorder`.
+     *
+     * @param type  the type for this aggregator
+     */
+    constructor (type: RecordType) {
+      super(aggregatorName('QueryRecorder'))
+      this.type = QueryRecorder.getType(type)
+    }
+
+    /**
+     * Create an object that may be deserialized as a Java Enum.
+     *
+     * @param type  the {@link RecordType}
+     * @internal
+     */
+    private static getType (type: RecordType): object {
+      switch (type) {
+        case RecordType.EXPLAIN:
+          return {enum: this.EXPLAIN}
+        case RecordType.TRACE:
+          return {enum: this.TRACE}
+      }
+    }
+  }
+
+  /**
+   * The `ReducerAggregator` is used to implement functionality similar to
+   * {@link NamedMap} *getAll()* API.  Instead of returning the complete
+   * set of values, it will return a portion of value attributes based on the
+   * provided {@linkextractor.ValueExtractor}.
+   *
+   * This aggregator could be used in combination with {@link MultiExtractor} allowing one
+   * to collect tuples that are a subset of the attributes of each object stored in
+   * the cache.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam T  the type of the value to extract from
+   * @typeParam E  the type of the extracted value
+   */
+  export class ReducerAggregator<K, V, T, E>
+    extends EntryAggregator<K, V, T, E, [net.MapEntry<K, V>]> {
+
+    /**
+     * Construct a new `ReducerAggregator`.
+     *
+     * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
+     *                             could be invoked via Java reflection and that returns values to aggregate; this
+     *                             parameter can also be a dot-delimited sequence of method names which would
+     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
+     *                             an array of corresponding {@link UniversalExtractor} objects
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('ReducerAggregator'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * ScriptAggregator is a {@link EntryAggregator} that wraps a script written
+   * in one of the languages supported by Graal VM.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam P  the type of the partial result
+   * @typeParam R  the type of the final result
+   *
+   * @author mk 2019.09.24
+   * @since 14.1.1.0
+   */
+  export class ScriptAggregator<K, V, P, R>
+    extends EntryAggregator<K, V, P, any, R> {
+
+    /**
+     * The language with which the script is written in.
+     */
+    protected language: string
+
+    /**
+     * The name of the {@link EntryAggregator} that needs to be evaluated.
+     */
+    protected name: string
+
+    /**
+     * The arguments to be passed to the script for evaluation
+     */
+    protected args: any[]
+
+    /**
+     * Present only for serialization purposes.
+     * @internal
+     */
+    protected readonly characteristics: number
+
+    /**
+     * Create a {@link EntryAggregator} that wraps the specified script.
+     *
+     * @param language         the language language with which the script is written in.
+     *                         Currently, only `js` (for JavaScript) is supported
+     * @param name             the name of the {@link Filter} that needs to
+     *                         be evaluated
+     * @param args             the arguments to be passed to the script for evaluation
+     */
+    constructor (language: string, name: string, args?: any[]) {
+      super(aggregatorName('ScriptAggregator'))
+      if (language !== 'js') {
+        throw new Error('Javascript is currently the only supported language')
+      }
+      this.language = language
+      this.name = name
+      this.args = args ? args : new Array<any>()
+      this.characteristics = 0
+    }
+  }
+
+  /**
+   * Calculates an sum for values of any numeric type extracted from a set of
+   * entries in a Map in a form of a numeric value.
+   *
+   * If the set of entries is empty, a 'null' result is returned.
+   *
+   * @typeParam T  the type of the value to extract from
+   */
+  export class SumAggregator<T>
+    extends AbstractDoubleAggregator<T> {
+    /**
+     * @param extractorOrProperty the extractor that provides a value in the form of any numeric object or
+     *                            the name of the method that could be invoked via Java reflection and that
+     *                            returns numeric values to aggregate; this parameter can also be a dot-delimited
+     *                            sequence of method names which would result in an aggregator based on the
+     *                            {@link ChainedExtractor} that is based on an array of corresponding
+     *                            {@link UniversalExtractor} objects.  May not be null
+     */
+    constructor (extractorOrProperty: extractor.ValueExtractor<T, number> | string) {
+      super(aggregatorName('BigDecimalSum'), extractorOrProperty)
+    }
+  }
+
+  /**
+   * `TopAggregator` aggregates the top *N* extracted values into an array.  The extracted values must not be `null`,
+   * but do not need to be unique.
+   *
+   * @typeParam K  the type of the Map entry keys
+   * @typeParam V  the type of the Map entry values
+   * @typeParam T  the type of the value to extract from
+   * @typeParam E  the type of the extracted value
+   */
+  export class TopAggregator<K, V, T, E>
+    extends EntryAggregator<K, V, T, E, any> {
+
+    /**
+     * The maximum number of results to include in the aggregation result.
+     */
+    protected results: number = 0
+
+    /**
+     * Result order.  By default, results will be ordered in descending order.
+     */
+    protected inverse: boolean = false
+
+    /**
+     * The extractor to obtain the values to aggregate.  If not explicitly set,
+     * this will default to an {@link IdentityExtractor}.
+     */
+    protected extractor: extractor.IdentityExtractor<E> = extractor.IdentityExtractor.INSTANCE
+
+    /**
+     * The {@link Comparator} to apply against the extracted values.
+     */
+    protected comparator?: AggregatorComparator
+    protected property?: string
+
+    /**
+     * Constructs a new `TopAggregator`.
+     *
+     * @param count  the number of results to include in the aggregation result
+     */
+    constructor (count: number) {
+      super(aggregatorName('TopNAggregator'))
+      this.results = count
+    }
+
+    /**
+     * Order the results based on the values of the specified property.
+     *
+     * @param property the property name
+     */
+    orderBy (property: string): TopAggregator<K, V, T, E> {
+      this.property = property
+      this.comparator = new AggregatorComparator(this.property, this.inverse)
+      return this
+    }
+
+    /**
+     * Sort the returned values in ascending order.
+     */
+    ascending (): TopAggregator<K, V, T, E> {
+      if (this.property) {
+        this.inverse = true
+        this.comparator = new AggregatorComparator(this.property, this.inverse)
+      }
+      return this
+    }
+
+    /**
+     * Sort the returned values in descending order.
+     */
+    descending (): TopAggregator<K, V, T, E> {
+      if (this.property) {
+        this.inverse = false
+        this.comparator = new AggregatorComparator(this.property, this.inverse)
+      }
+      return this
+    }
+
+    /**
+     * The property name of the value to extract.
+     *
+     * @param property  the property name
+     */
+    extract (property: string): TopAggregator<K, V, T, E> {
+      this.inverse = true
+      this.extractor = Extractors.extract(property)
+      return this
+    }
+  }
+
+  class AggregatorComparator implements util.Comparator {
+    '@class': string
+    protected comparator: object
+
+    constructor (property: string, isAsc: boolean) {
+      let sortTypeName = 'comparator.InverseComparator'
+      if (!isAsc) {
+        sortTypeName = 'comparator.SafeComparator'
+      }
+      let propertyName = property
+      this['@class'] = sortTypeName
+
+      this.comparator = {
+        '@class': 'comparator.ExtractorComparator',
+        'extractor': Extractors.extract(propertyName)
+      }
+    }
+  }
+
+
+  /**
+   * RecordType enum specifies whether the {@link QueryRecorder} should be
+   * used to produce an object that contains an estimated or an actual cost of the query execution.
+   */
+  export enum RecordType {
+    /**
+     * Produce an object that contains an estimated cost of the query execution.
+     */
+    EXPLAIN,
+
+    /**
+     * Produce an object that contains the actual cost of the query execution.
+     */
+    TRACE
+  }
+
+  /**
+   * Available scheduling priorities for use with the {@link PriorityAggregator}.
+   */
+  export enum Schedule {
+    /**
+     * Scheduling value indicating that this task is to be queued and executed
+     * in a natural (based on the request arrival time) order.
+     */
+    STANDARD,
+
+    /**
+     * Scheduling value indicating that this task is to be queued in front of
+     * any equal or lower scheduling priority tasks and executed as soon as any
+     * of the worker threads become available.
+     */
+    FIRST,
+
+    /**
+     * Scheduling value indicating that this task is to be immediately executed
+     * by any idle worker thread; if all of them are active, a new thread will
+     * be created to execute this task.
+     */
+    IMMEDIATE
+  }
+
+  /**
+   * Default timeout configurations for use with the {@link PriorityAggregator}.
+   */
+  export enum Timeout {
+    /**
+     * A special timeout value to indicate that this task or request can run
+     * indefinitely.
+     */
+    NONE = -1,
+
+    /**
+     * A special timeout value to indicate that the corresponding service's
+     * default timeout value should be used.
+     */
+    DEFAULT
+  }
+
+  function aggregatorName (name: string): string {
+    return 'aggregator.' + name
+  }
+}
 
 /**
  * Simple Aggregator DSL.
@@ -51,8 +829,8 @@ export class Aggregators {
    * @return an aggregator that calculates a average of the numeric values extracted
    *         from a set of entries in a Map
    */
-  static average<K, V, T> (extractorOrProperty: ValueExtractor<T, number> | string): EntryAggregator<K, V, T, number, number> {
-    return new AverageAggregator(extractorOrProperty)
+  static average<K, V, T> (extractorOrProperty: extractor.ValueExtractor<T, number> | string): aggregator.EntryAggregator<K, V, T, number, number> {
+    return new aggregator.AverageAggregator(extractorOrProperty)
   }
 
   /**
@@ -64,8 +842,8 @@ export class Aggregators {
    *
    * @return an aggregator that calculates a number of values in an entry set
    */
-  static count<K, V> (): EntryAggregator<K, V, any, number, number> {
-    return new CountAggregator()
+  static count<K, V> (): aggregator.EntryAggregator<K, V, any, number, number> {
+    return new aggregator.CountAggregator()
   }
 
   /**
@@ -75,8 +853,8 @@ export class Aggregators {
    *
    * @return an aggregator that calculates the set of distinct values from the entries in a Map
    */
-  static distinct<K, V, T> (extractorOrProperty: ValueExtractor<T, number> | string): EntryAggregator<K, V, T, number, number> {
-    return new DistinctValuesAggregator(extractorOrProperty)
+  static distinct<K, V, T> (extractorOrProperty: extractor.ValueExtractor<T, number> | string): aggregator.EntryAggregator<K, V, T, number, number> {
+    return new aggregator.DistinctValuesAggregator(extractorOrProperty)
   }
 
   /**
@@ -90,14 +868,14 @@ export class Aggregators {
    * @typeParam R  the type of the group aggregator result
    *
    * @param extractorOrProperty  the extractor or method/property name to provide values for aggregation
-   * @param aggregator           an underlying {@link EntryAggregator}
+   * @param agg                  an underlying {@link EntryAggregator}
    * @param filter               an optional {@link Filter} object used to filter out results
    *                             of individual group aggregation results
    *
    * @return a new {@link GroupAggregator}
    */
-  static groupBy<K, V, T, E, R> (extractorOrProperty: ValueExtractor<T, E> | string, aggregator: EntryAggregator<K, V, T, E, T>, filter: Filter): EntryAggregator<K, V, T, E, Map<E, R>> {
-    return new GroupAggregator(extractorOrProperty, aggregator, filter)
+  static groupBy<K, V, T, E, R> (extractorOrProperty: extractor.ValueExtractor<T, E> | string, agg: aggregator.EntryAggregator<K, V, T, E, T>, filter: filter.Filter): aggregator.EntryAggregator<K, V, T, E, Map<E, R>> {
+    return new aggregator.GroupAggregator(extractorOrProperty, agg, filter)
   }
 
   /**
@@ -113,8 +891,8 @@ export class Aggregators {
    * @return an aggregator that calculates a minimum of the numeric values extracted
    *         from a set of entries in a Map
    */
-  static min<K, V, T> (extractorOrProperty: ValueExtractor<T, number> | string): EntryAggregator<K, V, T, number, number> {
-    return new MinAggregator(extractorOrProperty)
+  static min<K, V, T> (extractorOrProperty: extractor.ValueExtractor<T, number> | string): aggregator.EntryAggregator<K, V, T, number, number> {
+    return new aggregator.MinAggregator(extractorOrProperty)
   }
 
   /**
@@ -130,8 +908,8 @@ export class Aggregators {
    * @return an aggregator that calculates a maximum of the numeric values extracted
    *         from a set of entries in a Map
    */
-  static max<T> (extractorOrProperty: ValueExtractor<T, number> | string): MaxAggregator<T> {
-    return new MaxAggregator(extractorOrProperty)
+  static max<T> (extractorOrProperty: extractor.ValueExtractor<T, number> | string): aggregator.MaxAggregator<T> {
+    return new aggregator.MaxAggregator(extractorOrProperty)
   }
 
   /**
@@ -142,14 +920,14 @@ export class Aggregators {
    * @typeParam V  the type of the Map entry values
    * @typeParam R  the type of the final result
    *
-   * @param aggregator          the underlying {@link EntryAggregator}
+   * @param agg                 the underlying {@link EntryAggregator}
    * @param schedulingPriority  the {@link Schedule} priority
    * @param executionTimeout    the execution {@link Timeout}
    * @param requestTimeout      the request {@link Timeout}
    */
-  static priority<K, V, R>(aggregator: EntryAggregator<K, V, any, any, R>, schedulingPriority: Schedule = Schedule.STANDARD,
-                           executionTimeout: number = Timeout.DEFAULT, requestTimeout: number = Timeout.DEFAULT): PriorityAggregator<K, V, R> {
-    const priorityAgg = new PriorityAggregator(aggregator)
+  static priority<K, V, R> (agg: aggregator.EntryAggregator<K, V, any, any, R>, schedulingPriority: aggregator.Schedule = aggregator.Schedule.STANDARD,
+                            executionTimeout: number = aggregator.Timeout.DEFAULT, requestTimeout: number = aggregator.Timeout.DEFAULT): aggregator.PriorityAggregator<K, V, R> {
+    const priorityAgg = new aggregator.PriorityAggregator(agg)
     priorityAgg.executionTimeoutInMillis = executionTimeout
     priorityAgg.requestTimeoutInMillis = requestTimeout
     priorityAgg.schedulingPriority = schedulingPriority
@@ -168,8 +946,8 @@ export class Aggregators {
    * @return a new {@link QueryRecorder} aggregator which may be used is used to produce an object that
    *         contains an estimated or actual cost of the query execution for a given {@link Filter}
    */
-  static record<K, V>(type: RecordType = RecordType.EXPLAIN) : QueryRecorder<K, V> {
-    return new QueryRecorder<K, V>(type)
+  static record<K, V> (type: aggregator.RecordType = aggregator.RecordType.EXPLAIN): aggregator.QueryRecorder<K, V> {
+    return new aggregator.QueryRecorder<K, V>(type)
   }
 
   /**
@@ -182,8 +960,8 @@ export class Aggregators {
    *
    * @param extractorOrProperty  the extractor or method/property name to provide values for aggregation
    */
-  static reduce<K, V, T, R>(extractorOrProperty: ValueExtractor<T, R> | string): ReducerAggregator<K, V, T, R> {
-    return new ReducerAggregator<K, V, T, R>(extractorOrProperty)
+  static reduce<K, V, T, R> (extractorOrProperty: extractor.ValueExtractor<T, R> | string): aggregator.ReducerAggregator<K, V, T, R> {
+    return new aggregator.ReducerAggregator<K, V, T, R>(extractorOrProperty)
   }
 
   /**
@@ -202,8 +980,8 @@ export class Aggregators {
    * @return an aggregator that is implemented in a script using the specified
    *         language
    */
-  static script<K, V, P, R> (language: string, name: string, args: any[]): ScriptAggregator<K, V, P, R> {
-    return new ScriptAggregator<K, V, P, R>(language, name, args)
+  static script<K, V, P, R> (language: string, name: string, args: any[]): aggregator.ScriptAggregator<K, V, P, R> {
+    return new aggregator.ScriptAggregator<K, V, P, R>(language, name, args)
   }
 
   /**
@@ -217,8 +995,8 @@ export class Aggregators {
    * @return an aggregator that calculates a sum of the numeric values extracted
    *         from a set of entries in a Map
    */
-  static sum<T> (extractorOrProperty: ValueExtractor<T, number> | string): SumAggregator<T> {
-    return new SumAggregator(extractorOrProperty)
+  static sum<T> (extractorOrProperty: extractor.ValueExtractor<T, number> | string): aggregator.SumAggregator<T> {
+    return new aggregator.SumAggregator(extractorOrProperty)
   }
 
   /**
@@ -226,7 +1004,7 @@ export class Aggregators {
    *
    * @param count  the maximum number of results to include in the aggregation result
    */
-  static top<K, V, R> (count: number): TopAggregator<K, V, any, R> {
-    return new TopAggregator<K, V, any, R>(count)
+  static top<K, V, R> (count: number): aggregator.TopAggregator<K, V, any, R> {
+    return new aggregator.TopAggregator<K, V, any, R>(count)
   }
 }

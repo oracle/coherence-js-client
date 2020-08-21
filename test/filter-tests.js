@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Filters, SessionBuilder } = require('../lib/index')
+const { Filters, SessionBuilder } = require('../lib')
 const t = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')

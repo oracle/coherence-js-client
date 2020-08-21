@@ -8,29 +8,29 @@ http://oss.oracle.com/licenses/upl.
 # Coherence JavaScript Client
 
 Coherence JavaScript Client allows Node applications to act as
-cache clients to a Coherence Cluster using `gRPC` framework as
+cache clients to a Coherence Cluster using gRPC framework as
 the network transport.
 
 ### Features
-* Familar map-like interface for manipulating entries
+* Familiar `Map`-like interface for manipulating entries
 * Cluster-side querying and aggregation of map entries
-* Cluster-side manipulation of cache entries using `EntryProcessors`
+* Cluster-side manipulation of map entries using `EntryProcessors`
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 20.12 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
+* Coherence CE 20.06.1 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
 * Node 14
 * NPM 6.x
 
 ### Usage
 
-Before testing the library, you must ensure a Coherence cluster is availble.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
+Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.06
+docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.06.1
 ```
 
-For more details on the image, see [here](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
+For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
 
 ### Declare Your Dependency
 
@@ -89,25 +89,26 @@ The map (`NamedMap`) and cache (`NamedCache`) implementations provide the same b
 
 * key equality isn't restricted to reference equality
 * insertion order is not maintained
+* `set()` calls cannot be chained because of the asynchronous nature of the API
 
 > NOTE:  The only difference between `NamedCache` and `NamedMap` is that the cache allows associating a time-to-live on the cache entry, while the map does not
 
-For the following examples, let's assume that we have a cache defined with Coherence named 'Test'.  To get access to the cache from the client:
+For the following examples, let's assume that we have a Map defined in Coherence named `Test`.  To get access to the map from the client:
 
-> NOTE: If using the Docker image previously mentioned for testing, you don't need to worry about the details of the cache name.  Any name will work.
+> NOTE: If using the Docker image previously mentioned for testing, you don't need to worry about the details of the map name.  Any name will work.
 
 ```javascript
 let map = session.getMap('Test')
 ```
 
-Once we have the handle to our map, we can invoke all of the same basic operations as a standard JavaScript Map:
-
+Once we have the handle to our map, we can invoke the same basic operations as a standard JavaScript Map:
 ```javascript
 map.size                                        
 // (zero)
 
-map.set('key1', 'value1').set('key2', 'value2') 
-// returns the map
+map.set('key1', 'value1')
+map.set('key2', 'value2')
+// returns a Promise for each call
 
 map.size                                        
 // (two)
@@ -130,7 +131,7 @@ map.values()
 map.entries()                                   
 // [['key1', 'value1`], ['key2', 'value2`]]
 
-map.forEach(entry => console.log(entry))        
+map.forEach((value, key) => console.log(key + ': ' + value))
 // prints all of the entries
 ```
 
@@ -152,9 +153,9 @@ Let's assume we have a `NamedMap` in which we're storing `string` keys and some 
 Insert a few objects ...
 
 ```javascript
-map.set('0001', '{name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}')
-map.set('0002', '{name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}')
-map.set('0003', '{name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}')
+map.set('0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]})
+map.set('0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]})
+map.set('0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]})
 ```
 
 Using a filter we can limit the result set returned by the map:
@@ -170,16 +171,16 @@ map.entries(Filters.greater('age', 40))
 map.keys(Filters.arrayContains('hobbies', 'gardening'))  
 // ['0001', '0003']
 
-map.values(Filters.not(Filters.arrayContains('hobbies', 'gargending')
+map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')
 // [{name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}]
 ```
 
 #### Aggregation
 
-Coherence provides developers with the ability to process some subset of the entries in an cache, 
-resulting in a aggregated result. See the documentation for aggregators provided by this client.
+Coherence provides developers with the ability to process some subset of the entries in a map,
+resulting in an aggregated result. See the documentation for aggregators provided by this client.
 
-Assuming the same set of keys and values are present from the filtering example:
+Assuming the same set of keys and values are present from the filtering example above:
 
 ```javascript
 const { Aggregators, Filters } = require('@oracle/coherence')
@@ -200,7 +201,7 @@ map.aggregate(Filters.greater('age', 40), Aggregators.count())
 
 An entry processor allows manipulation of cache entries locally within the cluster instead of bringing the entire object to the client, updating, and pushing the value back.  See the documentation for the processors provided by this client.
 
-Assuming the same set of keeys and values are present from the filtering and aggregation examples:
+Assuming the same set of keys and values are present from the filtering and aggregation examples:
 
 ```javascript
 const { Filters, Processors } = require('@oracle/coherence')
