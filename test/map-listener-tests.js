@@ -8,7 +8,7 @@
 const { MapEventResponse } = require('../lib/net/grpc/messages_pb')
 const { event, Filters, filter, SessionBuilder } = require('../lib/index')
 const events = require('events')
-const { MapEvent } = require('../lib/event/map-event')
+const { MapEvent, MapListenerAdapter } = require('../lib/event')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
 
@@ -319,15 +319,14 @@ describe('MapListener IT Test Suite', function () {
         })
       })
 
-      await cache.addMapListener({
+      const listener = new (class MyListener extends MapListenerAdapter {
         async entryInserted (event) {
           assert.deepEqual(event.getSource(), cache)
           await cache.destroy()
         }
-        , entryDeleted (event) {
-        }, entryUpdated (event) {
-        }
-      })
+      })()
+
+      await cache.addMapListener(listener)
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -341,15 +340,14 @@ describe('MapListener IT Test Suite', function () {
         })
       })
 
-      await cache.addMapListener({
+      const listener = new (class MyListener extends MapListenerAdapter {
         async entryInserted (event) {
-          assert.equal(event.getName(), cache.name)
+          assert.deepEqual(event.getName(), cache.name)
           await cache.destroy()
         }
-        , entryDeleted (event) {
-        }, entryUpdated (event) {
-        }
-      })
+      })()
+
+      await cache.addMapListener(listener)
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -364,25 +362,29 @@ describe('MapListener IT Test Suite', function () {
       })
 
       let count = 0
-      await cache.addMapListener({
+      const listener = new (class MyListener extends MapListenerAdapter {
         async entryInserted (event) {
           assert.equal(event.getDescription(), 'inserted')
           if (++count === 3) {
             await cache.destroy()
           }
         }
-        , async entryDeleted (event) {
+
+        async entryDeleted (event) {
           assert.equal(event.getDescription(), 'deleted')
           if (++count === 3) {
             await cache.destroy()
           }
-        }, async entryUpdated (event) {
+        }
+
+        async entryUpdated (event) {
           assert.equal(event.getDescription(), 'updated')
           if (++count === 3) {
             await cache.destroy()
           }
         }
       })
+      await cache.addMapListener(listener)
 
       await cache.set('a', 'b')
       await cache.set('a', 'c')
