@@ -5,7 +5,7 @@
 node_modules/**
 .idea
 lib
-src/net/grpc
+src/grpc
 etc/proto
 .npmrc
 docs
