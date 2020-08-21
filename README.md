@@ -224,15 +224,15 @@ map.invoke('0001', Processors.extract('age'))
 
 // target all entries across the cluster
 map.invokeAll(Processors.extract('age'))
-// returns: [38, 56, 48]
+// returns: [['0001', 38], ['0002', 56], ['0003', 48]]
 
 // target all entries matching filtered critera
 map.invoke(Filters.greater('age', 40), Processors.extract('age'))
-// returns: [56, 48]
+// returns: [['0002', 56], ['0003', 48]]
 
 // incrementing a number 'in-place'
 map.invoke(Filters.greater('age', 40), Processors.increment('age', 1))
-// returns [57, 49]
+// returns [['0002', 57], ['0003', 49]]
 
 // update a value 'in-place'
 map.invoke('0001', Processors.update('age', 100))
