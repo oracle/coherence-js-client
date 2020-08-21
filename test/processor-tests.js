@@ -656,7 +656,49 @@ describe('processor.Processors IT Test Suite', function () {
       await t.compareEntries([[val123, val123],
         [val234, { id: 234, str: '234', ival: 236, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null' }],
         [val345, { id: 345, str: '345', ival: 347, fval: 34.5, iarr: [3, 4, 5], group: 2 }],
-        [val456, { id: 456, str: '456', ival: 458, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null' }]], await cache.entries())
+        [val456, {
+          id: 456,
+          str: '456',
+          ival: 458,
+          fval: 45.6,
+          iarr: [4, 5, 6],
+          group: 3,
+          nullIfOdd: 'non-null'
+        }]], await cache.entries())
+    })
+  })
+
+  describe('A PreloadRequest processor', () => {
+    it('should have the proper internal type', async () => {
+      const processor = Processors.preload()
+
+      assert.equal(processor['@class'], 'processor.PreloadRequest')
+    })
+
+    it('should be able to be invokable', async () => {
+      const processor = Processors.preload()
+
+      const result = await cache.invoke(val123, processor)
+      assert.equal(result, null)
+    })
+  })
+
+  describe('A Touch processor', () => {
+    it('should have the proper internal type', async () => {
+      const processor = Processors.touch()
+
+      assert.equal(processor['@class'], 'processor.TouchProcessor')
+    })
+  })
+
+  describe('A Script processor', () => {
+    it('should have the proper internal type', async () => {
+      const processor = Processors.script('js', 'jsprocessor', 'a', 'b')
+
+      assert.equal(processor['@class'], 'processor.ScriptProcessor')
+      assert.equal(processor['language'], 'js')
+      assert.equal(processor['name'], 'jsprocessor')
+      assert.deepEqual(processor['args'], ['a', 'b'])
     })
   })
 })

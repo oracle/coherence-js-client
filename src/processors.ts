@@ -8,8 +8,8 @@
 import { ValueUpdater } from './extractor'
 import { Filter } from './filter/'
 import {
-  ConditionalPutAll,
   ConditionalPut,
+  ConditionalPutAll,
   ConditionalRemove,
   EntryProcessor,
   ExtractorProcessor,
@@ -18,11 +18,12 @@ import {
   NumberIncrementor,
   NumberMultiplier,
   PreloadRequest,
-  PutIfAbsent,
+  ScriptProcessor,
   TouchProcessor,
   UpdaterProcessor,
-  VersionedPutAll,
-  VersionedPut, ValueManipulator, ScriptProcessor
+  ValueManipulator,
+  VersionedPut,
+  VersionedPutAll
 } from './processor'
 import { Map } from './util'
 
@@ -190,20 +191,6 @@ export class Processors {
   }
 
   /**
-   * Constructs a new {@link PutIfAbsent} processor.
-   *
-   * @typeParam K  the type of the Map entry keys
-   * @typeParam V  the type of the Map entry values
-   *
-   * @param value  the value to insert if not already present
-   *
-   * @return a new {@link PutIfAbsent} processor
-   */
-  static putIfAbsent<K, V> (value: V): EntryProcessor<K, V> {
-    return new PutIfAbsent(value)
-  }
-
-  /**
    * Construct an update processor for a given method name. The method
    * must have a single parameter of a Java type compatible with the
    * specified value type.
@@ -218,11 +205,7 @@ export class Processors {
    * @return an update processor for a given method name
    */
   static update<K, V, T> (propertyOrUpdater: string | ValueUpdater<V, T>, value: T): UpdaterProcessor<K, V, T> {
-    if (typeof propertyOrUpdater === 'string') {
       return new UpdaterProcessor<K, V, T>(propertyOrUpdater, value)
-    } else {
-      return new UpdaterProcessor<K, V, T>(propertyOrUpdater, value)
-    }
   }
 
   /**
