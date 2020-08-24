@@ -1048,7 +1048,7 @@ export namespace util {
      * This can either be called with a single argument like `aggregate(EntryAggregator)` or like
      * `aggregate(Iterable<K> | Filter<V>, Aggregator)`
      */
-    aggregate<R, T, E> (kfa: Iterable<K> | filter.Filter<V> | aggregator.EntryAggregator<K, V, T, E, R>, aggregator?: aggregator.EntryAggregator<K, V, T, E, R>): AggregateRequest {
+    aggregate<R = any> (kfa: Iterable<K> | filter.Filter | aggregator.EntryAggregator<K, V, R>, aggregator?: aggregator.EntryAggregator<K, V, R>): AggregateRequest {
       const request = new AggregateRequest()
       request.setCache(this.cacheName)
       request.setFormat(this._serializer.format)
@@ -1073,7 +1073,7 @@ export namespace util {
     /**
      * Creates an {@link AddIndexRequest}.
      */
-    addIndex (extractor: extractor.ValueExtractor<any, any>, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
+    addIndex (extractor: extractor.ValueExtractor, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
       const request = new AddIndexRequest()
 
       request.setCache(this.cacheName)
@@ -1093,7 +1093,7 @@ export namespace util {
      * Creates a new `RemoveIndexRequest`.
      * @param extractor
      */
-    removeIndex (extractor: extractor.ValueExtractor<any, any>): RemoveIndexRequest {
+    removeIndex (extractor: extractor.ValueExtractor): RemoveIndexRequest {
       const request = new RemoveIndexRequest()
 
       request.setCache(this.cacheName)
@@ -1213,7 +1213,7 @@ export namespace util {
     /**
      * Creates a new `InvokeAllRequest`.
      */
-    invokeAll<R> (keysOrFilter: Iterable<K> | filter.Filter<V>, processor?: processor.EntryProcessor<K, V, R>): InvokeAllRequest {
+    invokeAll<R = any> (keysOrFilter: Iterable<K> | filter.Filter, processor?: processor.EntryProcessor<K, V, R>): InvokeAllRequest {
       const request = new InvokeAllRequest()
       request.setFormat(this._serializer.format)
       request.setCache(this.cacheName)
@@ -1231,7 +1231,7 @@ export namespace util {
     /**
      * Creates a new `KeySetRequest`.
      */
-    keySet<T> (filter?: filter.Filter<T>): KeySetRequest {
+    keySet<T> (filter?: filter.Filter): KeySetRequest {
       const request = new KeySetRequest()
       request.setFormat(this._serializer.format)
       request.setCache(this.cacheName)

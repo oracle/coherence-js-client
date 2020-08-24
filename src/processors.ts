@@ -50,7 +50,7 @@ export namespace processor {
      *
      * @param filter  the filter
      */
-    when (filter: filter.Filter<V>): EntryProcessor<K, V, R> {
+    when (filter: filter.Filter): EntryProcessor<K, V, R> {
       return new ConditionalProcessor(filter, this)
     }
   }
@@ -65,7 +65,7 @@ export namespace processor {
    * @typeParam V  the type of the Map entry value
    * @typeParam R  the type of value returned by the EntryProcessor
    */
-  export class ConditionalProcessor<K, V, R>
+  export class ConditionalProcessor<K = any, V = any, R = any>
     extends EntryProcessor<K, V, R> {
 
     /**
@@ -75,7 +75,7 @@ export namespace processor {
     /**
      * The underlying filter.
      */
-    protected filter: filter.Filter<V>
+    protected filter: filter.Filter
 
     /**
      * Construct a ConditionalProcessor for the specified filter and the
@@ -88,7 +88,7 @@ export namespace processor {
      * @param filter     the filter
      * @param processor  the entry processor
      */
-    constructor (filter: filter.Filter<V>, processor: EntryProcessor<K, V, R>) {
+    constructor (filter: filter.Filter, processor: EntryProcessor<K, V, R>) {
       super(processorName('ConditionalProcessor'))
       this.filter = filter
       this.processor = processor
@@ -103,9 +103,8 @@ export namespace processor {
    * @typeParam V  the type of the Map entry value
    * @typeParam R  the type of value returned by the EntryProcessor
    */
-  export class CompositeProcessor<K, V>
+  export class CompositeProcessor<K = any, V = any>
     extends EntryProcessor<K, V> {
-    public static EMPTY_PROCESSOR_ARRAY = new Array<EntryProcessor>()
 
     /**
      * The underlying entry processor array.
@@ -139,12 +138,12 @@ export namespace processor {
    * `PropertyProcessor` is a base class for EntryProcessor implementations that
    * depend on a ValueManipulator.
    */
-  export abstract class PropertyProcessor<K, V, R>
+  export abstract class PropertyProcessor<K = any, V = any, R = any>
     extends EntryProcessor<K, V, R> {
     /**
      * The property value manipulator.
      */
-    protected readonly manipulator: extractor.ValueManipulator<V, R>
+    protected readonly manipulator: extractor.ValueManipulator
 
     /**
      * Construct a PropertyProcessor for the specified property name.
@@ -157,10 +156,10 @@ export namespace processor {
      * @param manipulatorOrPropertyName  the manipulator or property name
      * @param useIs                      prefix with `is`
      */
-    protected constructor (typeName: string, manipulatorOrPropertyName: extractor.ValueManipulator<V, R> | string, useIs: boolean = false) {
+    protected constructor (typeName: string, manipulatorOrPropertyName: extractor.ValueManipulator | string, useIs: boolean = false) {
       super(typeName)
       this.manipulator = typeof manipulatorOrPropertyName === 'string'
-        ? new PropertyManipulator<V, R>(manipulatorOrPropertyName, useIs)
+        ? new PropertyManipulator(manipulatorOrPropertyName, useIs)
         : manipulatorOrPropertyName
     }
   }
@@ -168,12 +167,9 @@ export namespace processor {
   /**
    * `PropertyManipulator` is a reflection based ValueManipulator implementation
    * based on the JavaBean property name conventions.
-   *
-   * @typeParam V  the type of value manipulate
-   * @typeParam R  the return type of manipulation
    */
-  export class PropertyManipulator<V, R>
-    implements extractor.ValueManipulator<V, R> {
+  export class PropertyManipulator
+    implements extractor.ValueManipulator {
     /**
      * The getter prefix flag.
      */
@@ -207,14 +203,14 @@ export namespace processor {
     /**
      * @inheritDoc
      */
-    getExtractor (): extractor.ValueExtractor<V, R> {
+    getExtractor (): extractor.ValueExtractor {
       throw new Error('Method not implemented.')
     }
 
     /**
      * @inheritDoc
      */
-    getUpdater (): extractor.ValueUpdater<V, R> {
+    getUpdater (): extractor.ValueUpdater {
       throw new Error('Method not implemented.')
     }
   }
@@ -237,7 +233,7 @@ export namespace processor {
     /**
      * The underlying filter.
      */
-    protected readonly filter: filter.Filter<V>
+    protected readonly filter: filter.Filter
 
     /**
      * Specifies the new value to update an entry with.
@@ -259,7 +255,7 @@ export namespace processor {
      * @param returnValue  specifies whether or not the processor should return
      *                     the current value in case it has not been updated
      */
-    constructor (filter: filter.Filter<V>, value: V, returnValue?: boolean) {
+    constructor (filter: filter.Filter, value: V, returnValue?: boolean) {
       super(processorName('ConditionalPut'))
 
       this.filter = filter
@@ -307,7 +303,7 @@ export namespace processor {
     /**
      * The underlying filter.
      */
-    filter: filter.Filter<V>
+    filter: filter.Filter
 
     /**
      * Specifies the new value to update an entry with.
@@ -323,7 +319,7 @@ export namespace processor {
      * @param filter  the filter to evaluate all supplied entries
      * @param map     a map of values to update entries with
      */
-    constructor (filter: filter.Filter<V>, map: Map<K, V>) {
+    constructor (filter: filter.Filter, map: Map<K, V>) {
       super(processorName('ConditionalPutAll'))
 
       this.filter = filter
@@ -344,7 +340,7 @@ export namespace processor {
     /**
      * The underlying filter.
      */
-    protected readonly filter: filter.Filter<V>
+    protected readonly filter: filter.Filter
 
     /**
      * Specifies whether or not a return value is required.
@@ -360,7 +356,7 @@ export namespace processor {
      * @param returnValue  specifies whether or not the processor should return
      *                     the current value if it has not been removed
      */
-    constructor (filter: filter.Filter<V>, returnValue?: boolean) {
+    constructor (filter: filter.Filter, returnValue?: boolean) {
       super(processorName('ConditionalRemove'))
 
       this.filter = filter
@@ -388,19 +384,14 @@ export namespace processor {
    * ```
    * For clustered caches using the ExtractorProcessor could significantly reduce the amount of network
    * traffic.
-   *
-   * @typeParam K  the type of the Map entry keys
-   * @typeParam V  the type of the Map entry values
-   * @typeParam T  the type of the value to extract from
-   * @typeParam E  the type of the extracted value
    */
-  export class ExtractorProcessor<K = any, V = any, T = any, E = any>
-    extends EntryProcessor<K, V, T> {
+  export class ExtractorProcessor
+    extends EntryProcessor {
 
     /**
      * The underlying value extractor.
      */
-    extractor: extractor.ValueExtractor<T, E | any> // This is because ChainedExtractor doesnt guarantee <T, E>
+    extractor: extractor.ValueExtractor
 
     /**
      * Construct an ExtractorProcessor using the given extractor or method name.
@@ -408,7 +399,7 @@ export namespace processor {
      * @param extractorOrMethod  the extractor.ValueExtractor to use by this filter or the name of the method to
      *                           invoke via reflection
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string | undefined) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string | undefined) {
       super(processorName('ExtractorProcessor'))
       if (extractorOrMethod instanceof extractor.ValueExtractor) {
         this.extractor = extractorOrMethod
@@ -429,8 +420,8 @@ export namespace processor {
    * of a cache entry and optionally updates the entry with a
    * modified value.
    */
-  export class MethodInvocationProcessor<K = any, V = any, R = any>
-    extends EntryProcessor<K, V, R> {
+  export class MethodInvocationProcessor
+    extends EntryProcessor {
     /**
      * The name of the method to invoke.
      */
@@ -470,7 +461,7 @@ export namespace processor {
    * `true` as a result of execution.
    */
   export class NullProcessor
-    extends EntryProcessor<any, any, void> {
+    extends EntryProcessor {
     /**
      * Singleton `NullProcessor` instance.
      */
@@ -516,7 +507,7 @@ export namespace processor {
      *                           it was incremented, or `pass` false to return the
      *                           value as it is after it is incremented
      */
-    constructor (nameOrManipulator: extractor.ValueManipulator<V, number> | string, increment: number, postIncrement: boolean = false) {
+    constructor (nameOrManipulator: extractor.ValueManipulator | string, increment: number, postIncrement: boolean = false) {
       super(processorName('NumberIncrementor'),
         typeof nameOrManipulator === 'string'
           ? NumberIncrementor.createCustomManipulator<V>(nameOrManipulator)
@@ -532,7 +523,7 @@ export namespace processor {
      * @param name  the property name
      * @hidden
      */
-    private static createCustomManipulator<V> (name: string): extractor.ValueManipulator<V, number> {
+    private static createCustomManipulator<V> (name: string): extractor.ValueManipulator {
       return new extractor.CompositeUpdater(new extractor.UniversalExtractor(name), new extractor.UniversalUpdater(name))
     }
 
@@ -584,7 +575,7 @@ export namespace processor {
      *                            it was multiplied, or pass false to return the
      *                            value as it is after it is multiplied
      */
-    constructor (nameOrManipulator: extractor.ValueManipulator<V, number> | string, multiplier: number, postMultiplication: boolean = false) {
+    constructor (nameOrManipulator: extractor.ValueManipulator | string, multiplier: number, postMultiplication: boolean = false) {
       super(processorName('NumberMultiplier'),
         typeof nameOrManipulator === 'string'
           ? NumberMultiplier.createCustomManipulator<V>(nameOrManipulator)
@@ -595,7 +586,7 @@ export namespace processor {
     }
 
     // uses UniversalExtractor and UniversalUpdater respectively.
-    private static createCustomManipulator<V> (name: string): extractor.ValueManipulator<V, number> {
+    private static createCustomManipulator<V> (name: string): extractor.ValueManipulator {
       return new extractor.CompositeUpdater(new extractor.UniversalExtractor(name), new extractor.UniversalUpdater(name))
     }
 
@@ -644,7 +635,7 @@ export namespace processor {
    * @typeParam V  the type of the Map entry value
    * @typeParma R  the type of value returned by the processor
    */
-  export class ScriptProcessor<K, V, R>
+  export class ScriptProcessor<K = any, V = any, R = any>
     extends EntryProcessor<K, V, R> {
     /**
      * The script name.
@@ -685,7 +676,7 @@ export namespace processor {
    * Touches an entry (if present) in order to trigger interceptor re-evaluation
    * and possibly increment expiry time.
    */
-  export class TouchProcessor<K, V>
+  export class TouchProcessor<K = any, V = any>
     extends EntryProcessor<K, V, void> {
     /**
      * Construct a `Touch` {@link EntryProcessor}.
@@ -708,7 +699,7 @@ export namespace processor {
     /**
      * The underlying ValueUpdater.
      */
-    protected readonly updater: extractor.ValueUpdater<V, T> | null
+    protected readonly updater: extractor.ValueUpdater | null
 
     /**
      * A value to update the entry's value with.
@@ -727,7 +718,7 @@ export namespace processor {
      *                               updating it
      * @param value                  the value to update the target entry with
      */
-    constructor (updaterOrPropertyName: string | extractor.ValueUpdater<V, T> | null, value: T) {
+    constructor (updaterOrPropertyName: string | extractor.ValueUpdater | null, value: T) {
       super(processorName('UpdaterProcessor'))
       if (typeof updaterOrPropertyName === 'string') {
         const methodName = updaterOrPropertyName
@@ -748,7 +739,7 @@ export namespace processor {
    * the version of the corresponding value. `VersionedPutAll` will increment the version
    * indicator before each value is updated.
    */
-  export class VersionedPut<K, V>
+  export class VersionedPut<K = any, V = any>
     extends EntryProcessor<K, V, V> {
     /**
      * Specifies the new value to update an entry with.
@@ -804,7 +795,7 @@ export namespace processor {
    * @typeParam K  the type of the Map entry key
    * @typeParam V  the type of the Map entry value
    */
-  export class VersionedPutAll<K, V>
+  export class VersionedPutAll<K = any, V = any>
     extends EntryProcessor<K, V, void> {
     /**
      * Specifies the new value to update an entry with.
@@ -878,7 +869,7 @@ export class Processors {
    * @return a put processor that updates an entry with a new value if
    *         and only if the filter applied to the entry evaluates to `true`.
    */
-  static conditionalPut<K, V> (filter: filter.Filter<V>, value: V, returnValue?: boolean): processor.ConditionalPut<K, V> {
+  static conditionalPut<K = any, V = any> (filter: filter.Filter, value: V, returnValue?: boolean): processor.ConditionalPut<K, V> {
     return new processor.ConditionalPut(filter, value, returnValue)
   }
 
@@ -898,7 +889,7 @@ export class Processors {
    *         if and only if the filter applied to the entry evaluates to
    *         `true`.
    */
-  static conditionalPutAll<K, V> (filter: filter.Filter<V>, map: Map<K, V>): processor.ConditionalPutAll<K, V> {
+  static conditionalPutAll<K = any, V = any> (filter: filter.Filter, map: Map<K, V>): processor.ConditionalPutAll<K, V> {
     return new processor.ConditionalPutAll(filter, map)
   }
 
@@ -916,7 +907,7 @@ export class Processors {
    * @return a remove processor that removes an InvocableMap entry
    *         if and only if the filter applied to the entry evaluates to `true`.
    */
-  static conditionalRemove<K, V> (filter: filter.Filter<V>, returnValue?: boolean): processor.ConditionalRemove<K, V> {
+  static conditionalRemove<K = any, V = any> (filter: filter.Filter, returnValue?: boolean): processor.ConditionalRemove<K, V> {
     return new processor.ConditionalRemove(filter, returnValue)
   }
 
@@ -935,7 +926,7 @@ export class Processors {
    *
    * @see ExtractorProcessor
    */
-  static extract<K, V, R> (extractorOrFieldName?: string): processor.EntryProcessor<K, V, R> {
+  static extract<K = any, V = any, R = any> (extractorOrFieldName?: string): processor.EntryProcessor<K, V, R> {
     return new processor.ExtractorProcessor(extractorOrFieldName)
   }
 
@@ -956,7 +947,7 @@ export class Processors {
    *
    * @return an increment processor
    */
-  static increment<K, V> (propertyOrManipulator: extractor.ValueManipulator<V, number> | string, value: number, returnOldValue: boolean = false): processor.NumberIncrementor<K, V> {
+  static increment<K = any, V = any> (propertyOrManipulator: extractor.ValueManipulator | string, value: number, returnOldValue: boolean = false): processor.NumberIncrementor<K, V> {
     return new processor.NumberIncrementor(propertyOrManipulator, value, returnOldValue)
   }
 
@@ -970,7 +961,7 @@ export class Processors {
    * @param methodName  the name of the method to invoke
    * @param args        the method arguments
    */
-  static invokeAccessor<K, V, R> (methodName: string, ...args: any[]): processor.EntryProcessor<K, V, R> {
+  static invokeAccessor<K = any, V = any, R = any> (methodName: string, ...args: any[]): processor.EntryProcessor<K, V, R> {
     return new processor.MethodInvocationProcessor(methodName, false, args)
   }
 
@@ -984,7 +975,7 @@ export class Processors {
    * @param methodName  the name of the method to invoke
    * @param args        the method arguments
    */
-  static invokeMutator<K, V, R> (methodName: string, ...args: any[]): processor.EntryProcessor<K, V, R> {
+  static invokeMutator<K = any, V = any, R = any> (methodName: string, ...args: any[]): processor.EntryProcessor<K, V, R> {
     return new processor.MethodInvocationProcessor(methodName, true, args)
   }
 
@@ -1007,7 +998,7 @@ export class Processors {
    *         by a specified factor, returning either the old or the
    *         new value as specified
    */
-  static multiply<K, V> (propertyOrManipulator: string, numFactor: number, returnOldValue: boolean = false): processor.NumberMultiplier<K, V> {
+  static multiply<K = any, V = any> (propertyOrManipulator: string, numFactor: number, returnOldValue: boolean = false): processor.NumberMultiplier<K, V> {
     return new processor.NumberMultiplier(propertyOrManipulator, numFactor, returnOldValue)
   }
 
@@ -1019,7 +1010,7 @@ export class Processors {
    *
    * @return an {@link EntryProcessor} that does nothing and returns `true` as a result of execution
    */
-  static nop<K, V> (): processor.EntryProcessor<K, V> {
+  static nop<K = any, V = any> (): processor.EntryProcessor<K, V> {
     return processor.NullProcessor.INSTANCE
   }
 
@@ -1037,7 +1028,7 @@ export class Processors {
    *
    * @return an update processor for a given method name
    */
-  static update<K, V, T> (propertyOrUpdater: string | extractor.ValueUpdater<V, T>, value: T): processor.UpdaterProcessor<K, V, T> {
+  static update<K = any, V = any, T = any> (propertyOrUpdater: string | extractor.ValueUpdater, value: T): processor.UpdaterProcessor<K, V, T> {
     return new processor.UpdaterProcessor<K, V, T>(propertyOrUpdater, value)
   }
 
@@ -1058,7 +1049,7 @@ export class Processors {
    *                       return the current value in case it has not been
    *                       updated
    */
-  static versionedPut<K, V> (value: V, allowInsert: boolean = false, returnCurrent: boolean = false): processor.VersionedPut<K, V> {
+  static versionedPut<K = any, V = any> (value: V, allowInsert: boolean = false, returnCurrent: boolean = false): processor.VersionedPut<K, V> {
     return new processor.VersionedPut(value, allowInsert, returnCurrent)
   }
 
@@ -1080,7 +1071,7 @@ export class Processors {
    *
    * @return a {@link VersionedPutAll} processor
    */
-  static versionedPutAll<K, V> (map: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false): processor.VersionedPutAll<K, V> {
+  static versionedPutAll<K = any, V = any> (map: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false): processor.VersionedPutAll<K, V> {
     return new processor.VersionedPutAll(map, allowInsert, returnCurrent)
   }
 
@@ -1092,7 +1083,7 @@ export class Processors {
    *
    * @return a preload request processor
    */
-  static preload<K, V> (): processor.PreloadRequest<K, V> {
+  static preload<K = any, V = any> (): processor.PreloadRequest<K, V> {
     return new processor.PreloadRequest()
   }
 
@@ -1110,7 +1101,7 @@ export class Processors {
    *
    * @return a new  {@link ScriptProcessor}
    */
-  static script<K, V, R> (language: string, name: string, ...args: any[]): processor.ScriptProcessor<K, V, R> {
+  static script<K = any, V = any, R = any> (language: string, name: string, ...args: any[]): processor.ScriptProcessor<K, V, R> {
     return new processor.ScriptProcessor(language, name, args)
   }
 
@@ -1123,7 +1114,7 @@ export class Processors {
    *
    * @return a new {@link TouchProcessor}
    */
-  static touch<K, V> (): processor.TouchProcessor<K, V> {
+  static touch (): processor.TouchProcessor {
     return new processor.TouchProcessor()
   }
 }

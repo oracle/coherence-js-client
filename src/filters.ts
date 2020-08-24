@@ -5,11 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { event } from './events'
 import { extractor, Extractors } from './extractors'
 
 export namespace filter {
-  export abstract class Filter<T = any> {
+  export abstract class Filter {
     /**
      * Server-side `Filter` implementation type identifier.
      */
@@ -82,43 +81,36 @@ export namespace filter {
     /**
      * Return a key associated filter based on this filter and a specified key.
      *
-     * @typeParam K  the key type
-     *
      * @param key  associated key
      *
      * @return a key associated filter
      */
-    associatedWith<K> (key: K): KeyAssociatedFilter<T> {
+    associatedWith<K = any> (key: K): KeyAssociatedFilter {
       return new KeyAssociatedFilter(this, key)
     }
 
     /**
      * Return a filter that will only be evaluated within specified key set.
      *
-     * @typeParam K  the key type
-     *
      * @param keys  the set of keys to limit the filter evaluation to
      *
      * @return a key set-limited filter
      */
-    forKeys<K> (keys: Set<K>): InKeySetFilter<T, K> {
-      return new InKeySetFilter<T, K>(this, keys)
+    forKeys<K = any> (keys: Set<K>): InKeySetFilter<K> {
+      return new InKeySetFilter<K>(this, keys)
     }
   }
 
   /**
    * Base Filter implementation for doing extractor-based processing.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the attribute extracted from the input argument
    */
-  export abstract class ExtractorFilter<T, E>
-    extends Filter<T> {
+  export abstract class ExtractorFilter
+    extends Filter {
 
     /**
      * The {@link extractor.ValueExtractor} used by this {@link Filter}.
      */
-    protected extractor: extractor.ValueExtractor<T, E>
+    protected extractor: extractor.ValueExtractor
 
     /**
      * Construct an `ExtractorFilter` for the given {@link extractor.ValueExtractor}.
@@ -130,7 +122,7 @@ export namespace filter {
      *                           the {@link ChainedExtractor} that is based on an array of corresponding
      *                           ReflectionExtractor objects
      */
-    protected constructor (typeName: string, extractorOrMethod: extractor.ValueExtractor<T, E> | string) {
+    protected constructor (typeName: string, extractorOrMethod: extractor.ValueExtractor | string) {
       super(typeName)
       this.extractor = (extractorOrMethod instanceof extractor.ValueExtractor)
         ? extractorOrMethod
@@ -143,12 +135,10 @@ export namespace filter {
   /**
    * Filter which compares the result of a method invocation with a value.
    *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    * @typeParam C  the type of value to compare extracted attribute with
    */
-  export abstract class ComparisonFilter<T, E, C>
-    extends ExtractorFilter<T, E> {
+  export abstract class ComparisonFilter<C = any>
+    extends ExtractorFilter {
     /**
      * The value to compare to.
      */
@@ -162,7 +152,7 @@ export namespace filter {
      *                           to invoke via reflection
      * @param value              the object to compare the result with
      */
-    protected constructor (typeName: string, extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: C) {
+    protected constructor (typeName: string, extractorOrMethod: extractor.ValueExtractor | string, value: C) {
       super(typeName, extractorOrMethod)
       this.value = value instanceof Set ? Array.from(value as Set<any>) as unknown as C : value
     }
@@ -314,8 +304,8 @@ export namespace filter {
    * });
    * ```
    */
-  export class InKeySetFilter<T, K>
-    extends Filter<T> {
+  export class InKeySetFilter<K = any>
+    extends Filter {
     /**
      * The underlying set of keys.
      */
@@ -323,16 +313,17 @@ export namespace filter {
     /**
      * The underlying Filter.
      */
-    protected filter: Filter<T>
+    protected filter: Filter
 
     /**
      * Construct an `InKeySetFilter` for testing "In" condition.
      *
      * @typeParam K   the key type
+     *
      * @param filter  the underlying filter
      * @param keys    the set of keys to limit the filter evaluation to
      */
-    constructor (filter: Filter<T>, keys: Set<K>) {
+    constructor (filter: Filter, keys: Set<K>) {
       super('InKeySetFilter')
       this.filter = filter
       this.keys = keys
@@ -341,11 +332,9 @@ export namespace filter {
 
   /**
    * Filter which always evaluates to `true`.
-   *
-   * @typeParam T  the type of the input argument to the filter.
    */
-  export class AlwaysFilter<T = any>
-    extends Filter<T> {
+  export class AlwaysFilter
+    extends Filter {
     /**
      * Singleton `AlwaysFilter` instance.
      */
@@ -366,22 +355,19 @@ export namespace filter {
    * In a case when either result of a method invocation or a value to compare
    * are equal to null, the <tt>evaluate</tt> test yields <tt>false</tt>.
    * This approach is equivalent to the way the NULL values are handled by SQL.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    */
-  export class BetweenFilter<T = any, E = any>
+  export class BetweenFilter
     extends AndFilter {
 
     /**
      * Lower bound of range.
      */
-    protected from: E
+    protected from: number
 
     /**
      * Upper bound of range.
      */
-    protected to: E
+    protected to: number
 
     /**
      * Construct a BetweenFilter for testing "Between" condition.
@@ -393,7 +379,7 @@ export namespace filter {
      * @param includeLowerBound  a flag indicating whether values matching the lower bound evaluate to true
      * @param includeUpperBound  a flag indicating whether values matching the upper bound evaluate to true
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, from: E, to: E,
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, from: number, to: number,
                  includeLowerBound: boolean = false, includeUpperBound: boolean = false) {
       super(includeLowerBound
         ? new GreaterEqualsFilter(extractorOrMethod, from)
@@ -412,12 +398,9 @@ export namespace filter {
   /**
    * Filter which tests a Collection or array value returned from
    * a method invocation for containment of all values in a Set.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    */
-  export class ContainsAllFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, Set<any>> {
+  export class ContainsAllFilter
+    extends ComparisonFilter<Set<any>> {
 
     /**
      * Construct an ContainsAllFilter for testing containment of the given Set
@@ -428,7 +411,7 @@ export namespace filter {
      *
      * @param setValues the {@link Set} of values that a Collection or array is tested to contain
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, setValues: Set<any>) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, setValues: Set<any>) {
       super(filterName('ContainsAllFilter'), extractorOrMethod, setValues)
     }
   }
@@ -436,12 +419,9 @@ export namespace filter {
   /**
    * Filter which tests Collection or Object array value returned from
    * a method invocation for containment of any value in a Set.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    */
-  export class ContainsAnyFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, Set<any>> {
+  export class ContainsAnyFilter
+    extends ComparisonFilter<Set<any>> {
 
     /**
      * Construct an ContainsAllFilter for testing containment of any value within the given Set.
@@ -451,7 +431,7 @@ export namespace filter {
      *
      * @param setValues the {@link Set} of values that a Collection or array is tested to contain
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, setValues: Set<any>) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, setValues: Set<any>) {
       super(filterName('ContainsAnyFilter'), extractorOrMethod, setValues)
     }
   }
@@ -460,11 +440,10 @@ export namespace filter {
    * Filter which tests a collection or array value returned from
    * a method invocation for containment of a given value.
    *
-   * @typeParam T  the type of the input argument to the filter
    * @typeParam E  the type of the extracted attribute to use for comparison
    */
-  export class ContainsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class ContainsFilter<E = any>
+    extends ComparisonFilter<E> {
 
     /**
      * Construct an ContainsFilter for testing containment of the given
@@ -475,7 +454,7 @@ export namespace filter {
      * @param value              the object that a collection or array is tested
      *                           to contain
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('ContainsFilter'), extractorOrMethod, value)
     }
   }
@@ -484,11 +463,10 @@ export namespace filter {
    * Filter which compares the result of a method invocation with a value for
    * equality.
    *
-   * @typeParam T  the type of the input argument to the filter
    * @typeParam E  the type of the value to use for comparison
    */
-  export class EqualsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class EqualsFilter<E = any>
+    extends ComparisonFilter<E> {
 
     /**
      * Construct an EqualsFilter for testing equality.
@@ -497,7 +475,7 @@ export namespace filter {
      *                           via reflection
      * @param value              the object to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('EqualsFilter'), extractorOrMethod, value)
     }
   }
@@ -509,11 +487,10 @@ export namespace filter {
    * test yields false. This approach is equivalent to the way
    * the `NULL` values are handled by SQL.
    *
-   * @typeParam T  the type of the input argument to the filter
    * @typeParam E  the type of the value to use for comparison
    */
-  export class GreaterEqualsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class GreaterEqualsFilter<E = any>
+    extends ComparisonFilter<E> {
 
     /**
      * Construct a `GreaterEqualFilter` for testing `Greater or Equal`
@@ -523,7 +500,7 @@ export namespace filter {
      *                          the name of the method to invoke via reflection
      * @param value             the object to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('GreaterEqualsFilter'), extractorOrMethod, value)
     }
   }
@@ -535,11 +512,10 @@ export namespace filter {
    * test yields `false`. This approach is equivalent to the way
    * the `NULL` values are handled by SQL.
    *
-   * @typeParam T  the type of the input argument to the filter
    * @typeParam E  the type of the value to use for comparison
    */
-  export class GreaterFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class GreaterFilter<E = any>
+    extends ComparisonFilter<E> {
     /**
      * Construct a `GreaterFilter` for testing `Greater`
      * condition.
@@ -548,7 +524,7 @@ export namespace filter {
      *                          the name of the method to invoke via reflection
      * @param value             the object to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('GreaterFilter'), extractorOrMethod, value)
     }
   }
@@ -557,8 +533,8 @@ export namespace filter {
    * Filter which checks whether the result of a method invocation belongs to a
    * predefined set of values.
    */
-  export class InFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, Set<E>> {
+  export class InFilter<E = any>
+    extends ComparisonFilter<Set<E>> {
 
     /**
      * Construct an InFilter for testing `In` condition.
@@ -567,7 +543,7 @@ export namespace filter {
      *                           the name of the method to invoke via reflection
      * @param setValues          the set of values to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, setValues: Set<E>) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, setValues: Set<E>) {
       super(filterName('InFilter'), extractorOrMethod, setValues)
     }
   }
@@ -576,18 +552,17 @@ export namespace filter {
    * Filter which compares the result of a method invocation with a value for
    * inequality.
    *
-   * @typeParam T the type of the input argument to the filter
    * @typeParam E the type of the value to use for comparison
    */
-  export class NotEqualsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class NotEqualsFilter<E = any>
+    extends ComparisonFilter<E> {
     /**
      * Construct a `NotEqualsFilter` for testing inequality.
      *
      * @param extractorOrMethod  the extractor.ValueExtractor to use by this filter or the name of the method to invoke via reflection
      * @param value              the object to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('NotEqualsFilter'), extractorOrMethod, value)
     }
   }
@@ -595,15 +570,15 @@ export namespace filter {
   /**
    * Filter which tests the result of a method invocation for inequality to `null`.
    */
-  export class IsNotNullFilter<T = any, E = any>
-    extends NotEqualsFilter<T, E | null> {
+  export class IsNotNullFilter
+    extends NotEqualsFilter {
     /**
      * Construct a IsNotNullFilter for testing inequality to `null`.
      *
      * @param extractorOrMethod  the extractor.ValueExtractor to use by this filter or
      *                           the name of the method to invoke via reflection
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string) {
       super(extractorOrMethod, null)
       this['@class'] = filterName('IsNotNullFilter')
     }
@@ -614,15 +589,15 @@ export namespace filter {
    *
    * @author cp/gg 2002.10.27
    */
-  export class IsNullFilter<T = any, E = any>
-    extends EqualsFilter<T, E> {
+  export class IsNullFilter
+    extends EqualsFilter {
     /**
      * Construct a `IsNullFilter` for testing equality to `null`.
      *
      * @param extractorOrMethod the extractor.ValueExtractor to use by this filter or
      *                          the name of the method to invoke via reflection
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string) {
       // @ts-ignore
       super(extractorOrMethod, null)
       this['@class'] = filterName('IsNullFilter')
@@ -649,8 +624,8 @@ export namespace filter {
    * });
    * ```
    */
-  export class KeyAssociatedFilter<T = any>
-    extends Filter<T> {
+  export class KeyAssociatedFilter
+    extends Filter {
 
     /**
      * The association host key.
@@ -659,7 +634,7 @@ export namespace filter {
     /**
      * The underlying filter.
      */
-    protected filter: Filter<T>
+    protected filter: Filter
 
     /**
      * Filter which limits the scope of another filter according to the key
@@ -683,18 +658,17 @@ export namespace filter {
    * test yields `false`. This approach is equivalent to the way
    * the `NULL` values are handled by SQL.
    *
-   * @typeParam T  the type of the input argument to the filter
    * @typeParam E  the type of value to use for comparison
    */
-  export class LessEqualsFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class LessEqualsFilter<E = any>
+    extends ComparisonFilter<E> {
     /**
      * Construct a `LessEqualsFilter` for testing `Less or Equals` condition.
      *
      * @param extractor  the extractor.ValueExtractor to use by this filter or the name of the method to invoke via reflection
      * @param value      the object to compare the result with
      */
-    constructor (extractor: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractor: extractor.ValueExtractor | string, value: E) {
       super(filterName('LessEqualsFilter'), extractor, value)
     }
   }
@@ -706,11 +680,10 @@ export namespace filter {
    * test yields `false`. This approach is equivalent to the way
    * the `NULL` values are handled by SQL.
    *
-   * @typeParam T the type of the input argument to the filter
    * @typeParam E the type of the value to use for comparison
    */
-  export class LessFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, E> {
+  export class LessFilter<E = any>
+    extends ComparisonFilter<E> {
     /**
      * Construct a LessFilter for testing `Less` condition.
      *
@@ -718,7 +691,7 @@ export namespace filter {
      *                          to invoke via reflection
      * @param value             the object to compare the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, value: E) {
       super(filterName('LessFilter'), extractorOrMethod, value)
     }
   }
@@ -732,12 +705,9 @@ export namespace filter {
    * characters in an evaluated string. Wildcard character `_` (underscore) can
    * be matched with any single character, and wildcard character `%` can be
    * matched with any string fragment of zero or more characters.
-   *
-   * @typeParam T the type of the input argument to the filter
-   * @typeParam E the type of the value to use for comparison
    */
-  export class LikeFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, string> {
+  export class LikeFilter
+    extends ComparisonFilter<string> {
     escapeChar: string
     ignoreCase: boolean
 
@@ -750,7 +720,7 @@ export namespace filter {
      * @param escapeChar         the escape character for escaping `%` and `_`
      * @param ignoreCase         `true` to be case-insensitive
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, pattern: string, escapeChar: string = '0', ignoreCase: boolean = false) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, pattern: string, escapeChar: string = '0', ignoreCase: boolean = false) {
       super(filterName('LikeFilter'), extractorOrMethod, pattern)
 
       this.escapeChar = escapeChar.length === 1 ? escapeChar : '0'
@@ -765,7 +735,7 @@ export namespace filter {
    * of MapEvent notifications emitted by the map.
    */
   export class MapEventFilter<K, V>
-    extends Filter<event.MapEvent<K, V>> {
+    extends Filter {
     /**
      * This value indicates that insert events should be evaluated. The event will be fired if
      * there is no filter specified or the filter evaluates to true for a new
@@ -882,20 +852,20 @@ export namespace filter {
   /**
    * Filter which negates the results of another filter.
    */
-  export class NotFilter<T = any>
-    extends Filter<T> {
+  export class NotFilter
+    extends Filter {
 
     /**
      * The Filter whose results are negated by this filter.
      */
-    protected filter: Filter<T>
+    protected filter: Filter
 
     /**
      * Construct a negation filter.
      *
      * @param filter  the filter whose results this Filter negates
      */
-    constructor (filter: Filter<T>) {
+    constructor (filter: Filter) {
       super(filterName('NotFilter'))
       this.filter = filter
     }
@@ -904,8 +874,8 @@ export namespace filter {
   /**
    * A {@code java.util.function.Predicate} based {@link ExtractorFilter}.
    */
-  export class PredicateFilter<T = any, E = any>
-    extends ExtractorFilter<T, E> {
+  export class PredicateFilter
+    extends ExtractorFilter {
     /**
      * The 'Predicate' for filtering extracted values.
      */
@@ -919,7 +889,7 @@ export namespace filter {
      * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
      *                           via reflection
      */
-    constructor (predicate: { '@class': string }, extractorOrMethod: extractor.ValueExtractor<T, E> | string | undefined) {
+    constructor (predicate: { '@class': string }, extractorOrMethod: extractor.ValueExtractor | string | undefined) {
       super(filterName('PredicateFilter'), extractorOrMethod || Extractors.identityCast())
       this.predicate = predicate
     }
@@ -931,11 +901,9 @@ export namespace filter {
    * This Filter is intended to be used solely in combination with a
    * {@link ConditionalProcessor} and is unnecessary
    * for standard {@link NamedMap} operations.
-   *
-   * @typeParam T  the type of the input argument to the filter
    */
-  export class PresentFilter<T = any>
-    extends Filter<T> {
+  export class PresentFilter
+    extends Filter {
     /**
      * Singleton `PresentFilter` instance
      */
@@ -953,19 +921,16 @@ export namespace filter {
    * Filter which uses the regular expression pattern match defined by the
    * Java's `String.matches` contract. This implementation is not index
    * aware and will not take advantage of existing indexes.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    */
-  export class RegexFilter<T = any, E = any>
-    extends ComparisonFilter<T, E, string> {
+  export class RegexFilter
+    extends ComparisonFilter<string> {
     /**
      *
      * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
      *                           via reflection
      * @param regex              the regular expression to match the result with
      */
-    constructor (extractorOrMethod: extractor.ValueExtractor<T, E> | string, regex: string) {
+    constructor (extractorOrMethod: extractor.ValueExtractor | string, regex: string) {
       super(filterName('RegexFilter'), extractorOrMethod, regex)
     }
   }
@@ -995,7 +960,7 @@ export class Filters {
    * @return  a composite filter representing logical `AND` of all specified
    *          filters
    */
-  static all<T> (...filters: filter.Filter<T>[]): filter.Filter {
+  static all (...filters: filter.Filter[]): filter.Filter {
     return new filter.AllFilter(filters)
   }
 
@@ -1006,7 +971,7 @@ export class Filters {
    *
    * @link AlwaysFilter
    */
-  static always<T> (): filter.Filter<T> {
+  static always (): filter.Filter {
     return filter.AlwaysFilter.INSTANCE
   }
 
@@ -1021,15 +986,12 @@ export class Filters {
    *
    * @see AnyFilter
    */
-  static any<T> (...filters: filter.Filter<T>[]): filter.Filter {
+  static any (...filters: filter.Filter[]): filter.Filter {
     return new filter.AnyFilter(filters)
   }
 
   /**
    * Return a filter that tests if the extracted array contains the specified value.
-   *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1039,16 +1001,13 @@ export class Filters {
    * @return  a filter that tests if the extracted array contains the
    *          specified value
    */
-  static arrayContains<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.Filter<T> {
+  static arrayContains<E> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.Filter {
     return new filter.ContainsFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted array contains `all` of the specified values.
    *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
-   *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
    * @param values             the object that a Collection or Object array is tested
@@ -1057,16 +1016,13 @@ export class Filters {
    * @return  a filter that tests if the extracted array contains the
    *          specified values
    */
-  static arrayContainsAll<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, values: Set<any>): filter.Filter<T> {
+  static arrayContainsAll (extractorOrMethod: extractor.ValueExtractor | string, values: Set<any>): filter.Filter {
     return new filter.ContainsAllFilter(extractorOrMethod, values)
   }
 
   /**
    * Return a filter that tests if the extracted array contains `any` of the specified values.
    *
-   * @typeParam T  the type of the input argument to the filter
-   * @typeParam E  the type of the extracted attribute to use for comparison
-   *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
    * @param values             the object that a Collection or Object array is tested
@@ -1075,15 +1031,12 @@ export class Filters {
    * @return  a filter that tests if the extracted array contains the
    *          specified values
    */
-  static arrayContainsAny<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E[]> | string, values: Set<any>): filter.Filter<T> {
+  static arrayContainsAny (extractorOrMethod: extractor.ValueExtractor | string, values: Set<any>): filter.Filter {
     return new filter.ContainsAnyFilter(extractorOrMethod, values)
   }
 
   /**
    * Return a filter that tests if the extracted value is `between` the specified values (inclusive).
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1094,16 +1047,13 @@ export class Filters {
    *
    * @return  a filter that tests if the extracted value is between the specified values
    */
-  static between<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, from: E, to: E,
-                        includeLowerBound: boolean = true, includeUpperBound: boolean = true): filter.Filter<T> {
+  static between (extractorOrMethod: extractor.ValueExtractor | string, from: number, to: number,
+                  includeLowerBound: boolean = true, includeUpperBound: boolean = true): filter.Filter {
     return new filter.BetweenFilter(extractorOrMethod, from, to, includeLowerBound, includeUpperBound)
   }
 
   /**
    * Return a filter that tests if the extracted collection contains the specified value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1113,15 +1063,12 @@ export class Filters {
    * @return  a filter that tests if the extracted collection contains the
    *          specified value
    */
-  static contains<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.ContainsFilter<T, E> {
+  static contains<E> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.ContainsFilter {
     return new filter.ContainsFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted collection contains `all` of the specified values.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1131,15 +1078,12 @@ export class Filters {
    * @return  a filter that tests if the extracted collection contains `all` of
    *          the specified values.
    */
-  static containsAll<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, values: Set<any>): filter.Filter<T> {
+  static containsAll (extractorOrMethod: extractor.ValueExtractor | string, values: Set<any>): filter.Filter {
     return new filter.ContainsAllFilter(extractorOrMethod, values)
   }
 
   /**
    * Return a filter that tests if the extracted collection contains `any` of the specified values.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1149,15 +1093,12 @@ export class Filters {
    * @return  a filter that tests if the extracted collection contains `any` of
    *          the specified values.
    */
-  static containsAny<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, values: Set<any>): filter.Filter<T> {
+  static containsAny (extractorOrMethod: extractor.ValueExtractor | string, values: Set<any>): filter.Filter {
     return new filter.ContainsAnyFilter(extractorOrMethod, values)
   }
 
   /**
    * Return a filter that tests for equality against the extracted value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1165,7 +1106,7 @@ export class Filters {
    *
    * @return a filter that tests for equality
    */
-  static equal<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.EqualsFilter<T, E> {
+  static equal<E = any> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.EqualsFilter {
     return new filter.EqualsFilter(extractorOrMethod, value)
   }
 
@@ -1175,16 +1116,13 @@ export class Filters {
    * @param ff    the event filter
    * @param mask  the event mask
    */
-  static event<K, V> (ff: filter.Filter<V>, mask: number = filter.MapEventFilter.E_KEYSET): filter.MapEventFilter<K, V> {
+  static event<K = any, V = any> (ff: filter.Filter, mask: number = filter.MapEventFilter.E_KEYSET): filter.MapEventFilter<K, V> {
     return new filter.MapEventFilter<K, K>(mask, ff)
   }
 
   /**
    * Return a filter that tests if the extracted value is greater than the
    * specified value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1193,16 +1131,13 @@ export class Filters {
    * @return  a filter that tests if the extracted value is greater than the
    *          specified value.
    */
-  static greater<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.GreaterFilter<T, E> {
+  static greater<E = any> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.GreaterFilter {
     return new filter.GreaterFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is greater than or equal
    * to the specified value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1211,16 +1146,13 @@ export class Filters {
    * @return  a filter that tests if the extracted value is greater than or
    *          equal to the specified value.
    */
-  static greaterEqual<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.GreaterFilter<T, E> {
+  static greaterEqual<E = any> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.GreaterFilter {
     return new filter.GreaterEqualsFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is contained in the
    * specified array.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1231,46 +1163,37 @@ export class Filters {
    *
    * @see ContainsAnyFilter
    */
-  static in<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, values: Set<E>): filter.Filter<T> {
+  static in<E = any> (extractorOrMethod: extractor.ValueExtractor | string, values: Set<E>): filter.Filter {
     return new filter.InFilter(extractorOrMethod, values)
   }
 
   /**
    * Return a filter that evaluates to true for `non-null` values.
    *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
-   *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
    *
    * @return a filter that evaluates to true for `non-null` values.
    */
-  static isNotNull<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string): filter.IsNotNullFilter<T, E> {
+  static isNotNull (extractorOrMethod: extractor.ValueExtractor | string): filter.IsNotNullFilter {
     return new filter.IsNotNullFilter(extractorOrMethod)
   }
 
   /**
    * Return a filter that evaluates to true for null values.
    *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
-   *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
    *
    * @return a filter that evaluates to true for null values.
    */
-  static isNull<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string): filter.IsNotNullFilter<T, E> {
+  static isNull (extractorOrMethod: extractor.ValueExtractor | string): filter.IsNotNullFilter {
     return new filter.IsNullFilter(extractorOrMethod)
   }
 
   /**
    * Return a filter that tests if the extracted value is less than the
    * specified value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1279,16 +1202,13 @@ export class Filters {
    * @return  a filter that tests if the extracted value is less than the
    *          specified value
    */
-  static less<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.LessFilter<T, E> {
+  static less<E = any> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.LessFilter {
     return new filter.LessFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a filter that tests if the extracted value is less than or equal
    * to the specified value.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1297,15 +1217,12 @@ export class Filters {
    * @return  a filter that tests if the extracted value is less than or equal
    *          to the specified value
    */
-  static lessEqual<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.Filter<T> {
+  static lessEqual<E = any> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.Filter {
     return new filter.LessEqualsFilter(extractorOrMethod, value)
   }
 
   /**
    * Return a LikeFilter for pattern match.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1315,7 +1232,7 @@ export class Filters {
    *
    * @return a LikeFilter
    */
-  static like<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, pattern: string, escape: string, ignoreCase: boolean): filter.Filter<T> {
+  static like (extractorOrMethod: extractor.ValueExtractor | string, pattern: string, escape: string, ignoreCase: boolean): filter.Filter {
     return new filter.LikeFilter(extractorOrMethod, pattern, escape, ignoreCase)
   }
 
@@ -1324,7 +1241,7 @@ export class Filters {
    *
    * @return a filter that always evaluates to `false`.
    */
-  static never<T> (): filter.Filter<T> {
+  static never (): filter.Filter {
     return filter.NeverFilter.INSTANCE
   }
 
@@ -1332,22 +1249,17 @@ export class Filters {
    * Return a filter that represents the logical negation of the specified
    * filter.
    *
-   * @typeParam T  the type of the input argument to the filter
-   *
    * @param ff     the filter.
    *
    * @return  a filter that represents the logical negation of the specified
    *          filter.
    */
-  static not<T> (ff: filter.Filter<T>): filter.Filter<T> {
+  static not (ff: filter.Filter): filter.Filter {
     return new filter.NotFilter(ff)
   }
 
   /**
    * Return a filter that tests for non-equality.
-   *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
    *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
@@ -1355,7 +1267,7 @@ export class Filters {
    *
    * @return a filter that tests for non-equality
    */
-  static notEqual<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, value: E): filter.Filter<T> {
+  static notEqual<E> (extractorOrMethod: extractor.ValueExtractor | string, value: E): filter.Filter {
     return new filter.NotEqualsFilter(extractorOrMethod, value)
   }
 
@@ -1366,21 +1278,18 @@ export class Filters {
    *
    * @see PresentFilter
    */
-  static present<T> (): filter.Filter<T> {
+  static present (): filter.Filter {
     return filter.PresentFilter.INSTANCE
   }
 
   /**
    * Return a RegexFilter for pattern match.
    *
-   * @typeParam T  the type of the object to extract value from
-   * @typeParam E  the type of extracted value
-   *
    * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
    *                           via reflection
    * @param regex              the Java regular expression to match the result with
    */
-  static regex<T, E> (extractorOrMethod: extractor.ValueExtractor<T, E> | string, regex: string): filter.Filter<T> {
+  static regex (extractorOrMethod: extractor.ValueExtractor | string, regex: string): filter.Filter {
     return new filter.RegexFilter(extractorOrMethod, regex)
   }
 }

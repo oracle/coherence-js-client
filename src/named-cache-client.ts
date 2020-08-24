@@ -287,7 +287,7 @@ export namespace net {
      * @param keys        the {@link Iterable} of keys that specify the entries within this Map to aggregate across
      * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
      */
-    aggregate<R, T, E> (keys: Iterable<K>, aggregator: EntryAggregator<K, V, T, E, R>): Promise<R>
+    aggregate<R> (keys: Iterable<K>, aggregator: EntryAggregator<K, V, R>): Promise<R>
 
     /**
      * Perform an aggregating operation against the set of entries that are selected by the given {@link Filter}.
@@ -297,7 +297,7 @@ export namespace net {
      * @param filter      the {@link Filter} that is used to select entries within this Map to aggregate across
      * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
      */
-    aggregate<R, T, E> (filter: Filter<V>, aggregator: EntryAggregator<K, V, any, any, R>): Promise<R>
+    aggregate<R> (filter: Filter, aggregator: EntryAggregator<K, V, R>): Promise<R>
 
     /**
      * Perform an aggregating operation against all the entries.
@@ -306,7 +306,7 @@ export namespace net {
      *
      * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
      */
-    aggregate<R, T, E> (aggregator: EntryAggregator<K, V, T, E, R>): Promise<R>
+    aggregate<R, T, E> (aggregator: EntryAggregator<K, V, R>): Promise<R>
 
     /**
      * Invoke the passed {@link EntryProcessor} against the {@link Entry} specified by the
@@ -363,7 +363,7 @@ export namespace net {
      * @param filter     a {@link Filter} that results in the set of keys to be processed
      * @param processor  the {@link EntryProcessor} to use to process the specified keys
      */
-    invokeAll<R> (filter: Filter<V>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
+    invokeAll<R> (filter: Filter, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
 
     /**
      * Allows registration of a handler to be notified of cache lifecycle events.
@@ -461,13 +461,11 @@ export namespace net {
      * @param comparator  The Comparator object which imposes an ordering
      *                    on entries in the indexed map or null if the
      *                    entries' values natural ordering should be used.
-     * @typeParam T  The type of the value to extract from.
-     * @typeParam E  The type of value that will be extracted.
      *
      * @returns            A Promise<void> that resolves when the operation
      *                     completes.
      */
-    addIndex<T, E> (extractor: ValueExtractor<T, E>, ordered?: boolean, comparator?: Comparator): Promise<void>
+    addIndex (extractor: ValueExtractor, ordered?: boolean, comparator?: Comparator): Promise<void>
 
     /**
      * Returns a {@link Set} view of the keys contained in this map.
@@ -538,16 +536,13 @@ export namespace net {
      * cache.removeIndex(Extractors.extract('name'))
      * ```
      *
-     * @typeParam T  The type of the value to extract from.
-     * @typeParam E  The type of value that will be extracted.
-     *
      * @param extractor  The ValueExtractor object that is used to extract
      *                   an indexable Object from a value stored in the
      *                   indexed Map. Must not be `null`.
      *
      * @return  A `Promise` that resolves when the operation completes.
      */
-    removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void>
+    removeIndex (extractor: ValueExtractor): Promise<void>
 
     /**
      * Returns a Set view of the values contained in this map.
@@ -803,7 +798,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  aggregate<R, T, E> (kfa: Iterable<K> | Filter<V> | EntryAggregator<K, V, T, E, R>, agg?: EntryAggregator<K, V, T, E, R>): Promise<any> {
+  aggregate<R = any> (kfa: Iterable<K> | Filter | EntryAggregator<K, V, R>, agg?: EntryAggregator<K, V, R>): Promise<any> {
     const self = this
     const request = this.requestFactory.aggregate(kfa, agg)
     return new Promise((resolve, reject) => {
@@ -830,7 +825,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  invoke<R> (key: K, processor: EntryProcessor<K, V, R>): Promise<R | null> {
+  invoke<R = any> (key: K, processor: EntryProcessor<K, V, R>): Promise<R | null> {
     const self = this
     return new Promise((resolve, reject) => {
       self.client.invoke(self.requestFactory.invoke(key, processor), (err, resp) => {
@@ -846,7 +841,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  invokeAll<R = any> (keysOrFilterOrProcessor: Iterable<K> | Filter<V> | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
+  invokeAll<R = any> (keysOrFilterOrProcessor: Iterable<K> | Filter | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
     const self = this
     let keysOrFilter: Iterable<K> | Filter
     if (processor) {
@@ -920,7 +915,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  addIndex<T, E> (extractor: ValueExtractor<T, E>, ordered?: boolean, comparator?: Comparator): Promise<void> {
+  addIndex (extractor: ValueExtractor, ordered?: boolean, comparator?: Comparator): Promise<void> {
     const self = this
     const request = this.requestFactory.addIndex(extractor, ordered, comparator)
     return new Promise((resolve, reject) => {
@@ -985,7 +980,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  removeIndex<T, E> (extractor: ValueExtractor<T, E>): Promise<void> {
+  removeIndex (extractor: ValueExtractor): Promise<void> {
     const self = this
     const request = this.requestFactory.removeIndex(extractor)
     return new Promise((resolve, reject) => {

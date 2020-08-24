@@ -26,11 +26,8 @@ export namespace extractor {
   /**
    * ValueExtractor is used to both extract values (for example, for sorting
    * or filtering) from an object, and to provide an identity for that extraction.
-   *
-   * @typeParam T  the type of the value to extract from
-   * @typeParam E  the type of value that will be extracted
    */
-  export abstract class ValueExtractor<T, E> {
+  export abstract class ValueExtractor {
     /**
      * Server-side ValueExtractor implementation type identifier.
      */
@@ -76,21 +73,17 @@ export namespace extractor {
      * If evaluation of either extractor throws an exception, it is relayed
      * to the caller of the composed extractor.
      *
-     * @typeParam V  the type of input to the `before` extractor, and
-     *               to the composed extractor
-     * @typeParam E  the type of value that will be extracted
-     *
      * @param before  the extractor to apply before this extractor is applied
      *
      * @return a composed extractor that first applies the *before*
      *         extractor and then applies this extractor
      */
-    compose<V> (before: ValueExtractor<T, E>): ValueExtractor<V, E> {
+    compose (before: ValueExtractor): ValueExtractor {
       util.ensureNotNull(before, 'before cannot be null')
 
       return (before instanceof ChainedExtractor)
         ? before.andThen(this)
-        : new ChainedExtractor<V, E>([before, this])
+        : new ChainedExtractor([before, this])
     }
 
     /**
@@ -99,35 +92,27 @@ export namespace extractor {
      * evaluation of either extractor throws an exception, it is relayed to
      * the caller of the composed extractor.
      *
-     * @typeParam E  the type of value that will be extracted
-     * @typeParam T  the type of the value to extract from
-     * @typeParam V  the type of output of the `after` extractor, and of
-     *               the composed extractor
-     *
      * @param after   the extractor to apply after this extractor is applied
      *
      * @return a composed extractor that first applies this extractor and then
      *         applies the *after* extractor
      */
-    andThen<V> (after: ValueExtractor<T, V>): ValueExtractor<E, V> {
+    andThen (after: ValueExtractor): ValueExtractor {
       util.ensureNotNull(after, 'before cannot be null')
 
       return (!(after instanceof ChainedExtractor))
         ? after.compose(this)
-        : new ChainedExtractor<T, V>([this, after])
+        : new ChainedExtractor([this, after])
     }
   }
 
   /**
    * Abstract super class for {@link ValueExtractor} implementations that are based on
    * an underlying array of {@link ValueExtractor} objects.
-   *
-   * @typeParam T  the type of the value to extract from
-   * @typeParam E  the type of value that will be extracted
    */
-  export class AbstractCompositeExtractor<T, E>
-    extends ValueExtractor<T, T> {
-    extractors: ValueExtractor<T, E>[]
+  export class AbstractCompositeExtractor
+    extends ValueExtractor {
+    extractors: ValueExtractor[]
 
     /**
      * Constructs a new AbstractCompositeExtractor.
@@ -135,7 +120,7 @@ export namespace extractor {
      * @param typeName    the server-side ValueExtractor implementation type identifier.
      * @param extractors  an array of extractors
      */
-    protected constructor (typeName: string, extractors: ValueExtractor<T, E>[]) {
+    protected constructor (typeName: string, extractors: ValueExtractor[]) {
       super(typeName)
       this.extractors = extractors
     }
@@ -150,13 +135,9 @@ export namespace extractor {
    * represents a property unless the *name* value ends in `()`,
    * then this instance is a reflection based method extractor.
    * Special cases are described in the constructor documentation.
-   * <p>
-   *
-   * @typeParam T  the type of the value to extract from
-   * @typeParam E  the type of value that will be extracted
    */
-  export class UniversalExtractor<T = any, E = any>
-    extends ValueExtractor<T, E> {
+  export class UniversalExtractor
+    extends ValueExtractor {
 
     /**
      * A method or property name.
@@ -195,12 +176,9 @@ export namespace extractor {
    * Composite {@link ValueExtractor} implementation based on an array of extractors.
    * The extractors in the array are applied sequentially left-to-right, so a
    * result of a previous extractor serves as a target object for a next one.
-   *
-   * @typeParam T  the type of the value to extract from
-   * @typeParam E  the type of value that will be extracted
    */
-  export class ChainedExtractor<T, E>
-    extends AbstractCompositeExtractor<T, E> {
+  export class ChainedExtractor
+    extends AbstractCompositeExtractor {
 
     /**
      * Create a new `ChainedExtractor`.
@@ -209,7 +187,7 @@ export namespace extractor {
      *                            names which results in a ChainedExtractor that is based on an array of
      *                            corresponding {@link UniversalExtractor} objects
      */
-    constructor (extractorsOrMethod: ValueExtractor<T, E>[] | string) {
+    constructor (extractorsOrMethod: ValueExtractor[] | string) {
       super(extractorName('ChainedExtractor'),
         ((typeof extractorsOrMethod === 'string')
           ? ChainedExtractor.createExtractors(extractorsOrMethod)
@@ -220,16 +198,13 @@ export namespace extractor {
     /**
      * Create a new `ChainedExtractor` based on the provided dot-delimited sequence of method names.
      *
-     * @typeParam T  the type of the value to extract from
-     * @typeParam E  the type of value that will be extracted
-     *
      * @param fields  a dot-delimited sequence of method names
      *
      * @return an array of {@link ValueExtractor}s based on the input string
      */
-    protected static createExtractors<T, E> (fields: string): ValueExtractor<T, E>[] {
+    protected static createExtractors (fields: string): ValueExtractor[] {
       const names = fields.split('.').filter(f => f != null && f.length > 0)
-      const arr = new Array<ValueExtractor<T, E>>()
+      const arr = new Array<ValueExtractor>()
       for (const name of names) {
         arr.concat(new UniversalExtractor(name))
       }
@@ -260,8 +235,8 @@ export namespace extractor {
    * A Trivial {@link ValueExtractor} implementation that does not actually extract
    * anything from the passed value, but returns the value itself.
    */
-  export class IdentityExtractor<T>
-    extends ValueExtractor<T, T> {
+  export class IdentityExtractor
+    extends ValueExtractor {
     public static INSTANCE = new IdentityExtractor()
 
     /**
@@ -284,7 +259,7 @@ export namespace extractor {
    * and run additional aggregation against the corresponding groups of entries.
    */
   export class MultiExtractor
-    extends AbstractCompositeExtractor<any, any> {
+    extends AbstractCompositeExtractor {
     /**
      * Constructs a new `MultiExtractor`.
      *
@@ -292,7 +267,7 @@ export namespace extractor {
      *                            of method names which results in a MultiExtractor that
      *                            is based on a corresponding array of {@link ValueExtractor} objects
      */
-    constructor (extractorsOrMethod: ValueExtractor<any, any>[] | string) {
+    constructor (extractorsOrMethod: ValueExtractor[] | string) {
       super(extractorName('MultiExtractor'),
         ((typeof extractorsOrMethod === 'string')
           ? MultiExtractor.createExtractors(extractorsOrMethod)
@@ -307,9 +282,9 @@ export namespace extractor {
      *
      * @return an array of {@link ValueExtractor} objects
      */
-    protected static createExtractors (methods: string): ValueExtractor<any, any>[] {
+    protected static createExtractors (methods: string): ValueExtractor[] {
       const names = methods.split(',').filter(f => f != null && f.length > 0)
-      const arr = new Array<ValueExtractor<any, any>>()
+      const arr = new Array<ValueExtractor>()
       for (const name of names) {
         arr.concat(name.indexOf('.') < 0 ? new UniversalExtractor(name) : new ChainedExtractor(name))
       }
@@ -321,11 +296,8 @@ export namespace extractor {
 
   /**
    * ValueUpdater is used to update an object's state.
-   *
-   * @typeParam T  the type of object
-   * @typeParam U  the type of value used to update the object
    */
-  export abstract class ValueUpdater<T, U> {
+  export abstract class ValueUpdater {
     /**
      * The server-side `ValueUpdater` type identifier.
      */
@@ -344,25 +316,22 @@ export namespace extractor {
   /**
    * ValueManipulator represents a composition of {@link ValueExtractor} and
    * {@link ValueUpdater} implementations.
-   *
-   * @typeParam  T  the type of object
-   * @typeParam  V  the type of value that will be extracted/updated from/on object
    */
-  export interface ValueManipulator<T, V> {
+  export interface ValueManipulator {
 
     /**
      * Retrieve the underlying ValueExtractor reference.
      *
      * @return the ValueExtractor
      */
-    getExtractor (): ValueExtractor<T, V>;
+    getExtractor (): ValueExtractor;
 
     /**
      * Retrieve the underlying ValueUpdater reference.
      *
      * @return the ValueUpdater
      */
-    getUpdater (): ValueUpdater<T, V>;
+    getUpdater (): ValueUpdater;
   }
 
   /**
@@ -370,18 +339,18 @@ export namespace extractor {
    * also be used as a ValueManipulator.
    */
   export class CompositeUpdater
-    extends ValueUpdater<any, any>
-    implements ValueManipulator<any, any> {
+    extends ValueUpdater
+    implements ValueManipulator {
 
     /**
      * The ValueExtractor part.
      */
-    protected readonly extractor: ValueExtractor<any, any>
+    protected readonly extractor: ValueExtractor
 
     /**
      * The ValueUpdater part.
      */
-    protected readonly updater: ValueUpdater<any, any>
+    protected readonly updater: ValueUpdater
 
     /**
      * Constructs a new `CompositeUpdater`.
@@ -389,11 +358,11 @@ export namespace extractor {
      * @param methodOrExtractor  the {@link ValueExtractor} or the name of the method to invoke via reflection
      * @param updater            the {@link ValueUpdater}
      */
-    constructor (methodOrExtractor: string | ValueExtractor<any, any>, updater?: ValueUpdater<any, any>) {
+    constructor (methodOrExtractor: string | ValueExtractor, updater?: ValueUpdater) {
       super(extractorName(('CompositeUpdater')))
       if (updater) {
         // Two arg constructor
-        this.extractor = methodOrExtractor as ValueExtractor<any, any>
+        this.extractor = methodOrExtractor as ValueExtractor
         this.updater = updater
       } else {
         // One arg with method name
@@ -411,14 +380,14 @@ export namespace extractor {
     /**
      * @inheritDoc
      */
-    getExtractor (): ValueExtractor<any, any> {
+    getExtractor (): ValueExtractor {
       return this.extractor
     }
 
     /**
      * @inheritDoc
      */
-    getUpdater (): ValueUpdater<any, any> {
+    getUpdater (): ValueUpdater {
       return this.updater
     }
   }
@@ -429,8 +398,8 @@ export namespace extractor {
    * Either a property-based and method-based {@link ValueUpdater}
    * based on whether constructor parameter *name* is evaluated to be a property or method.
    */
-  export class UniversalUpdater<T, E>
-    extends ValueUpdater<T, E> {
+  export class UniversalUpdater
+    extends ValueUpdater {
     /**
      * The method or property name.
      */
@@ -476,8 +445,6 @@ export class Extractors {
    * field extraction is the input to the next extractor. The result
    * returned is the result of the final extractor in the chain.
    *
-   * @typeParam T  the type of the object to extract from
-   *
    * @param extractorsOrFields  If extractorsOrFields is a string type, then the
    *                            field names to extract (if any field name contains a dot '.'
    *                            that field name is split into multiple field names delimiting on
@@ -486,38 +453,35 @@ export class Extractors {
    *
    * @return an extractor that extracts the value(s) of the specified field(s)
    */
-  static chained<T, R> (extractorsOrFields: extractor.ValueExtractor<any, any>[] | string): extractor.ValueExtractor<T, R> {
-    let extractors = new Array<extractor.ValueExtractor<T, R>>()
+  static chained (extractorsOrFields: extractor.ValueExtractor[] | string): extractor.ValueExtractor {
+    let extractors = new Array<extractor.ValueExtractor>()
 
     if (extractorsOrFields && (typeof extractorsOrFields === 'string')) {
       const s = extractorsOrFields as string
       if (s.length > 0) {
         for (const fieldName of s.split('.')) {
-          extractors.push(Extractors.extract<T, R>(fieldName))
+          extractors.push(Extractors.extract(fieldName))
         }
       }
     } else {
-      extractors = extractorsOrFields as extractor.ValueExtractor<any, any>[]
+      extractors = extractorsOrFields as extractor.ValueExtractor[]
     }
 
     if (extractors.length == 1) {
       return extractors[0]
     }
-    return new extractor.ChainedExtractor<any, any>(extractors)
+    return new extractor.ChainedExtractor(extractors)
   }
 
   /**
    * Returns an extractor that extracts the value of the specified field.
-   *
-   * @typeParam T  the type of the object to extract from
-   * @typeParam E  the type of the extracted value
    *
    * @param from    the name of the field or method to extract the value from.
    * @param params  the parameters to pass to the method.
    *
    * @return an extractor that extracts the value of the specified field.
    */
-  static extract<T, E> (from: string, params?: any[]): extractor.ValueExtractor<T, E> {
+  static extract (from: string, params?: any[]): extractor.ValueExtractor {
     if (params) {
       if (!from.endsWith('()')) {
         from = from + '()'
@@ -530,23 +494,18 @@ export class Extractors {
   /**
    * Returns an extractor that always returns its input argument.
    *
-   * @typeParam T  the type of the input and output objects to the function
-   *
    * @return an extractor that always returns its input argument
    */
-  static identity<T> (): extractor.ValueExtractor<T, T> {
+  static identity (): extractor.ValueExtractor {
     return extractor.IdentityExtractor.INSTANCE
   }
 
   /**
    * Returns an extractor that casts its input argument.
    *
-   * @typeParam T  the type of the input objects to the function
-   * @typeParam E  the type of the output objects to the function
-   *
    * @return an extractor that always returns its input argument
    */
-  static identityCast<T, E> (): extractor.ValueExtractor<T, E> {
+  static identityCast (): extractor.ValueExtractor {
     return extractor.IdentityExtractor.INSTANCE
   }
 
@@ -554,20 +513,16 @@ export class Extractors {
    * Returns an extractor that extracts the specified fields
    * and returns the extracted values in an array.
    *
-   * @typeParam T the type of the object to extract from
-   *
    * @param extractorOrFields  the field names to extract
    *
    * @return an extractor that extracts the value(s) of the specified field(s)
    */
-  static multi<T> (extractorOrFields: extractor.ValueExtractor<T, any>[] | string): extractor.ValueExtractor<T, any[]> {
-    let extractors: extractor.ValueExtractor<T, any>[] = new Array<extractor.ValueExtractor<T, any>>()
+  static multi (extractorOrFields: extractor.ValueExtractor[] | string): extractor.MultiExtractor {
+    let extractors: extractor.ValueExtractor[] = new Array<extractor.ValueExtractor>()
     if (typeof extractorOrFields[0] === 'string') {
-      for (const f in extractorOrFields as String) {
-        extractors.push(Extractors.chained(f))
-      }
+      extractors.push(Extractors.chained(extractorOrFields as string))
     } else {
-      extractors = extractorOrFields as extractor.ValueExtractor<T, any>[]
+      extractors = extractorOrFields as extractor.ValueExtractor[]
     }
 
     return new extractor.MultiExtractor(extractors)
