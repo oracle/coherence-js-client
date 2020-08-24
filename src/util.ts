@@ -41,6 +41,8 @@ import { NamedCacheClient, net } from './named-cache-client'
 import { processor } from './processors'
 
 export namespace util {
+  import MapEntry = net.MapEntry
+
   /**
    * A drop-in replacement for the default ECMA Map implementation that uses
    * hashes keys based on the string view of an Object.
@@ -596,15 +598,15 @@ export namespace util {
      * @inheritDoc
      */
     delete (e: net.MapEntry<K, V>): Promise<boolean> {
-      return this.namedCache.removeMapping(e.getKey(), e.getValue())
+      return this.namedCache.removeMapping(e.key, e.value)
     }
 
     /**
      * @inheritDoc
      */
-    has (value: NamedCacheEntry<K, V>): Promise<boolean> {
+    has (value: MapEntry<K, V>): Promise<boolean> {
       return new Promise((resolve, reject) => {
-        return this.namedCache.hasEntry(value.getKey(), value.getValue())
+        return this.namedCache.hasEntry(value.key, value.value)
           .then((v) => {
             resolve(v)
           }).catch(e => reject(e))
@@ -926,12 +928,17 @@ export namespace util {
     /**
      * The deserialized key.
      */
-    private key!: K
+    private _key!: K
 
     /**
-     * The deserialized value.
+     * @inheritDoc
      */
-    private value!: V
+    get key (): K {
+      if (!this._key) {
+        this._key = this.serializer.deserialize(this.keyBytes)
+      }
+      return this._key
+    }
 
     /**
      * The raw key bytes.
@@ -964,23 +971,18 @@ export namespace util {
     }
 
     /**
-     * @inheritDoc
+     * The deserialized value.
      */
-    getKey (): K {
-      if (!this.key) {
-        this.key = this.serializer.deserialize(this.keyBytes)
-      }
-      return this.key
-    }
+    private _value!: V
 
     /**
      * @inheritDoc
      */
-    getValue (): V {
-      if (!this.value) {
-        this.value = this.serializer.deserialize(this.valueBytes)
+    get value (): V {
+      if (!this._value) {
+        this._value = this.serializer.deserialize(this.valueBytes)
       }
-      return this.value
+      return this._value
     }
   }
 

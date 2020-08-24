@@ -73,21 +73,21 @@ describe('MapListener IT Test Suite', function () {
         const expectedEvent = expectedOrder[i]
         const actualEvent = actualOrder[i]
         const expectedKey = expectedEvent.key
-        const actualKey = actualEvent.getKey()
+        const actualKey = actualEvent.key
         assert.deepEqual(actualKey, expectedKey, 'Unexpected event order; expected key: '
           + stringify(expectedKey) + ', received: ' + stringify(actualKey))
         if (expectedEvent.new) {
-          assert.deepEqual(actualEvent.getNewValue(), expectedEvent.new, 'Unexpected event order; expected new value: '
-            + stringify(expectedEvent.new) + ', received: ' + stringify(actualEvent.getNewValue()))
+          assert.deepEqual(actualEvent.newValue, expectedEvent.new, 'Unexpected event order; expected new value: '
+            + stringify(expectedEvent.new) + ', received: ' + stringify(actualEvent.newValue))
         } else {
-          assert.equal(actualEvent.getNewValue(), null, 'Unexpected event order; event incorrectly has new value')
+          assert.equal(actualEvent.newValue, null, 'Unexpected event order; event incorrectly has new value')
         }
 
         if (expectedEvent.old) {
-          assert.deepEqual(actualEvent.getOldValue(), expectedEvent.old, 'Unexpected event order; expected old value: '
-            + stringify(expectedEvent.old) + ', received: ' + stringify(actualEvent.getOldValue()))
+          assert.deepEqual(actualEvent.oldValue, expectedEvent.old, 'Unexpected event order; expected old value: '
+            + stringify(expectedEvent.old) + ', received: ' + stringify(actualEvent.oldValue))
         } else {
-          assert.equal(actualEvent.getOldValue(), null, 'Unexpected event order; event incorrectly has old value')
+          assert.equal(actualEvent.oldValue, null, 'Unexpected event order; event incorrectly has old value')
         }
       }
     }
@@ -99,32 +99,32 @@ describe('MapListener IT Test Suite', function () {
       const key = expectedEvent.key
       for (const receivedEvent of eventsReceived) {
         try {
-          assert.deepEqual(key, receivedEvent.getKey())
+          assert.deepEqual(key, receivedEvent.key)
           keyFound = true
         } catch (error) {
         }
 
         if (expectedEvent.new) {
-          if (!receivedEvent.getNewValue()) {
+          if (!receivedEvent.newValue) {
             assert.fail('[' + mode + '] Expected event for key ' + stringify(key) + ' to have new value, but none was found')
           } else {
-            assert.deepEqual(expectedEvent.new, receivedEvent.getNewValue(), '[' + mode + '] Unexpected new value found for event keyed by ' + stringify(key))
+            assert.deepEqual(expectedEvent.new, receivedEvent.newValue, '[' + mode + '] Unexpected new value found for event keyed by ' + stringify(key))
           }
         } else {
           if (receivedEvent.new) {
-            assert.fail('[' + mode + '] Did not expect event for key ' + stringify(key) + ' to have new value, but found' + stringify(receivedEvent.getNewValue()))
+            assert.fail('[' + mode + '] Did not expect event for key ' + stringify(key) + ' to have new value, but found' + stringify(receivedEvent.newValue))
           }
         }
 
         if (expectedEvent.old) {
-          if (!receivedEvent.getOldValue()) {
+          if (!receivedEvent.oldValue) {
             assert.fail('[' + mode + '] Expected event for key ' + stringify(key) + ' to have old value, but none was found')
           } else {
-            assert.deepEqual(expectedEvent.old, receivedEvent.getOldValue(), '[' + mode + '] Unexpected old value found for event keyed by ' + stringify(key))
+            assert.deepEqual(expectedEvent.old, receivedEvent.oldValue, '[' + mode + '] Unexpected old value found for event keyed by ' + stringify(key))
           }
         } else {
           if (receivedEvent.old) {
-            assert.fail('[' + mode + '] Did not expect event for key ' + stringify(key) + ' to have old value, but found' + stringify(receivedEvent.getOldValue()))
+            assert.fail('[' + mode + '] Did not expect event for key ' + stringify(key) + ' to have old value, but found' + stringify(receivedEvent.oldValue))
           }
         }
       }
@@ -320,7 +320,7 @@ describe('MapListener IT Test Suite', function () {
 
       const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
-          assert.deepEqual(event.getSource(), cache)
+          assert.deepEqual(event.source, cache)
           await cache.destroy()
         }
       })()
@@ -341,7 +341,7 @@ describe('MapListener IT Test Suite', function () {
 
       const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
-          assert.deepEqual(event.getName(), cache.name)
+          assert.deepEqual(event.name, cache.name)
           await cache.destroy()
         }
       })()
@@ -363,21 +363,21 @@ describe('MapListener IT Test Suite', function () {
       let count = 0
       const listener = new (class MyListener extends event.MapListenerAdapter {
         async entryInserted (event) {
-          assert.equal(event.getDescription(), 'inserted')
+          assert.equal(event.description, 'inserted')
           if (++count === 3) {
             await cache.destroy()
           }
         }
 
         async entryDeleted (event) {
-          assert.equal(event.getDescription(), 'deleted')
+          assert.equal(event.description, 'deleted')
           if (++count === 3) {
             await cache.destroy()
           }
         }
 
         async entryUpdated (event) {
-          assert.equal(event.getDescription(), 'updated')
+          assert.equal(event.description, 'updated')
           if (++count === 3) {
             await cache.destroy()
           }
@@ -396,7 +396,7 @@ describe('MapListener IT Test Suite', function () {
       const response = new MapEventResponse()
       response.setId(8)
       const e = new event.MapEvent(cache.name, cache, response, null)
-      assert.equal(e.getDescription(), '<unknown: ' + 8 + '>')
+      assert.equal(e.description, '<unknown: ' + 8 + '>')
       await cache.destroy()
     })
 
@@ -471,8 +471,8 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'delete\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.getNewValue()) +
-          ', old-value: ' + stringify(event.getOldValue()) + '}')
+          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'delete')
     }
@@ -485,8 +485,8 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'insert\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.getNewValue()) +
-          ', old-value: ' + stringify(event.getOldValue()) + '}')
+          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'insert')
     }
@@ -499,8 +499,8 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'updated\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.getNewValue()) +
-          ', old-value: ' + stringify(event.getOldValue()) + '}')
+          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'update')
     }

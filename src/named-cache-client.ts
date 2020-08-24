@@ -591,14 +591,14 @@ export namespace net {
      *
      * @return the key corresponding to this entry
      */
-    getKey (): K
+    key: K
 
     /**
      * Returns the value corresponding to this entry.
      *
      * @return the value corresponding to this entry
      */
-    getValue (): V
+    value: V
   }
 
   /**

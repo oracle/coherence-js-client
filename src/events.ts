@@ -32,78 +32,90 @@ export namespace event {
     static readonly ENTRY_DELETED = 3
 
     /**
-     * The name of cache from which the event originated.
-     */
-    cacheName: string
-
-    /**
-     * The event source.
-     */
-    source: net.NamedCache<K, V>
-
-    /**
-     * Event id; may be one of {@link ENTRY_INSERTED}, {@link ENTRY_UPDATED}, or {@link ENTRY_DELETED}.
-     */
-    id: number
-
-    /**
      * Serialized representation of the cache key associated with this event.
      */
-    keyBytes: Uint8Array
-
+    protected keyBytes: Uint8Array
     /**
      * Serialized representation of the new cache value associated with this event.
      */
-    newValueBytes?: Uint8Array
-
+    protected newValueBytes?: Uint8Array
     /**
      * Serialized representation of the old cache value associated with this event.
      */
-    oldValueBytes?: Uint8Array
-
-    /**
-     * The deserialized key.
-     */
-    private key?: K
-
-    /**
-     * The deserialized new value.
-     */
-    private newValue?: V
-
-    /**
-     * The deserialized old value.
-     */
-    private oldValue?: V
-
+    protected oldValueBytes?: Uint8Array
     /**
      * Array of filter IDs applied to this event.
      * TODO(rlubke) not used - should it be?
      */
-    private readonly filterIDs: Array<number>
-
+    protected readonly filterIDs: Array<number>
     /**
      * The {@link Serializer} to use to deserialize in-bound `MapEvents`.
      */
-    private serializer: util.Serializer
+    protected serializer: util.Serializer
 
     /**
      * Constructs a new `MapEvent`
      *
-     * @param cacheName  the name of the cache the generated the event
-     * @param source     the event source
-     * @param mapEvent   the {@link MapEventResponse} from the server
+     * @param cacheName          the name of the cache the generated the event
+     * @param source             the event source
+     * @param mapEventResponse   the {@link MapEventResponse} from the server
      * @param serializer
      */
-    constructor (cacheName: string, source: net.NamedCache<K, V>, mapEvent: MapEventResponse, serializer: util.Serializer) {
-      this.cacheName = cacheName
-      this.source = source
+    constructor (cacheName: string, source: net.NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
+      this._name = cacheName
+      this._source = source
       this.serializer = serializer
-      this.id = mapEvent.getId()
-      this.keyBytes = mapEvent.getKey_asU8()
-      this.newValueBytes = mapEvent.getNewvalue_asU8()
-      this.oldValueBytes = mapEvent.getOldvalue_asU8()
-      this.filterIDs = mapEvent.getFilteridsList()
+      this._id = mapEventResponse.getId()
+      this.keyBytes = mapEventResponse.getKey_asU8()
+      this.newValueBytes = mapEventResponse.getNewvalue_asU8()
+      this.oldValueBytes = mapEventResponse.getOldvalue_asU8()
+      this.filterIDs = mapEventResponse.getFilteridsList()
+    }
+
+    /**
+     * The name of cache from which the event originated.
+     */
+    protected _name: string
+
+    /**
+     * Return the cache name from which the event originated.
+     *
+     * @return the cache name from which the event originated
+     */
+    get name (): string {
+      return this._name
+    }
+
+    /**
+     * The event source.
+     */
+    protected _source: net.NamedCache<K, V>
+
+    /**
+     * Return the event source.
+     *
+     * @return the event source
+     */
+    get source (): net.NamedCache<K, V> {
+      return this._source
+    }
+
+    /**
+     * Event id; may be one of {@link ENTRY_INSERTED}, {@link ENTRY_UPDATED}, or {@link ENTRY_DELETED}.
+     */
+    protected _id: number
+
+    /**
+     * Return the event ID.
+     * This may be one of:
+     * - {@link MapEvent.ENTRY_INSERTED}
+     * - {@link MapEvent.ENTRY_UPDATED}
+     * - {@link MapEvent.ENTRY_DELETED}
+     *
+     * @return the event ID
+     */
+    get id (): number {
+      return this._id
     }
 
     /**
@@ -130,34 +142,57 @@ export namespace event {
     }
 
     /**
-     * Return the cache name from which the event originated.
-     *
-     * @return the cache name from which the event originated
+     * The deserialized key.
      */
-    getName (): string {
-      return this.cacheName
+    protected _key?: K
+
+    /**
+     * Return the key for the entry generating the event.
+     *
+     * @return the key for the entry generating the event
+     */
+    get key (): K {
+      if (!this._key) {
+        this._key = this.serializer.deserialize(this.keyBytes)
+      }
+      if (!this._key) {
+        throw new Error('unable to deserialize key using format: ' + this.serializer.format)
+      }
+      return this._key
     }
 
     /**
-     * Return the event source.
-     *
-     * @return the event source
+     * The deserialized new value.
      */
-    getSource (): net.NamedCache<K, V> {
-      return this.source
+    protected _newValue?: V
+
+    /**
+     * Return the new value for the entry generating the event.
+     *
+     * @return the new value, if any, for the entry generating the event
+     */
+    get newValue (): V | undefined {
+      if (!this._newValue && this.newValueBytes) {
+        this._newValue = this.serializer.deserialize(this.newValueBytes)
+      }
+      return this._newValue
     }
 
     /**
-     * Return the event ID.
-     * This may be one of:
-     * - {@link MapEvent.ENTRY_INSERTED}
-     * - {@link MapEvent.ENTRY_UPDATED}
-     * - {@link MapEvent.ENTRY_DELETED}
-     *
-     * @return the event ID
+     * The deserialized old value.
      */
-    getId (): number {
-      return this.id
+    protected _oldValue?: V
+
+    /**
+     * Return the old value for the entry generating the event.
+     *
+     * @return the old value, if any, for the entry generating the event
+     */
+    get oldValue (): V | undefined {
+      if (!this._oldValue && this.oldValueBytes) {
+        this._oldValue = this.serializer.deserialize(this.oldValueBytes)
+      }
+      return this._oldValue
     }
 
     /**
@@ -169,49 +204,8 @@ export namespace event {
      *
      * @return a `string` description for the event
      */
-    getDescription (): string {
-      return MapEvent.getDescription(this.id)
-    }
-
-    /**
-     * Return the key for the entry generating the event.
-     *
-     * @return the key for the entry generating the event
-     */
-    getKey (): K {
-      if (!this.key) {
-        this.key = this.serializer.deserialize(this.keyBytes)
-      }
-      if (!this.key) {
-        throw new Error('unable to deserialize key using format: ' + this.serializer.format)
-      }
-      return this.key
-    }
-
-    /**
-     * Return the old value for the entry generating the event.
-     *
-     * @return the old value, if any, for the entry generating the event
-     */
-    getOldValue (): V | undefined {
-      if (!this.oldValue && this.oldValueBytes) {
-        this.oldValue = this.serializer.deserialize(this.oldValueBytes)
-      }
-      return this.oldValue
-    }
-
-    // ----- helper methods ---------------------------------------------------
-
-    /**
-     * Return the new value for the entry generating the event.
-     *
-     * @return the new value, if any, for the entry generating the event
-     */
-    getNewValue (): V | undefined {
-      if (!this.newValue && this.newValueBytes) {
-        this.newValue = this.serializer.deserialize(this.newValueBytes)
-      }
-      return this.newValue
+    get description (): string {
+      return MapEvent.getDescription(this._id)
     }
   }
 
@@ -440,7 +434,7 @@ export namespace event {
                 }
               }
 
-              const keyGroup = this.keyMap.get(mapEvent.getKey())
+              const keyGroup = this.keyMap.get(mapEvent.key)
               if (keyGroup) {
                 keyGroup.notifyListeners(mapEvent)
               }
@@ -797,7 +791,7 @@ export namespace event {
      */
     notifyListeners (mapEvent: MapEvent): void {
       for (const listener of this.listeners.keys()) {
-        switch (mapEvent.getId()) {
+        switch (mapEvent.id) {
           case MapEvent.ENTRY_DELETED:
             listener.entryDeleted(mapEvent)
             break
