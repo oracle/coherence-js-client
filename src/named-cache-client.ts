@@ -264,11 +264,12 @@ export interface NamedMap<K, V> {
    * should be avoided. The mutating operations on a subset of entries
    * should be implemented using {@link invokeAll}.
    *
-   * @param keys    the keys to process these keys are not required to
-   *                exist within the Map
-   * @param action  the action to be performed for each entry
+   * @param keys     the keys to process these keys are not required to
+   *                 exist within the Map
+   * @param action   the action to be performed for each entry
+   * @param thisArg  optional argument to be used as this when invoking the action
    */
-  forEach (keys: Iterable<K>, action: (value: V, key: K) => void): Promise<void>
+  forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void>
 
   /**
    * Perform an aggregating operation against the entries specified by the passed keys.
@@ -905,10 +906,13 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  forEach (keys: Iterable<K>, action: (value: V, key: K) => void): Promise<void> {
+  forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void> {
+    if (thisArg) {
+      action.bind(thisArg)
+    }
     return new Promise((resolve, reject) => {
-      this.getAll(keys as Iterable<K>)
-        .then(entries => entries.forEach((value: V, key: K) => action(value, key)))
+      this.getAll(keys)
+        .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
         .then(() => resolve(undefined))
         .catch(error => reject(error))
     })
