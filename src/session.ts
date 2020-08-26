@@ -10,7 +10,7 @@ import { PathLike, readFileSync } from 'fs'
 import { CallOptions, Channel, ChannelCredentials, credentials } from 'grpc'
 import { event } from './events'
 
-import { NamedCacheClient, net } from './named-cache-client'
+import { NamedCache, NamedCacheClient, NamedMap } from './named-cache-client'
 import { util } from './util'
 
 /**
@@ -538,7 +538,7 @@ export class Session
    * @param name    the cache name
    * @param format  the serialization format for keys and values stored within the cache
    */
-  getCache<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): net.NamedCache<K, V> {
+  getCache<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): NamedCache<K, V> {
     if (this.markedForClose) {
       throw new Error('Session is closing')
     }
@@ -559,8 +559,8 @@ export class Session
     return namedCache
   }
 
-  getMap<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): net.NamedMap<K, V> {
-    return this.getCache(name, format) as net.NamedMap<K, V>
+  getMap<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): NamedMap<K, V> {
+    return this.getCache(name, format) as NamedMap<K, V>
   }
 
   /**

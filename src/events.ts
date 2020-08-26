@@ -10,7 +10,7 @@ import { ClientDuplexStream } from 'grpc'
 import { filter } from './filters'
 import { MapEventResponse, MapListenerRequest, MapListenerResponse } from './grpc/messages_pb'
 import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
-import { net } from './named-cache-client'
+import { NamedCache, NamedMap } from './named-cache-client'
 import { util } from './util'
 
 export namespace event {
@@ -61,7 +61,7 @@ export namespace event {
      * @param mapEventResponse   the {@link MapEventResponse} from the server
      * @param serializer
      */
-    constructor (cacheName: string, source: net.NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
+    constructor (cacheName: string, source: NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
       this._name = cacheName
       this._source = source
       this.serializer = serializer
@@ -89,14 +89,14 @@ export namespace event {
     /**
      * The event source.
      */
-    protected _source: net.NamedCache<K, V>
+    protected _source: NamedCache<K, V>
 
     /**
      * Return the event source.
      *
      * @return the event source
      */
-    get source (): net.NamedCache<K, V> {
+    get source (): NamedCache<K, V> {
       return this._source
     }
 
@@ -271,7 +271,7 @@ export namespace event {
     /**
      * The `NamedMap` that will used as the *source* of the events.
      */
-    protected namedMap: net.NamedMap<K, V>
+    protected namedMap: NamedMap<K, V>
 
     /**
      * Request factory.
@@ -331,7 +331,7 @@ export namespace event {
      * @param serializer  the {@link Serializer} used by this map
      * @param emitter     the {@link EventEmitter} to use
      */
-    constructor (namedMap: net.NamedMap<K, V>, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
+    constructor (namedMap: NamedMap<K, V>, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
       this.mapName = namedMap.name
       this.client = client
       this.namedMap = namedMap

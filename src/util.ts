@@ -37,11 +37,10 @@ import {
   ReplaceRequest,
   ValuesRequest
 } from './grpc/messages_pb'
-import { NamedCacheClient, net } from './named-cache-client'
+import { MapEntry, NamedCacheClient } from './named-cache-client'
 import { processor } from './processors'
 
 export namespace util {
-  import MapEntry = net.MapEntry
 
   /**
    * A drop-in replacement for the default ECMA Map implementation that uses
@@ -582,7 +581,7 @@ export namespace util {
    * @internal
    */
   export class EntrySet<K, V>
-    extends PagedSet<K, V, net.MapEntry<K, V>> {
+    extends PagedSet<K, V, MapEntry<K, V>> {
     [Symbol.toStringTag]: string = 'EntrySet'
 
     /**
@@ -597,7 +596,7 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    delete (e: net.MapEntry<K, V>): Promise<boolean> {
+    delete (e: MapEntry<K, V>): Promise<boolean> {
       return this.namedCache.removeMapping(e.key, e.value)
     }
 
@@ -676,7 +675,7 @@ export namespace util {
    * Helper for streaming cache entries.
    */
   class EntrySetHelper<K, V>
-    implements IStreamedDataHelper<EntryResult, net.MapEntry<K, V>> {
+    implements IStreamedDataHelper<EntryResult, MapEntry<K, V>> {
     private namedCache: NamedCacheClient<K, V>
 
     /**
@@ -698,7 +697,7 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    handleEntry (e: EntryResult): net.MapEntry<K, V> {
+    handleEntry (e: EntryResult): MapEntry<K, V> {
       return new NamedCacheEntry(e.getKey_asU8(), e.getValue_asU8(), this.namedCache.getRequestFactory().serializer)
     }
 
@@ -923,7 +922,7 @@ export namespace util {
    * @internal
    */
   export class NamedCacheEntry<K, V>
-    implements net.MapEntry<K, V> {
+    implements MapEntry<K, V> {
 
     /**
      * The deserialized key.

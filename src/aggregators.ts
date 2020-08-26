@@ -7,7 +7,8 @@
 
 import { extractor, Extractors } from './extractors'
 import { filter } from './filters'
-import { net } from './named-cache-client'
+import { MapEntry } from './named-cache-client'
+
 import { util } from './util'
 
 export namespace aggregator {
@@ -520,7 +521,7 @@ export namespace aggregator {
    * @typeParam E  extracted value type
    */
   export class ReducerAggregator<K = any, V = any, E = any>
-    extends EntryAggregator<K, V, [net.MapEntry<E, V>]> {
+    extends EntryAggregator<K, V, [MapEntry<E, V>]> {
 
     /**
      * Construct a new `ReducerAggregator`.

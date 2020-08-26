@@ -20,11 +20,14 @@
     "**/grpc/**"
   ],
   "toc": [
+    "NamedMap",
+    "NamedCache",
     "Aggregators",
     "Extractors",
     "Filters",
     "Processors",
     "Session",
-    "SessionBuilder"
+    "Options",
+    "TlsOptions"
   ]
 }
