@@ -45,6 +45,7 @@ import RemoteSet = util.RemoteSet
 import RequestFactory = util.RequestFactory
 import Serializer = util.Serializer
 import ValueSet = util.ValueSet
+import HashMap = util.HashMap
 
 /**
  * A Map-based data-structure that manages entries across one or more processes.
@@ -1372,7 +1373,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   protected doInvokeAll<T = any> (call: EventEmitter): Promise<Map<K, T>> {
     const serializer = this.getSerializer()
-    const result: Map<K, T> = new Map()
+    const result: Map<K, T> = new HashMap<K, T>()
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (e: Entry) {
         const key = serializer.deserialize(e.getKey_asU8())

@@ -57,7 +57,12 @@ export namespace util {
    * @typeParam K  the type of the key
    * @typeParam V  the type of the value
    */
-  export class Map<K, V> {
+  export class HashMap<K, V> implements Map<K, V> {
+
+    /**
+     * @inheritDoc
+     */
+    readonly [Symbol.toStringTag]: string = 'HashMap'
 
     /**
      * The buckets for storing key/value pairs.
@@ -90,9 +95,7 @@ export namespace util {
     protected _size: number = 0
 
     /**
-     * Returns the size of this map.
-     *
-     * @return the size of this map
+     * @inheritDoc
      */
     get size () {
       return this._size
@@ -116,14 +119,9 @@ export namespace util {
     }
 
     /**
-     * Sets the value for the key in the Map object. Returns the Map object.
-     *
-     * @param key    the key of the element to add to the Map object
-     * @param value  the value of the element to add to the Map object
-     *
-     * @return this
+     * @inheritDoc
      */
-    set (key: K, value: V): Map<K, V> {
+    set (key: K, value: V): this {
       const bucket = this.buckets[this.getBucket(key)]
       const existing = bucket.find(entry => entry[0] === key)
       if (existing) {
@@ -136,14 +134,15 @@ export namespace util {
     }
 
     /**
-     * Calls `callbackFn` once for each key-value pair present in the Map object.
-     *
-     * @param callbackFn  the Function to execute for each element
+     * @inheritDoc
      */
-    forEach (callbackFn: (value: V, key: K) => void): void {
+    forEach (callbackFn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void {
       const entries = this.entries()
+      if (thisArg) {
+        callbackFn.bind(thisArg)
+      }
       for (const entry of entries) {
-        callbackFn(entry[1], entry[0])
+        callbackFn(entry[1], entry[0], this)
       }
     }
 
@@ -160,23 +159,27 @@ export namespace util {
     }
 
     /**
-     * Returns a new Iterator object that contains an array of [key, value] for each element in the Map object.
+     * @inheritDoc
      */
-    entries (): Iterable<[K, V]> {
+    entries (): IterableIterator<[K, V]> {
       return new EntryIterator(this.buckets)
     }
 
+    values (): IterableIterator<V> {
+      return new ValueIterator(this.buckets)
+    }
+
+
+
     /**
-     * Returns a new Iterator object that contains the keys for each element in the Map object.
+     * @inheritDoc
      */
-    keys (): Iterable<K> {
+    keys (): IterableIterator<K> {
       return new KeyIterator(this.buckets)
     }
 
     /**
-     * Returns the value associated to the key, or `undefined` if there is none.
-     *
-     * @param key  the key of the element to return from the Map object
+     * @inheritDoc
      */
     get (key: K): V | undefined {
       const bucket = this.buckets[this.getBucket(key)]
@@ -185,7 +188,7 @@ export namespace util {
     }
 
     /**
-     * Removes all key-value pairs from the Map object.
+     * @inheritDoc
      */
     clear (): void {
       for (let i = 0, len = this.buckets.length; i < len; i++) {
@@ -195,9 +198,7 @@ export namespace util {
     }
 
     /**
-     * Removes the specified element from a Map object by key.
-     *
-     * @param key  the key of the element to remove from the Map object
+     * @inheritDoc
      */
     delete (key: K): boolean {
       const bucket = this.buckets[this.getBucket(key)]
@@ -211,9 +212,7 @@ export namespace util {
     }
 
     /**
-     * Returns a new Iterator object that contains an array of [key, value] for each element in the Map object.
-     *
-     * @return a new Iterator object that contains an array of [key, value] for each element in the Map object
+     * @inheritDoc
      */
     [Symbol.iterator] (): IterableIterator<[K, V]> {
       return new EntryIterator(this.buckets)
@@ -226,7 +225,7 @@ export namespace util {
      * @hidden
      */
     private getBucket (key: any) {
-      return Math.abs(Map.hash(key.toString()) % this.buckets.length)
+      return Math.abs(HashMap.hash(key.toString()) % this.buckets.length)
     }
   }
 
@@ -239,7 +238,7 @@ export namespace util {
     /**
      * Element storage.
      */
-    private map: Map<T, boolean>
+    private map: HashMap<T, boolean>
 
     /**
      * Constructs a new `LocalSet`.
@@ -248,7 +247,7 @@ export namespace util {
      * @param iterable
      */
     constructor (size: number = 32, iterable?: Iterable<T>) {
-      this.map = new Map<T, boolean>(size)
+      this.map = new HashMap<T, boolean>(size)
       if (iterable) {
         for (const element of iterable) {
           this.map.set(element, true)
@@ -315,7 +314,7 @@ export namespace util {
   }
 
   /**
-   * {@link IterableIterator} implementation for {@link Map} entries.
+   * {@link IterableIterator} implementation for {@link HashMap} entries.
    */
   class EntryIterator<K, V> implements IterableIterator<[K, V]> {
 
@@ -378,7 +377,7 @@ export namespace util {
   }
 
   /**
-   * {@link IterableIterator} implementation for {@link Map} entries.
+   * {@link IterableIterator} implementation for {@link HashMap} keys.
    */
   class KeyIterator<K> implements IterableIterator<K> {
 
@@ -411,6 +410,44 @@ export namespace util {
      * @inheritDoc
      */
     [Symbol.iterator] (): IterableIterator<K> {
+      return this
+    }
+  }
+
+  /**
+   * {@link IterableIterator} implementation for {@link HashMap} values.
+   */
+  class ValueIterator<V> implements IterableIterator<V> {
+
+    /**
+     * The wrapped {@link EntryIterator}.
+     */
+    protected readonly entryIterator: EntryIterator<any, V>
+
+    /**
+     * Constructs a new `EntryIterator`.
+     *
+     * @param buckets  the buckets to iterator over
+     */
+    constructor (buckets: [any, V][][]) {
+      this.entryIterator = new EntryIterator<any, V>(buckets)
+    }
+
+    /**
+     * @inheritDoc
+     */
+    next (...args: [] | [undefined]): IteratorResult<V> {
+      const result = this.entryIterator.next()
+      if (result.value) {
+        result.value = result.value[1]
+      }
+      return result as IteratorResult<V>
+    }
+
+    /**
+     * @inheritDoc
+     */
+    [Symbol.iterator] (): IterableIterator<V> {
       return this
     }
   }
