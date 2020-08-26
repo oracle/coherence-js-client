@@ -24,7 +24,7 @@ import {
 } from './grpc/messages_pb'
 import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
 import { processor } from './processors'
-import { Session, SessionOptions } from './session'
+import { Session } from './session'
 import { util } from './util'
 // none of these are exported
 import EntryAggregator = aggregator.EntryAggregator
@@ -713,12 +713,6 @@ export class NamedCacheClient<K = any, V = any>
 
   /**
    * @internal
-   * The set of options used to create the session.
-   */
-  private readonly sessOpts: SessionOptions
-
-  /**
-   * @internal
    * The internalEventEmitter is used by Session and this class for internal purposes. This
    * allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
    * to be handled independent of the eventual events seen by the client application.
@@ -735,16 +729,17 @@ export class NamedCacheClient<K = any, V = any>
   constructor (cacheName: string, session: Session, serializer: Serializer) {
     super()
 
+    session.options.lock()
+
     this.cacheName = cacheName
     this.session = session
-    this.sessOpts = this.session.getSessionOptions()
     this.serializer = serializer
 
     this.requestFactory = new RequestFactory(this.cacheName, this.serializer)
     this.client = new NamedCacheServiceClient(
-      session.getAddress(), // Ignored since we are using a shared Channel
-      session.getChannelCredentials(),
-      session.getClientOptions())
+      session.address, // Ignored since we are using a shared Channel
+      session.channelCredentials,
+      session.clientOptions) // shared channel defined here
 
     // We maintain two separate EventEmitters;
     //
@@ -789,7 +784,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     return new Promise((resolve, reject) => {
       const request = self.requestFactory.containsEntry(key, value)
-      self.client.containsEntry(request, this.callOptions(), (err, resp) => {
+      self.client.containsEntry(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -802,7 +797,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.aggregate(kfa, agg)
     return new Promise((resolve, reject) => {
-      self.client.aggregate(request, this.callOptions(), (err, resp) => {
+      self.client.aggregate(request, this.session.callOptions(), (err, resp) => {
         if (err) {
           reject(err)
         } else {
@@ -859,7 +854,7 @@ export class NamedCacheClient<K = any, V = any>
       processor = keysOrFilterOrProcessor as EntryProcessor
     }
 
-    const call = self.client.invokeAll(self.requestFactory.invokeAll(keysOrFilter, processor), this.callOptions())
+    const call = self.client.invokeAll(self.requestFactory.invokeAll(keysOrFilter, processor), this.session.callOptions())
     return this.doInvokeAll(call)
   }
 
@@ -919,7 +914,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.addIndex(extractor, ordered, comparator)
     return new Promise((resolve, reject) => {
-      self.client.addIndex(request, this.callOptions(), (err: ServiceError | null) => {
+      self.client.addIndex(request, this.session.callOptions(), (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
     })
@@ -936,7 +931,7 @@ export class NamedCacheClient<K = any, V = any>
 
     const set = new LocalSet<MapEntry<K, V>>()
     const request = this.requestFactory.entrySet(filter, comp)
-    const call = self.client.entrySet(request, this.callOptions())
+    const call = self.client.entrySet(request, this.session.callOptions())
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (e: GrpcEntry) {
@@ -961,7 +956,7 @@ export class NamedCacheClient<K = any, V = any>
 
     const set = new LocalSet<K>()
     const request = this.requestFactory.keySet(filter)
-    const call = self.client.keySet(request, this.callOptions())
+    const call = self.client.keySet(request, this.session.callOptions())
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (r: BytesValue) {
@@ -1001,7 +996,7 @@ export class NamedCacheClient<K = any, V = any>
 
     const set = new LocalSet<V>()
     const request = this.requestFactory.values(filter, comparator)
-    const call = self.client.values(request, this.callOptions())
+    const call = self.client.values(request, this.session.callOptions())
 
     return new Promise((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (b: BytesValue) {
@@ -1020,7 +1015,7 @@ export class NamedCacheClient<K = any, V = any>
   clear (): Promise<void> {
     const self = this
     return new Promise((resolve, reject) => {
-      self.client.clear(self.requestFactory.clear(), this.callOptions(), (err: ServiceError | null) => {
+      self.client.clear(self.requestFactory.clear(), this.session.callOptions(), (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
     })
@@ -1033,7 +1028,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = self.requestFactory.containsKey(key)
     return new Promise((resolve, reject) => {
-      self.client.containsKey(request, this.callOptions(), (err, resp) => {
+      self.client.containsKey(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1046,7 +1041,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.containsValue(value)
     return new Promise((resolve, reject) => {
-      self.client.containsValue(request, this.callOptions(), (err, resp) => {
+      self.client.containsValue(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1064,7 +1059,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   getAll (keys: Iterable<K>): Promise<Map<K, V>> {
     const self = this
-    const call = self.client.getAll(self.requestFactory.getAll(keys), this.callOptions())
+    const call = self.client.getAll(self.requestFactory.getAll(keys), this.session.callOptions())
     return this.doInvokeAll(call)
   }
 
@@ -1074,7 +1069,7 @@ export class NamedCacheClient<K = any, V = any>
   getOrDefault (key: K, defaultValue: V | null): Promise<V | null> {
     const self = this
     return new Promise((resolve, reject) => {
-      self.client.get(self.requestFactory.get(key), this.callOptions(), (err, resp) => {
+      self.client.get(self.requestFactory.get(key), this.session.callOptions(), (err, resp) => {
         if (resp && resp.getPresent()) {
           self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
         } else {
@@ -1092,7 +1087,7 @@ export class NamedCacheClient<K = any, V = any>
     return new Promise((resolve, reject) => {
       const request = new IsEmptyRequest()
       request.setCache(this.cacheName)
-      self.client.isEmpty(request, this.callOptions(), (err, resp) => {
+      self.client.isEmpty(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1104,7 +1099,7 @@ export class NamedCacheClient<K = any, V = any>
   set (key: K, value: V, ttl?: number): Promise<V> {
     const self = this
     return new Promise((resolve, reject) => {
-      self.client.put(self.requestFactory.put(key, value, ttl), this.callOptions(), (err, resp) => {
+      self.client.put(self.requestFactory.put(key, value, ttl), this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1117,7 +1112,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = self.requestFactory.putIfAbsent(key, value, ttl)
     return new Promise((resolve, reject) => {
-      self.client.putIfAbsent(request, this.callOptions(), (err, resp) => {
+      self.client.putIfAbsent(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1129,7 +1124,7 @@ export class NamedCacheClient<K = any, V = any>
   delete (key: K): Promise<V> {
     const self = this
     return new Promise((resolve, reject) => {
-      self.client.remove(this.requestFactory.remove(key), this.callOptions(), (err, resp) => {
+      self.client.remove(this.requestFactory.remove(key), this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1142,7 +1137,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.removeMapping(key, value)
     return new Promise((resolve, reject) => {
-      self.client.removeMapping(request, this.callOptions(), (err, resp) => {
+      self.client.removeMapping(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1155,7 +1150,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.replace(key, value)
     return new Promise((resolve, reject) => {
-      self.client.replace(request, this.callOptions(), (err, resp) => {
+      self.client.replace(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1169,7 +1164,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.replaceMapping(key, value, newValue)
 
     return new Promise((resolve, reject) => {
-      self.client.replaceMapping(request, this.callOptions(), (err, resp) => {
+      self.client.replaceMapping(request, this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1182,7 +1177,7 @@ export class NamedCacheClient<K = any, V = any>
     return new Promise<number>((resolve, reject) => {
       const request = new SizeRequest()
       request.setCache(this.cacheName)
-      this.client.size(request, this.callOptions(), (err, resp) => {
+      this.client.size(request, this.session.callOptions(), (err, resp) => {
         if (err || !resp) {
           reject(err)
         } else {
@@ -1211,7 +1206,7 @@ export class NamedCacheClient<K = any, V = any>
         // method will generate the appropriate event on the internalEmitter
         // for which our 'once & only once' listener is setup.
         const request = self.requestFactory.destroy()
-        self.client.destroy(request, self.callOptions(), (err: ServiceError | null) => {
+        self.client.destroy(request, self.session.callOptions(), (err: ServiceError | null) => {
           if (err) {
             reject(err)
           }
@@ -1289,7 +1284,7 @@ export class NamedCacheClient<K = any, V = any>
       // for which our 'once & only once' listener is setup.
       const request = new TruncateRequest()
       request.setCache(this.cacheName)
-      this.client.truncate(request, this.callOptions(), (err, resp) => {
+      this.client.truncate(request, this.session.callOptions(), (err, resp) => {
         if (err || !resp) {
           reject(err)
         }
@@ -1307,7 +1302,7 @@ export class NamedCacheClient<K = any, V = any>
    * @return a {@link ClientReadableStream} to read entries from
    */
   nextEntrySetPage (cookie: Uint8Array | string | undefined): ClientReadableStream<EntryResult> {
-    return this.client.nextEntrySetPage(this.requestFactory.pageRequest(cookie), this.callOptions())
+    return this.client.nextEntrySetPage(this.requestFactory.pageRequest(cookie), this.session.callOptions())
   }
 
   /**
@@ -1318,18 +1313,7 @@ export class NamedCacheClient<K = any, V = any>
    * @return a {@link ClientReadableStream} to read keys from
    */
   nextKeySetPage (cookie: Uint8Array | string | undefined): ClientReadableStream<BytesValue> {
-    return this.client.nextKeySetPage(this.requestFactory.pageRequest(cookie), this.callOptions())
-  }
-
-  /**
-   * Return the per-call options.
-   *
-   * @return the per-call options
-   */
-  protected callOptions (): object {
-    return {
-      deadline: Date.now() + this.sessOpts.requestTimeoutInMillis
-    }
+    return this.client.nextKeySetPage(this.requestFactory.pageRequest(cookie), this.session.callOptions())
   }
 
   /**

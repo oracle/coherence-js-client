@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Aggregators, Filters, SessionBuilder, aggregator } = require('../lib')
+const { Aggregators, Filters, Session, aggregator } = require('../lib')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
@@ -16,7 +16,7 @@ describe('Aggregators IT Test Suite', function () {
   const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5], group: 2 }
   const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null' }
 
-  const session = new SessionBuilder().build()
+  const session = new Session()
   const cache = session.getCache('cache-client')
   this.timeout(30000)
 

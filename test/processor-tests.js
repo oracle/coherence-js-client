@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Filters, Extractors, Processors, SessionBuilder } = require('../lib')
+const { Filters, Extractors, Processors, Session } = require('../lib')
 const t = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha');
@@ -49,7 +49,7 @@ describe('processor.Processors IT Test Suite', function () {
     nullIfOdd: 'non-null'
   }
 
-  const session = new SessionBuilder().build()
+  const session = new Session()
 
   const cache = session.getCache('client-cache')
   const nested = session.getCache('nest-cache')

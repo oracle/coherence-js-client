@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { event, SessionBuilder, Session } = require('../lib')
+const { event, Session, Options } = require('../lib')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
 
@@ -13,43 +13,44 @@ describe('Session Tests Suite (unit/IT)', () => {
   describe('Session Unit Test Suite', () => {
     describe('A SessionBuilder', () => {
       it('should have the expected defaults', () => {
-        const builder = new SessionBuilder()
+        const session = new Session()
 
-        assert.equal(builder.getSessionOptions().address, Session.DEFAULT_ADDRESS)
-        assert.equal(builder.getSessionOptions().tlsEnabled, false)
-        assert.equal(builder.getSessionOptions().requestTimeoutInMillis, 60000)
-        assert.equal(builder.getSessionOptions().caCertPath, undefined)
-        assert.equal(builder.getSessionOptions().clientCertPath, undefined)
-        assert.equal(builder.getSessionOptions().clientKeyPath, undefined)
-        assert.equal(builder.getSessionOptions().format, Session.DEFAULT_FORMAT)
+        assert.equal(session.address, Session.DEFAULT_ADDRESS)
+        assert.equal(session.options.requestTimeoutInMillis, 60000)
+        assert.equal(session.options.tls.enabled, false)
+        assert.equal(session.options.tls.caCertPath, undefined)
+        assert.equal(session.options.tls.clientCertPath, undefined)
+        assert.equal(session.options.tls.clientKeyPath, undefined)
+        assert.equal(session.options.format, Session.DEFAULT_FORMAT)
       })
 
       it('should be able to specify a custom address', () => {
-        const builder = new SessionBuilder().withAddress('localhost:1444')
+        const opts = new Options();
+        opts.address = 'localhost:14444'
+        const session = new Session(opts)
 
-        assert.equal(builder.getSessionOptions().address, 'localhost:1444')
+        assert.equal(session.address, 'localhost:14444')
       })
 
       it('should be able to specify a custom request timeout', () => {
-        const builder = new SessionBuilder().withRequestTimeout(1000)
+        const opts = new Options();
+        opts.requestTimeoutInMillis = 1000
+        const session = new Session(opts)
 
-        assert.equal(builder.getSessionOptions().requestTimeoutInMillis, 1000)
+        assert.equal(session.options.requestTimeoutInMillis, 1000)
       })
 
       it('should be able enable tls', () => {
-        const builder = new SessionBuilder().enableTls().withCaCert('/tmp')
-          .withClientCert('/tmp').withClientKey('/tmp')
+        const opts = new Options();
+        opts.tls.enabled = true
+        opts.tls.clientKeyPath = '/tmp'
+        opts.tls.clientCertPath = '/tmp'
+        opts.tls.caCertPath = '/tmp'
 
-        assert.equal(builder.getSessionOptions().tlsEnabled, true)
-        assert.equal(builder.getSessionOptions().caCertPath, '/tmp')
-        assert.equal(builder.getSessionOptions().clientCertPath, '/tmp')
-        assert.equal(builder.getSessionOptions().clientKeyPath, '/tmp')
-      })
-
-      it('should be able to have a custom serialization format', () => {
-        const builder = new SessionBuilder().withFormat('POF')
-
-        assert.equal(builder.getSessionOptions().format, 'POF')
+        assert.equal(opts.tls.enabled, true)
+        assert.equal(opts.tls.caCertPath, '/tmp')
+        assert.equal(opts.tls.clientCertPath, '/tmp')
+        assert.equal(opts.tls.clientKeyPath, '/tmp')
       })
     })
   })
@@ -57,31 +58,31 @@ describe('Session Tests Suite (unit/IT)', () => {
   describe('Session IT Test Suite', () => {
     describe('A Session', () => {
       it('should not have active sessions upon creation', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
-        assert.equal(sess.getActiveCacheCount(), 0)
-        assert.equal(sess.getActiveCaches().length, 0)
+        assert.equal(sess.activeCacheCount, 0)
+        assert.equal(sess.activeCaches.length, 0)
 
         await sess.close()
       })
 
       it('should have active sessions after getCache() is called', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         sess.getCache('sess-cache')
-        assert.equal(sess.getActiveCacheCount(), 1)
-        assert.equal(sess.getActiveCaches()[0].name, 'sess-cache')
+        assert.equal(sess.activeCacheCount, 1)
+        assert.equal(sess.activeCaches[0].name, 'sess-cache')
 
         await sess.close()
       })
 
       it('should return the same cache instance upon multiple getCache() invocations for the same cache', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const cache1 = sess.getCache('sess-cache')
         const cache2 = sess.getCache('sess-cache')
-        assert.equal(sess.getActiveCacheCount(), 1)
-        assert.equal(sess.getActiveCaches()[0].name, 'sess-cache')
+        assert.equal(sess.activeCacheCount, 1)
+        assert.equal(sess.activeCaches[0].name, 'sess-cache')
         assert.equal(cache1, cache2)
         assert.deepEqual(cache1, cache2)
 
@@ -89,12 +90,12 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should return the same cache instance upon multiple getMap() invocations for the same map', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const map1 = sess.getMap('sess-map')
         const map2 = sess.getMap('sess-map')
-        assert.equal(sess.getActiveCacheCount(), 1)
-        assert.equal(sess.getActiveCaches()[0].name, 'sess-map')
+        assert.equal(sess.activeCacheCount, 1)
+        assert.equal(sess.activeCaches[0].name, 'sess-map')
         assert.equal(map1, map2)
         assert.deepEqual(map1, map2)
 
@@ -102,12 +103,12 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should return different cache instances for differing getCache() invocations', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const cache1 = sess.getCache('sess-cache')
         const cache2 = sess.getCache('sess-cache2')
-        assert.equal(sess.getActiveCacheCount(), 2)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-cache', 'sess-cache2']))
+        assert.equal(sess.activeCacheCount, 2)
+        assert.deepEqual(sess.activeCacheNames, new Set(['sess-cache', 'sess-cache2']))
         assert.notEqual(cache1, cache2)
         assert.notDeepEqual(cache1, cache2)
 
@@ -115,12 +116,12 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should return different cache instances for differing getMap() invocations', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const map1 = sess.getCache('sess-map')
         const map2 = sess.getCache('sess-map2')
-        assert.equal(sess.getActiveCacheCount(), 2)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-map', 'sess-map2']))
+        assert.equal(sess.activeCacheCount, 2)
+        assert.deepEqual(sess.activeCacheNames, new Set(['sess-map', 'sess-map2']))
         assert.notEqual(map1, map2)
         assert.notDeepEqual(map1, map2)
 
@@ -128,7 +129,7 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should getCache() should return the same instance as getMap() for the same name', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const cache = sess.getCache('sess-test')
         const map = sess.getMap('sess-test')
@@ -139,33 +140,33 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should release active caches when closed', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const cache1 = sess.getCache('sess-cache-1')
         const cache2 = sess.getCache('sess-cache-2')
 
-        assert.equal(sess.getActiveCacheCount(), 2)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-cache-1', 'sess-cache-2']))
+        assert.equal(sess.activeCacheCount, 2)
+        assert.deepEqual(sess.activeCacheNames, new Set(['sess-cache-1', 'sess-cache-2']))
 
         assert.notDeepEqual(cache1, cache2)
         await sess.close()
         await sess.waitUntilClosed()
 
-        assert.equal(sess.getActiveCacheCount(), 0)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set([]))
+        assert.equal(sess.activeCacheCount, 0)
+        assert.deepEqual(sess.activeCacheNames, new Set([]))
 
         assert.equal(cache1.active, false)
         assert.equal(cache2.active, false)
       })
 
       it('should not maintain references to explicitly released caches', async () => {
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
 
         const cache1 = sess.getCache('sess-test-cache-1')
         const cache2 = sess.getCache('sess-test-cache-2')
 
-        assert.equal(sess.getActiveCacheCount(), 2)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-test-cache-1', 'sess-test-cache-2']))
+        assert.equal(sess.activeCacheCount, 2)
+        assert.deepEqual(sess.activeCacheNames, new Set(['sess-test-cache-1', 'sess-test-cache-2']))
 
         assert.notDeepEqual(cache1, cache2)
         const prom = new Promise((resolve) => {
@@ -178,8 +179,8 @@ describe('Session Tests Suite (unit/IT)', () => {
         await cache1.release()
         await prom
 
-        assert.equal(sess.getActiveCacheCount(), 1)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set(['sess-test-cache-2']))
+        assert.equal(sess.activeCacheCount, 1)
+        assert.deepEqual(sess.activeCacheNames, new Set(['sess-test-cache-2']))
 
         assert.equal(cache1.active, false)
         assert.equal(cache2.active, true)
@@ -187,8 +188,8 @@ describe('Session Tests Suite (unit/IT)', () => {
         await sess.close()
         await sess.waitUntilClosed()
 
-        assert.equal(sess.getActiveCacheCount(), 0)
-        assert.deepEqual(sess.getActiveCacheNames(), new Set([]))
+        assert.equal(sess.activeCacheCount, 0)
+        assert.deepEqual(sess.activeCacheNames, new Set([]))
 
         assert.equal(cache1.active, false)
         assert.equal(cache2.active, false)
@@ -202,7 +203,7 @@ describe('Session Tests Suite (unit/IT)', () => {
 
       it('should trigger a \'released\' event for each active cache', async () => {
         const cache2Name = CACHE_NAME + '2'
-        const sess = new SessionBuilder().build()
+        const sess = new Session()
         const cache = sess.getCache(CACHE_NAME)
         const cache2 = sess.getCache(cache2Name)
 

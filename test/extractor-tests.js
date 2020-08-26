@@ -5,13 +5,13 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { Filters, Extractors, SessionBuilder } = require('../lib')
+const { Filters, Extractors, Session } = require('../lib')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha');
 
 describe('Extractor IT Test Suite', function () {
-  const session = new SessionBuilder().build()
+  const session = new Session()
   this.timeout(30000)
 
   describe('An Extractor', () => {

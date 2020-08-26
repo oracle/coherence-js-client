@@ -6,13 +6,13 @@
  */
 
 const { MapEventResponse } = require('../lib/grpc/messages_pb')
-const { event, Filters, filter, SessionBuilder } = require('../lib')
+const { event, Filters, Session, filter } = require('../lib')
 const events = require('events')
 const assert = require('assert').strict
 const { describe, it } = require('mocha')
 
 describe('MapListener IT Test Suite', function () {
-  const session = new SessionBuilder().build()
+  const session = new Session()
   const stringify = JSON.stringify
   const debug = process.env.DEBUG || false
 

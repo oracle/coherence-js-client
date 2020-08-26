@@ -61,30 +61,37 @@ a serializer configured on the server to match that used by the client.
 
 > NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
 
-A `Session` is constructed using a `SessionBuilder`.  The builder exposes configuration such as:
-* Address of the Coherence gRPC proxy (defaults to `localhost:1408`)
-* TLS configuration
-* Serialization format
-* Request timeout
+A `Session` is constructed using an `Options` instance.  This instance provides configuration for:
+* `address` - the address of the Coherence gRPC proxy.  This defaults to `localhost:1408`.
+* `requestTimeoutInMillis` - the gRPC request timeout in milliseconds.  This defaults to `60000`.
+* `callOptions` - per-request gRPC call options.
+* `tls` - options related to the configuration of TLS.
+    - `enabled` - determines if TLS is enabled or not.  This defaults to `false`.
+    - `caCertPath` - the path to the CA certificate.
+    - `clientCertPath` - the path to the client certificate.
+    - `clientKeyPath` - the path to the client certificate key.
 
 ```typescript
-const { SessionBuilder } = require('@oracle/coherence')
+const { Session } = require('@oracle/coherence')
 
-let session = new SessionBuilder().build()
+let session = new Session()
 ```
 
 This is the simplest invocation which assumes the following defaults:
 * `address` is `localhost:1408`
-* tls is `disabled`
-* `format` is `json`
+* `requestTimeoutInMillis` is `60000`
+* `tls` is `disabled`
 
-To use values other than the default, invoke the appropriate builder function
-to update the configuration:
+To use values other than the default, create a new `Options` instance, configure as desired,
+and pass it to the constructor of the `Session`:
 
 ```javascript
-const { SessionBuilder } = require('@oracle/coherence')
+const { Session, Options } = require('@oracle/coherence')
 
-let session = new SessionBuilder().withAddress('example.com:4444').build();
+const opts = new Options()
+opts.address = 'example.com:4444'
+
+let session = new Session(opts)
 ```
 
 Once the session has been constructed, it will now be possible to create maps and caches.
