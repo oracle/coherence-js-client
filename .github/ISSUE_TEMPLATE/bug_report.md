@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a bug report to help us improve
+about: Create a bug report helping us improve
 title: ''
 labels: bug
 assignees: ''
@@ -20,6 +20,8 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment (please complete the following information):**
+ - Coherence JS Client version (or Git SHA)
+ - NodeJS version
  - Coherence CE version (or Git SHA)
  - Java version and Java vendor
  - OS: [e.g. iOS]
