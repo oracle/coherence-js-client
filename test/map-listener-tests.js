@@ -11,7 +11,7 @@ const events = require('events')
 const assert = require('assert').strict
 const { describe, it } = require('mocha')
 
-describe('MapListener IT Test Suite', function () {
+describe('Map Events IT Test Suite', function () {
   const session = new Session()
   const stringify = JSON.stringify
   const debug = process.env.DEBUG || false
@@ -21,17 +21,22 @@ describe('MapListener IT Test Suite', function () {
   async function runBasicEventTest (expectedEvents /* object */, filterMask /* number */) {
     const cache = session.getCache('event-map')
     const prom = new Promise((resolve) => {
-      cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+      cache.on(event.MapLifecycleEvent.DESTROYED, () => {
         resolve()
       })
     })
 
     const listener = new CountingMapListener('listener-default')
     setImmediate(async () => {
+      const eventFilter = Filters.event(Filters.always(), filterMask)
       if (filterMask) {
-        await cache.addMapListener(listener, Filters.event(Filters.always(), filterMask))
+        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener.entryInserted(event), eventFilter)
+        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener.entryUpdated(event), eventFilter)
+        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener.entryDeleted(event), eventFilter)
       } else {
-        await cache.addMapListener(listener)
+        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener.entryInserted(event))
+        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener.entryUpdated(event))
+        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener.entryDeleted(event))
       }
 
       await cache.set('123', { xyz: '123-xyz' })
@@ -135,7 +140,7 @@ describe('MapListener IT Test Suite', function () {
     }
   }
 
-  describe('A MapListener', () => {
+  describe('A MapEvent callback', () => {
     it('should be able to receive insert, update, and delete events in default registration case', async () => {
       const expected = {
         'inserts': [{ key: '123', new: { xyz: '123-xyz' } }],
@@ -187,96 +192,98 @@ describe('MapListener IT Test Suite', function () {
       await runBasicEventTest(expected, filter.MapEventFilter.E_DELETED)
     })
 
-    it('should properly handle multiple listeners', async () => {
+    it('should properly handle multiple listeners', (done) => {
       const cache = session.getCache('map-list-3')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
       const listener = new CountingMapListener('listener-default')
       const listener2 = new CountingMapListener('listener-2')
 
-      let failure
-
       setImmediate(async () => {
-        await cache.addMapListener(listener, true)
+        const l1Inserted = (event) => listener.entryInserted(event)
+        const l1Updated = (event) => listener.entryUpdated(event)
+        const l1Deleted = (event) => listener.entryDeleted(event)
+        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted)
+        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated)
+        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted)
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('123', { abc: '123-abc' })
         await cache.delete('123')
 
-        await listener.waitFor(3).catch(error => failure = error)
-        if (failure) {
+        await listener.waitFor(3).catch(error => {
           cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-          return
-        }
-        await cache.addMapListener(listener2)
+          done(error)
+        })
+
+        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener2.entryInserted(event))
+        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener2.entryUpdated(event))
+        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener2.entryDeleted(event))
 
         await cache.set('123', { a: 2 })
         await cache.set('123', { a: 1 })
-        await cache.removeMapListener(listener)
+        await cache.removeMapListener(event.MapEventType.INSERT, l1Inserted)
+        await cache.removeMapListener(event.MapEventType.UPDATE, l1Updated)
+        await cache.removeMapListener(event.MapEventType.DELETE, l1Deleted)
         await cache.delete('123')
 
-        await listener.waitFor(5).catch(error => failure = error) // no delete due to de-registration
-        if (failure) {
+        await listener.waitFor(5).catch(error => {
           cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-          return
-        }
+          done(error)
+        })
 
-        await listener2.waitFor(3).catch(error => failure = error)
-        if (failure) {
+        await listener2.waitFor(3).catch(error => {
           cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-        }
+          done(error)
+        })
 
         await cache.destroy()
       })
 
-      await prom
-
-      if (failure) {
-        assert.fail(failure)
-      }
+      prom.then(() => done()).catch(err => done(err))
     })
 
-    it('should be registrable with a key', async () => {
+    it('should be registrable with a key', (done) => {
       const cache = session.getCache('event-map')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
       const listener = new CountingMapListener('listener-default')
-      let failure
       setImmediate(async () => {
-        await cache.addMapListener(listener, '123')
+        const l1Inserted = (event) => listener.entryInserted(event)
+        const l1Updated = (event) => listener.entryUpdated(event)
+        const l1Deleted = (event) => listener.entryDeleted(event)
+        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted, '123')
+        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated, '123')
+        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted, '123')
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('234', { abc: '123-abc' })
         await cache.delete('123')
 
-        listener.waitFor(2).catch(error => failure = error).finally(() => cache.destroy())
+        await listener.waitFor(2).catch(error => done(error)).finally(() => cache.destroy())
       })
 
-      await prom
-
-      if (failure) {
-        assert.fail(failure)
-      }
-
-      validateEventsForListener(listener, {
-        'inserts': [{ key: '123', new: { xyz: '123-xyz' } }],
-        'updates': [],
-        'deletes': [{ key: '123', old: { xyz: '123-xyz' } }],
-        'order': [{ key: '123', new: { xyz: '123-xyz' } }, { key: '123', old: { xyz: '123-xyz' } }]
-      })
+      prom.then(() => {
+        validateEventsForListener(listener, {
+          'inserts': [{ key: '123', new: { xyz: '123-xyz' } }],
+          'updates': [],
+          'deletes': [{ key: '123', old: { xyz: '123-xyz' } }],
+          'order': [{ key: '123', new: { xyz: '123-xyz' } }, { key: '123', old: { xyz: '123-xyz' } }]
+        })
+      }).then(() => done()).catch(error => done(error))
     })
 
-    it('should be registrable with a filter', async () => {
+    it('should be registrable with a filter', (done) => {
       const cache = session.getCache('event-map')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -284,7 +291,14 @@ describe('MapListener IT Test Suite', function () {
       let failure
       const listener = new CountingMapListener('listener-default')
       setImmediate(async () => {
-        await cache.addMapListener(listener, Filters.event(Filters.isNotNull('xyz')))
+        const mapEventFilter = Filters.event(Filters.isNotNull('xyz'))
+        const l1Inserted = (event) => listener.entryInserted(event)
+        const l1Updated = (event) => listener.entryUpdated(event)
+        const l1Deleted = (event) => listener.entryDeleted(event)
+        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted, mapEventFilter)
+        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated, mapEventFilter)
+        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted, mapEventFilter)
+
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('234', { abc: '123-abc' })
@@ -294,18 +308,14 @@ describe('MapListener IT Test Suite', function () {
 
       })
 
-      await prom
-
-      if (failure) {
-        assert.fail(failure)
-      }
-
-      validateEventsForListener(listener, {
-        'inserts': [{ key: '123', new: { xyz: '123-xyz' } }],
-        'updates': [],
-        'deletes': [{ key: '123', old: { xyz: '123-xyz' } }],
-        'order': [{ key: '123', new: { xyz: '123-xyz' } }, { key: '123', old: { xyz: '123-xyz' } }]
-      })
+      prom.then(() => {
+        validateEventsForListener(listener, {
+          'inserts': [{ key: '123', new: { xyz: '123-xyz' } }],
+          'updates': [],
+          'deletes': [{ key: '123', old: { xyz: '123-xyz' } }],
+          'order': [{ key: '123', new: { xyz: '123-xyz' } }, { key: '123', old: { xyz: '123-xyz' } }]
+        })
+      }).then(() => done()).catch(error => done(error))
     })
   })
 
@@ -313,19 +323,15 @@ describe('MapListener IT Test Suite', function () {
     it('should have the correct source', async () => {
       const cache = session.getCache('event-map')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
-      const listener = new (class MyListener extends event.MapListenerAdapter {
-        async entryInserted (event) {
-          assert.deepEqual(event.source, cache)
-          await cache.destroy()
-        }
-      })()
-
-      await cache.addMapListener(listener)
+      await cache.addMapListener(event.MapEventType.INSERT, async (event) => {
+        assert.deepEqual(event.source, cache)
+        await cache.destroy()
+      })
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -334,19 +340,15 @@ describe('MapListener IT Test Suite', function () {
     it('should have the same name as the source cache', async () => {
       const cache = session.getCache('event-map')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
-      const listener = new (class MyListener extends event.MapListenerAdapter {
-        async entryInserted (event) {
-          assert.deepEqual(event.name, cache.name)
-          await cache.destroy()
-        }
-      })()
-
-      await cache.addMapListener(listener)
+      await cache.addMapListener(event.MapEventType.INSERT, async (event) => {
+        assert.deepEqual(event.name, cache.name)
+        await cache.destroy()
+      })
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -355,35 +357,34 @@ describe('MapListener IT Test Suite', function () {
     it('should produce a readable description of the event type', async () => {
       const cache = session.getCache('event-map')
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, () => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
       let count = 0
-      const listener = new (class MyListener extends event.MapListenerAdapter {
-        async entryInserted (event) {
-          assert.equal(event.description, 'inserted')
-          if (++count === 3) {
-            await cache.destroy()
-          }
+      const insert = async (event) => {
+        assert.equal(event.description, 'insert')
+        if (++count === 3) {
+          await cache.destroy()
         }
+      }
+      const update = async (event) => {
+        assert.equal(event.description, 'update')
+        if (++count === 3) {
+          await cache.destroy()
+        }
+      }
+      const del = async (event) => {
+        assert.equal(event.description, 'delete')
+        if (++count === 3) {
+          await cache.destroy()
+        }
+      }
 
-        async entryDeleted (event) {
-          assert.equal(event.description, 'deleted')
-          if (++count === 3) {
-            await cache.destroy()
-          }
-        }
-
-        async entryUpdated (event) {
-          assert.equal(event.description, 'updated')
-          if (++count === 3) {
-            await cache.destroy()
-          }
-        }
-      })
-      await cache.addMapListener(listener)
+      await cache.addMapListener(event.MapEventType.INSERT, insert)
+      await cache.addMapListener(event.MapEventType.UPDATE, update)
+      await cache.addMapListener(event.MapEventType.DELETE, del)
 
       await cache.set('a', 'b')
       await cache.set('a', 'c')
@@ -432,7 +433,7 @@ describe('MapListener IT Test Suite', function () {
         return Promise.resolve()
       }
       if (this.counter >= numberOfEvents) {
-        return Promise.reject('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter)
+        return Promise.reject(new Error('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter))
       }
       return this.promiseTimeout(5000, new Promise((resolve, reject) => {
         this.on('event', () => {
@@ -440,7 +441,7 @@ describe('MapListener IT Test Suite', function () {
             resolve()
           }
           if (this.counter >= numberOfEvents) {
-            return reject('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter)
+            return reject(new Error('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter))
           }
         })
       }))
@@ -450,7 +451,7 @@ describe('MapListener IT Test Suite', function () {
       let id
       let timeout = new Promise((resolve, reject) => {
         id = setTimeout(() => {
-          reject('Timed out waiting for events in ' + ms + 'ms.')
+          reject(new Error('Timed out waiting for events in ' + ms + 'ms.'))
         }, ms)
       })
 
@@ -471,7 +472,7 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'delete\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'delete')
@@ -485,7 +486,7 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'insert\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'insert')
@@ -499,7 +500,7 @@ describe('MapListener IT Test Suite', function () {
       this.counter++
       if (debug) {
         console.log('Received \'updated\' event: {key: ' +
-          stringify(event.getKey()) + ', new-value: ' + stringify(event.newValue) +
+          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
       super.emit('event', 'update')

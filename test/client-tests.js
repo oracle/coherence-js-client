@@ -42,7 +42,7 @@ describe('NamedCacheClient IT Test Suite', function () {
       const cache = session.getCache(CACHE_NAME)
 
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.RELEASED, cacheName => {
+        cache.on(event.MapLifecycleEvent.RELEASED, cacheName => {
           if (cacheName === CACHE_NAME) {
             resolve()
           }
@@ -60,7 +60,7 @@ describe('NamedCacheClient IT Test Suite', function () {
       const cache = session.getCache(CACHE_NAME)
 
       const prom = new Promise((resolve) => {
-        cache.on(event.CacheLifecycleEvent.DESTROYED, cacheName => {
+        cache.on(event.MapLifecycleEvent.DESTROYED, cacheName => {
           if (cacheName === CACHE_NAME) {
             resolve()
           }
@@ -341,7 +341,7 @@ describe('NamedCacheClient IT Test Suite', function () {
         const cache = sess.getCache('test')
 
         const prom = new Promise((resolve) => {
-          cache.on(event.CacheLifecycleEvent.RELEASED, cacheName => {
+          cache.on(event.MapLifecycleEvent.RELEASED, cacheName => {
             if (cacheName === 'test') {
               resolve()
             }
@@ -360,7 +360,7 @@ describe('NamedCacheClient IT Test Suite', function () {
         const cache = sess.getCache('test')
 
         const prom = new Promise((resolve) => {
-          cache.on(event.CacheLifecycleEvent.DESTROYED, cacheName => {
+          cache.on(event.MapLifecycleEvent.DESTROYED, cacheName => {
             if (cacheName === 'test') {
               resolve()
             }

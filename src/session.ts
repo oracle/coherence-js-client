@@ -403,13 +403,13 @@ export class Session
 
     const self = this
     this.sessionClosedPromise = new Promise((resolve) => {
-      self.on(event.CacheLifecycleEvent.RELEASED, () => {
+      self.on(event.MapLifecycleEvent.RELEASED, () => {
         if (self.markedForClose && self.caches.size == 0) {
           self._closed = true
           resolve(true)
         }
       })
-      self.on(event.CacheLifecycleEvent.DESTROYED, () => {
+      self.on(event.MapLifecycleEvent.DESTROYED, () => {
         if (self.markedForClose && self.caches.size == 0) {
           self._closed = true
           resolve(true)
@@ -632,20 +632,20 @@ export class Session
    */
   private setupEventHandlers (cache: NamedCacheClient) {
     const self = this
-    cache.on(event.CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
+    cache.on(event.MapLifecycleEvent.DESTROYED, (cacheName: string) => {
       // Our keys in caches Map are of the form cacheName:format.
       // We will destroy all caches whose key starts with 'cacheName:'
       for (const key of self.caches.keys()) {
         if (Session.isKeyForCacheName(key, cacheName)) {
           self.caches.delete(key)
-          self.emit(event.CacheLifecycleEvent.DESTROYED, cacheName)
+          self.emit(event.MapLifecycleEvent.DESTROYED, cacheName)
         }
       }
     })
 
-    cache.on(event.CacheLifecycleEvent.RELEASED, (cacheName: string, format: string) => {
+    cache.on(event.MapLifecycleEvent.RELEASED, (cacheName: string, format: string) => {
       self.caches.delete(Session.makeCacheKey(cacheName, format))
-      self.emit(event.CacheLifecycleEvent.RELEASED, cacheName, format)
+      self.emit(event.MapLifecycleEvent.RELEASED, cacheName, format)
     })
   }
 }

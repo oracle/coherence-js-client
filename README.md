@@ -251,65 +251,79 @@ map.get('0001')
 ### Events
 
 Coherence provides the ability to subscribe to notifications pertaining to a particular map/cache.
+Registration is works similarly to event registration with Node, with some key differences.  In addition
+to listening for a specific event, it is possible to listen to events for changes made to a specific key, or using
+a Filter, it's possible to limit the events raised to be for a subset of the map entries.
 
-A listener implementation must define one or more of the following callbacks:
+Now, let's register a listener:
 
 ```javascript
-const { event } = require('@oracle/coherence')
+import { event } from '@oracle/coherence'
 
-// The MapListenerAdapter allows the developer to create a listener 
-// overridding only what is needed, but for the sake of the example, we
-// override everything
-class MyListener extends event.MapListenerAdapter { 
-    entryDeleted(event) {
-      console.log('DELETE ' + event.getKey())
-    }
-    entryInserted(event) {
-      console.log('INSERT ' + event.getKey())
-    }
-    entryUpdated(event) {
-      console.log('UPDATE ' + event.getKey())
-    }
+const MapEventType = event.MapEventType
+
+const handler = (event: MapEvent) => { 
+  console.log('Event: ' + event.description 
+    + ', Key: ' + JSON.stringify(event.key) 
+    + ', New Value: ' + JSON.stringify(event.newValue)
+    + ', Old Value: ' + JSON.stringify(event.oldValue))
 }
-```
-
-Now, let's register the listener:
-
-```javascript
-const listener = new MyListener()
-map.addListener(listener)          // subscribe to all events for all entries
+// register to receive all event types for all entries within the map
+map.addListener(MapEventType.INSERT, handler)
+map.addListener(MapEventType.DELETE, handler)
+map.addListener(MapEventType.UPDATE, handler)
 
 map.set('a', 'b')
-// INSERT 'a'
+// Event: insert, Key: a, New Value: b, Old Value: null
 
 map.set('a', 'c')
-// UPDATE 'c'
+// Event: update, Key: a, New Value: c, Old Value: b
 
 map.delete('a')
-// DELETE 'a'
+// Event: delete, Key: a, New Value: null, Old Value: c
 
-map.removeListener(listener)
+// remove the listeners
+map.removeListener(MapEventType.INSERT, handler)
+map.removeListener(MapEventType.DELETE, handler)
+map.removeListener(MapEventType.UPDATE, handler)
 
 // =======================================
 
-// assume previous example key/values
-map.addListener('0001', listener)  // subscribes to all events for that key only
-map.delete('0002')                 // does not generate any events
+// Assume the previous event callback as well as the following key and values:
+//   ['0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}]
+//   ['0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}]
+//   ['0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}]
+
+// Add handlers for updates to '0001'
+map.addListener(MapEventType.UPDATE, handler, '0001')
+
+map.update('0002', '0002')
+// does not generate any events
 
 map.invoke('0001', Processors.increment('age', 1))
-// UPDATE '0001'
+// Event: update, Key: 0001, New Value: {name: "Bill Smith", age: 39, hobbies: ["gardening", "painting"]}, Old Value: {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}
 
-map.removeListener('0001', listener)
+map.delete('0001') 
+// does not generate any events
+
+// remove the key listener
+map.removeMapListener(MapEventType.UPDATE, handler, '0001')
 
 // =======================================
 
-// assume previous example key/values
+// Assume the same setup as the previous example, except instead of listening to events for a single key,
+// we'll instead listen for events raised for entries that match the filtered criteria.
 const filter = Filters.event(Filters.greater('age', 40))
-map.addListener(filter, listener) // subscribe to all events for entries where age is greater than 40
+
+// Listen to all updates to entries where the age property of the entry value is greater than 40
+map.addListener(MapEventType.UPDATE, handler, filter) 
 
 map.invokeAll(Processors.increment('age', 1));
-// UPDATE '0002'
-// UPDATE '0003'
+// Event: update, Key: 0002, New Value: {name: "Fred Jones", age: 57, hobbies: ["racing", "golf"]}, Old Value: {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}
+// Event: update, Key: 0003, New Value: "Jane Doe", age: 49, hobbies: ["gardening", "photography"]}, Old Value: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}
+
+// remove the filter listener+
+map.removeMapListener(MapEventType.UPDATE, handler, filter)
 ```
 
 ### References

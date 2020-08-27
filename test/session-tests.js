@@ -170,7 +170,7 @@ describe('Session Tests Suite (unit/IT)', () => {
 
         assert.notDeepEqual(cache1, cache2)
         const prom = new Promise((resolve) => {
-          cache1.on(event.CacheLifecycleEvent.RELEASED, (cacheName) => {
+          cache1.on(event.MapLifecycleEvent.RELEASED, (cacheName) => {
             if (cacheName === 'sess-test-cache-1') {
               resolve()
             }
@@ -209,12 +209,12 @@ describe('Session Tests Suite (unit/IT)', () => {
 
         let destroyed1 = false
         const prom1 = new Promise((resolve, reject) => {
-          cache.on(event.CacheLifecycleEvent.RELEASED, cacheName => {
+          cache.on(event.MapLifecycleEvent.RELEASED, cacheName => {
             if (cacheName === CACHE_NAME) {
               resolve()
             }
           })
-          cache.on(event.CacheLifecycleEvent.DESTROYED, cacheName => {
+          cache.on(event.MapLifecycleEvent.DESTROYED, cacheName => {
             destroyed1 = true
             reject('Session close incorrectly triggered cache \'destroyed\' event for cache ' + cacheName)
           })
@@ -222,12 +222,12 @@ describe('Session Tests Suite (unit/IT)', () => {
 
         let destroyed2 = false
         const prom2 = new Promise((resolve, reject) => {
-          cache2.on(event.CacheLifecycleEvent.RELEASED, cacheName => {
+          cache2.on(event.MapLifecycleEvent.RELEASED, cacheName => {
             if (cacheName === CACHE2_NAME) {
               resolve()
             }
           })
-          cache2.on(event.CacheLifecycleEvent.DESTROYED, cacheName => {
+          cache2.on(event.MapLifecycleEvent.DESTROYED, cacheName => {
             destroyed2 = true
             reject('Session close incorrectly triggered cache \'destroyed\' event for cache ' + cacheName)
           })

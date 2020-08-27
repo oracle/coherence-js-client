@@ -27,9 +27,8 @@ import { processor } from './processors'
 import { Session } from './session'
 import { util } from './util'
 import EntryAggregator = aggregator.EntryAggregator
-import CacheLifecycleEvent = event.CacheLifecycleEvent
+import CacheLifecycleEvent = event.MapLifecycleEvent
 import MapEventsManager = event.MapEventsManager
-import MapListener = event.MapListener
 import RequestStateEvent = event.RequestStateEvent
 import ValueExtractor = extractor.ValueExtractor
 import Filter = filter.Filter
@@ -46,6 +45,7 @@ import RequestFactory = util.RequestFactory
 import Serializer = util.Serializer
 import ValueSet = util.ValueSet
 import HashMap = util.HashMap
+import MapEvent = event.MapEvent
 
 /**
  * A Map-based data-structure that manages entries across one or more processes.
@@ -366,27 +366,23 @@ export interface NamedMap<K, V> {
   on (eventName: CacheLifecycleEvent.RELEASED | CacheLifecycleEvent.TRUNCATED | CacheLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
 
   /**
-   * Add a standard map listener that will receive all events (inserts,
+   * Add a callback function that will receive events (inserts,
    * updates, deletes) that occur against the map, with the key, old-value
-   * and new-value included. This has the same result as the following call:
-   * ```
-   *   addMapListener(listener, (Filter) null, false);
-   * ```
+   * and new-value included.
    *
-   * @param listener the {@link MapEvent} listener to add
+   * @param event       the event to subscribe to
+   * @param callbackFn  the function to invoke when the specified event is fired
    */
-  addMapListener (listener: MapListener<K, V>): void
+  addMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void): Promise<void>
 
   /**
    * Remove a standard map listener that previously signed up for all
    * events. This has the same result as the following call:
-   * ```
-   *   removeMapListener(listener, (Filter) null);
-   * ```
    *
-   * @param listener the listener to remove
+   * @param event       the event previously subscribe to
+   * @param callbackFn  the function that was passed into the corresponding addMapListener() call
    */
-  removeMapListener (listener: MapListener<K, V>): Promise<void>;
+  removeMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void): Promise<void>;
 
   /**
    * Add a map listener for a specific key.
@@ -397,24 +393,25 @@ export interface NamedMap<K, V> {
    *
    * To unregister the {@link MapListener], use the `NamedMap.removeMapListener(MapListener, K)` method.
    *
-   * @param listener  the {@link MapEvent} listener to add
-   * @param key       the key that identifies the entry for which to raise
-   *                  events
-   * @param isLite    `true` to indicate that the {@link MapEvent} objects do
-   *                  not have to include the `OldValue` and `NewValue`
-   *                  property values in order to allow optimizations
+   * @param event       the event to subscribe to
+   * @param callbackFn  the function to invoke when the specified event is fired
+   * @param key         the key that identifies the entry for which to raise
+   *                    events
+   * @param isLite      `true` to indicate that the {@link MapEvent} objects do
+   *                    not have to include the `OldValue` and `NewValue`
+   *                    property values in order to allow optimizations
    */
-  addMapListener (listener: MapListener<K, V>, key: K, isLite?: boolean): void
+  addMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, key: K, isLite?: boolean): Promise<void>
 
   /**
    * Remove a map listener that previously signed up for events about a
    * specific key.
    *
-   * @param listener  the listener to remove
-   * @param key       the key that identifies the entry for which to raise
-   *                  events
+   * @param event       the event previously subscribed to
+   * @param callbackFn  the function that was passed into the corresponding addMapListener() call
+   * @param key         the key that was passed into the corresponding addMapListener() call
    */
-  removeMapListener (listener: MapListener<K, V>, key: K): Promise<void>;
+  removeMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, key: K): Promise<void>;
 
   /**
    * Add a map listener that receives events based on a filter evaluation.
@@ -425,16 +422,26 @@ export interface NamedMap<K, V> {
    *
    * To unregister the {@link MapListener}, use the `NamedMap.remoteMapListener(MapListener, Filter)`
    *
-   * @param listener  the {@link MapEvent} listener to add
-   * @param filter    a filter that will be passed MapEvent objects to select
-   *                  from; a {@link MapEvent} will be delivered to the listener only
-   *                  if the filter evaluates to true for that MapEvent (see {@link MapEventFilter});
-   *                  `null` is equivalent to a filter that always returns `true`
-   * @param isLite    `true` to indicate that the {@link MapEvent} objects do
-   *                  not have to include the `OldValue` and `NewValue`
-   *                  property values in order to allow optimizations
+   * @param event       the event to subscribe to
+   * @param callbackFn  the function to invoke when the specified event is fired
+   * @param filter      a filter that will be passed MapEvent objects to select
+   *                    from; a {@link MapEvent} will be delivered to the listener only
+   *                    if the filter evaluates to true for that MapEvent (see {@link MapEventFilter});
+   *                    `null` is equivalent to a filter that always returns `true`
+   * @param isLite      `true` to indicate that the {@link MapEvent} objects do
+   *                    not have to include the `OldValue` and `NewValue`
+   *                    property values in order to allow optimizations
    */
-  addMapListener (listener: MapListener<K, V>, filter: MapEventFilter<K, V>, isLite?: boolean): void
+  addMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, filter: MapEventFilter<K, V>, isLite?: boolean): void
+
+  /**
+   * Remove a filtered map listener that previously signed up for events.
+   *
+   * @param event       the event previously subscribed to
+   * @param callbackFn  the function that was passed into the corresponding addMapListener() call
+   * @param filter      the filter that was passed into the corresponding addMapListener() call
+   */
+  removeMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, filter: MapEventFilter<K, V>): Promise<void>;
 
   /**
    * Add an index to this map.
@@ -645,9 +652,9 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
  *
  * This class also extends EventEmitter and emits the following
  * events:
- * 1. {@link CacheLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
- * 2. {@link CacheLifecycleEvent.TRUNCATED}: when the underlying cache is truncated
- * 3. {@link CacheLifecycleEvent.RELEASED}: when the underlying cache is released
+ * 1. {@link MapLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
+ * 2. {@link MapLifecycleEvent.TRUNCATED}: when the underlying cache is truncated
+ * 3. {@link MapLifecycleEvent.RELEASED}: when the underlying cache is released
  *
  * @typeParam K  the type of the cache keys
  * @typeParam V  the type of the cache values
@@ -921,7 +928,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  addMapListener (listener: MapListener<K, V>, keyOrFilterOrLite?: MapEventFilter<K, V> | K | boolean, isLite?: boolean): Promise<void> {
+  addMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, keyOrFilterOrLite?: MapEventFilter<K, V> | K | boolean, isLite?: boolean): Promise<void> {
     let lite = false
 
     if (isLite !== undefined) {
@@ -930,29 +937,29 @@ export class NamedCacheClient<K = any, V = any>
     }
     if (keyOrFilterOrLite) {
       if (keyOrFilterOrLite instanceof MapEventFilter) {
-        return this.mapEventsHandler.registerFilterListener(listener, keyOrFilterOrLite, lite)
+        return this.mapEventsHandler.registerFilterListener(event, callbackFn, keyOrFilterOrLite, lite)
       } else if (typeof keyOrFilterOrLite === 'boolean') {
         // Two arg invocation.
-        return this.mapEventsHandler.registerFilterListener(listener, null, lite)
+        return this.mapEventsHandler.registerFilterListener(event, callbackFn, null, lite)
       } else {
-        return this.mapEventsHandler.registerKeyListener(listener, keyOrFilterOrLite, lite)
+        return this.mapEventsHandler.registerKeyListener(event, callbackFn, keyOrFilterOrLite, lite)
       }
     }
 
     // One arg invocation.
-    return this.mapEventsHandler.registerFilterListener(listener, null, lite)
+    return this.mapEventsHandler.registerFilterListener(event, callbackFn, null, lite)
   }
 
   /**
    * @inheritDoc
    */
-  removeMapListener (listener: MapListener<K, V>, keyOrFilter?: MapEventFilter<K, V> | K | null): Promise<void> {
+  removeMapListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, keyOrFilter?: MapEventFilter<K, V> | K | null): Promise<void> {
     if (keyOrFilter) {
       return (keyOrFilter instanceof MapEventFilter)
-        ? this.mapEventsHandler.removeFilterListener(listener, keyOrFilter)
-        : this.mapEventsHandler.removeKeyListener(listener, keyOrFilter)
+        ? this.mapEventsHandler.removeFilterListener(event, callbackFn, keyOrFilter)
+        : this.mapEventsHandler.removeKeyListener(event, callbackFn, keyOrFilter)
     }
-    return this.mapEventsHandler.removeFilterListener(listener, null)
+    return this.mapEventsHandler.removeFilterListener(event, callbackFn, null)
   }
 
   /**
