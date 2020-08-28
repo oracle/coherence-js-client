@@ -40,13 +40,14 @@ project's `package.json`:
 ...
 "dependencies": {
     "@oracle/coherence": "^1.0.0",
-  },
+},
 ...
 ```
 
 ### Examples
 
-> NOTE: The following examples assume the Coherence container is running locally
+> NOTE: The following examples assume the Coherence container is running locally.
+> You can start a container by running `npm run coh-up`.
 
 #### Establishing a Session
 
@@ -56,7 +57,7 @@ gRPC endpoint and uses a specific serialization format to marshal requests and r
 This means that different sessions using different serializers may connect to the same server endpoint. Typically,
 for efficiency the client and server would be configured to use matching serialization formats to avoid
 deserialization of data on the server but this does not have to be the case. If the server is using a different
-serializer for the server side caches it must be able to deserialize the client's requests, so there must be
+serializer for the server-side caches it must be able to deserialize the client's requests, so there must be
 a serializer configured on the server to match that used by the client.
 
 > NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
@@ -93,6 +94,10 @@ opts.address = 'example.com:4444'
 
 let session = new Session(opts)
 ```
+
+It's also possible to control the default address the session will bind to by providing
+an address via the `grpc_proxy_address` environment variable.  The format of the value would
+be the same as if you configured it programmatically as the above example shows.
 
 Once the session has been constructed, it will now be possible to create maps and caches.
 
