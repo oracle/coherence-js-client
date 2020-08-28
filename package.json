@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "UPL-1.0",
   "private": true,
-  "main": "index.js",
+  "main": "lib/index.js",
   "keywords": [
     "Oracle Coherence",
     "Coherence",
@@ -30,8 +30,7 @@
   "scripts": {
     "postinstall": "bin/npm-post-install.sh",
     "compile": "tsc -p src",
-    "src-clean": "rm -rf lib; bin/npm-post-install.sh",
-    "full-clean": "rm -rf lib; npm unlink; rm -rf node_modules",
+    "clean": "rm -rf lib docs coverage .nyc_output; bin/npm-post-install.sh",
     "test": "mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
