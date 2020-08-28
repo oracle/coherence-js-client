@@ -314,14 +314,14 @@ describe('processor.Processors IT Test Suite', function () {
     })
 
     it('should be able to be invoked against all entries using a filter', async () => {
-      const f1 = Filters.arrayContains(Extractors.extract('iarr'), 2)
+      const f1 = Filters.arrayContains(Extractors.extract('iarr'), 1)
       const ep = Processors.versionedPut(versioned123)
 
       const result = await versioned.invokeAll(f1, ep)
 
-      const expected = { '@version': 3, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3] }
+      const expected = { '@version': 2, id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3] }
       assert.deepEqual(result.size, 0)
-      await t.compareEntries([['123', expected], ['234', expected], ['345', versioned345],
+      await t.compareEntries([['123', expected], ['234', versioned234], ['345', versioned345],
         ['456', versioned456]], await versioned.entries())
     })
 
