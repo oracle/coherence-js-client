@@ -36,7 +36,7 @@ For more details on the image, see the [documentation](https://github.com/oracle
 
 To use the Coherence gRPC Javascript Client, simply declare it as a dependency in your
 project's `package.json`:
-```json
+```
 ...
 "dependencies": {
     "@oracle/coherence": "^1.0.0",
@@ -163,10 +163,10 @@ See the [documentation]() for details on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
 
-```json
+```
 {
-  name: string
-  age:  number
+  name: <string>
+  age:  <number>
   hobbies: [] // of string
 }
 ```
