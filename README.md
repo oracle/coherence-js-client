@@ -326,6 +326,37 @@ await map.invokeAll(Processors.increment('age', 1));
 await map.removeMapListener(MapEventType.UPDATE, handler, filter)
 ```
 
+### Cut/Paste Example
+Here's an example that can be pasted into a new node project that is using this library:
+
+```javascript
+const { Session } = require('@oracle/coherence')
+
+let session = new Session()
+let map = session.getMap('Test')
+
+setImmediate(async () => {
+  console.log("Map size is " + (await map.size))
+  console.log("Inserting entry (key=1, value=One)")
+  await map.set(1, "One")
+  console.log("Map entry is " + (await map.get(1)))
+  console.log("Deleting entry (key=1)")
+  await map.delete(1)
+  console.log("Map size is " + (await map.size))
+  await session.close()
+})
+```
+
+When run, it produces:
+
+```bash
+Map size is 0
+Inserting entry (key=1, value=One)
+Map entry is One
+Deleting entry (key=1)
+Map size is 0
+```
+
 ### References
 * Oracle Coherence JavaScript Client - PENDING
 * Oracle Coherence CE Documentation - https://coherence.community/20.12/docs/#/docs/about/01_overview
