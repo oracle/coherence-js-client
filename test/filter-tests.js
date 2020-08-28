@@ -89,6 +89,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.arrayContainsAll()', () => {
     it('should return results based on the value of a multiple array elements; entries must contain all elements', async () => {
+      // noinspection JSCheckFunctionSignatures
       const f1 = Filters.arrayContainsAll('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
@@ -98,6 +99,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.arrayContainsAny()', () => {
     it('should return results based on the value of a multiple array elements; entries must contain any of the elements', async () => {
+      // noinspection JSCheckFunctionSignatures
       const f1 = Filters.arrayContainsAny('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
@@ -153,6 +155,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.containsAll()', () => {
     it('should return results based on the value of a multiple collection elements; entries must contain all elements', async () => {
+      // noinspection JSCheckFunctionSignatures
       const f1 = Filters.containsAll('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
@@ -162,6 +165,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.containsAny()', () => {
     it('should return results based on the value of a multiple collection elements; entries must contain any of the elements', async () => {
+      // noinspection JSCheckFunctionSignatures
       const f1 = Filters.containsAny('iarr', new Set([2, 3]))
       const entries = await cache.entries(f1)
 
@@ -198,6 +202,7 @@ describe('Filter IT Test Suite', function () {
 
   describe('Filters.in()', () => {
     it('should return results for those entries that have matching field values', async () => {
+      // noinspection JSCheckFunctionSignatures
       const f1 = Filters.in('ival', new Set([234, 345]))
       const entries = await cache.entries(f1)
 
