@@ -34,7 +34,7 @@ For more details on the image, see the [documentation](https://github.com/oracle
 
 ### Declare Your Dependency
 
-To use the Coherence gRPC Javascript Client, simply declare it as a dependency in your
+To use the Coherence gRPC JavaScript Client, simply declare it as a dependency in your
 project's `package.json`:
 ```
 ...
