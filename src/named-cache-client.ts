@@ -5,9 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ClientReadableStream, ServiceError } from 'grpc'
 import { EventEmitter } from 'events'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
+import { ClientReadableStream, ServiceError } from 'grpc'
 import { aggregator } from './aggregators'
 
 import { event } from './events'
@@ -264,12 +264,54 @@ export interface NamedMap<K, V> {
    * should be avoided. The mutating operations on a subset of entries
    * should be implemented using {@link invokeAll}.
    *
-   * @param keys     the keys to process these keys are not required to
-   *                 exist within the Map
+   *
    * @param action   the action to be performed for each entry
    * @param thisArg  optional argument to be used as this when invoking the action
    */
-  forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void>
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void>
+
+  /**
+   * Perform the given action for each entry selected by the specified key set
+   * until all entries have been processed or the action raises an error.
+   * <p>
+   * Errors raised by the action are relayed to the caller.
+   * <p>
+   * The implementation processes each entry on the client and should only be
+   * used for read-only client-side operations (such as adding map entries to
+   * a UI widget, for example).
+   * <p>
+   * Any entry mutation caused by the specified action will not be propagated
+   * to the server when this method is called on a distributed map, so it
+   * should be avoided. The mutating operations on a subset of entries
+   * should be implemented using {@link invokeAll}.
+   *
+   * @param action   the action to be performed for each entry
+   * @param keys     the keys to process these keys are not required to
+   *                 exist within the Map
+   * @param thisArg  optional argument to be used as this when invoking the action
+   */
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, keys: Iterable<K>, thisArg?: any): Promise<void>
+
+  /**
+   * Perform the given action for each entry selected by the specified key set
+   * until all entries have been processed or the action raises an error.
+   * <p>
+   * Errors raised by the action are relayed to the caller.
+   * <p>
+   * The implementation processes each entry on the client and should only be
+   * used for read-only client-side operations (such as adding map entries to
+   * a UI widget, for example).
+   * <p>
+   * Any entry mutation caused by the specified action will not be propagated
+   * to the server when this method is called on a distributed map, so it
+   * should be avoided. The mutating operations on a subset of entries
+   * should be implemented using {@link invokeAll}.
+   *
+   * @param action   the action to be performed for each entry
+   * @param filter   the filter criteria to apply to the entries
+   * @param thisArg  optional argument to be used as this when invoking the action
+   */
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, filter: Filter, thisArg?: any): Promise<void>
 
   /**
    * Perform an aggregating operation against the entries specified by the passed keys.
@@ -910,20 +952,64 @@ export class NamedCacheClient<K = any, V = any>
     return this.doInvokeAll(call)
   }
 
-  /**
-   * @inheritDoc
-   */
-  forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void> {
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void>
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, keys: Iterable<K>, thisArg?: any): Promise<void>
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, filter: filter.Filter, thisArg?: any): Promise<void>
+  forEach (action: ((value: V, key: K, map: NamedMap<K, V>) => void), keysOrFilter?: Iterable<K> | filter.Filter, thisArg?: any): Promise<void> {
     if (thisArg) {
       action.bind(thisArg)
     }
+    if (keysOrFilter) {
+      if (util.isIterableType(keysOrFilter)) {
+        return new Promise((resolve, reject) => {
+          this.getAll(keysOrFilter as Iterable<K>)
+            .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
+            .then(() => resolve(undefined))
+            .catch(error => reject(error))
+        })
+      } else {
+        return new Promise((resolve, reject) => {
+          this.entries(keysOrFilter as filter.Filter)
+            .then(entries => {
+              for (const entry of entries) {
+                action(entry.value, entry.key, this)
+              }
+            })
+            .then(() => resolve(undefined))
+            .catch(error => reject(error))
+        })
+      }
+    }
     return new Promise((resolve, reject) => {
-      this.getAll(keys)
-        .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
+      this.entries(Filters.always())
+        .then(entries => {
+          for (const entry of entries) {
+            action(entry.value, entry.key, this)
+          }
+        })
         .then(() => resolve(undefined))
         .catch(error => reject(error))
     })
   }
+
+  /**
+   * @inheritDoc
+   */
+  // forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void> {
+  //   if (thisArg) {
+  //     action.bind(thisArg)
+  //   }
+  //   return new Promise((resolve, reject) => {
+  //     this.getAll(keys)
+  //       .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
+  //       .then(() => resolve(undefined))
+  //       .catch(error => reject(error))
+  //   })
+  // }
+
+
+
+
 
   /**
    * @inheritDoc
