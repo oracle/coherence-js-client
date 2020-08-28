@@ -5,9 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
+import { ClientReadableStream, ServiceError } from 'grpc'
 import { EventEmitter } from 'events'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
-import { ClientReadableStream, ServiceError } from 'grpc'
 import { aggregator } from './aggregators'
 
 import { event } from './events'
@@ -27,8 +27,9 @@ import { processor } from './processors'
 import { Session } from './session'
 import { util } from './util'
 import EntryAggregator = aggregator.EntryAggregator
-import CacheLifecycleEvent = event.MapLifecycleEvent
+import MapEvent = event.MapEvent
 import MapEventsManager = event.MapEventsManager
+import CacheLifecycleEvent = event.MapLifecycleEvent
 import RequestStateEvent = event.RequestStateEvent
 import ValueExtractor = extractor.ValueExtractor
 import Filter = filter.Filter
@@ -36,6 +37,7 @@ import MapEventFilter = filter.MapEventFilter
 import EntryProcessor = processor.EntryProcessor
 import Comparator = util.Comparator
 import EntrySet = util.EntrySet
+import HashMap = util.HashMap
 import isIterableType = util.isIterableType
 import KeySet = util.KeySet
 import LocalSet = util.LocalSet
@@ -44,8 +46,6 @@ import RemoteSet = util.RemoteSet
 import RequestFactory = util.RequestFactory
 import Serializer = util.Serializer
 import ValueSet = util.ValueSet
-import HashMap = util.HashMap
-import MapEvent = event.MapEvent
 
 /**
  * A Map-based data-structure that manages entries across one or more processes.

@@ -5,9 +5,9 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
+import { CallOptions, Channel, ChannelCredentials, credentials } from 'grpc'
 import { EventEmitter } from 'events'
 import { PathLike, readFileSync } from 'fs'
-import { CallOptions, Channel, ChannelCredentials, credentials } from 'grpc'
 import { event } from './events'
 
 import { NamedCache, NamedCacheClient, NamedMap } from './named-cache-client'

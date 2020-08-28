@@ -30,7 +30,7 @@
   "scripts": {
     "postinstall": "bin/npm-post-install.sh",
     "compile": "tsc -p src",
-    "clean": "rm -rf lib docs coverage .nyc_output node_modules; bin/npm-post-install.sh",
+    "clean": "rm -rf lib docs coverage .nyc_output node_modules",
     "test": "npm run compile; mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
