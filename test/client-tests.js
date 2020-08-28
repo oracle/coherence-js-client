@@ -180,14 +180,34 @@ describe('NamedCacheClient IT Test Suite', function () {
     })
 
     describe('forEach()', () => {
-      it('should iterate over the entries associated with the key and invoke the callback', async () => {
+      it('should iterate over the entries associated with the specified keys and invoke the callback', async () => {
         const entriesSeen = new Set()
         await cache.clear()
         await cache.set('123', val123).then(() => cache.set('234', val234))
         await cache.set('345', val345)
         await cache.set('456', val456)
-        await cache.forEach(['123', '456'], (value, key) => entriesSeen.add([value, key]))
+        await cache.forEach((value, key) => entriesSeen.add([value, key]), ['123', '456'])
         await test.compareElements([[val123, '123'], [val456, '456']], entriesSeen)
+      })
+
+      it('should iterate over all entries invoke the callback for each', async () => {
+        const entriesSeen = new Set()
+        await cache.clear()
+        await cache.set('123', val123).then(() => cache.set('234', val234))
+        await cache.set('345', val345)
+        await cache.set('456', val456)
+        await cache.forEach((value, key) => entriesSeen.add([value, key]))
+        await test.compareElements([[val123, '123'], [val234, '234'], [val345, '345'], [val456, '456']], entriesSeen)
+      })
+
+      it('should iterate over all filtered entries and invoke the callback for each', async () => {
+        const entriesSeen = new Set()
+        await cache.clear()
+        await cache.set('123', val123).then(() => cache.set('234', val234))
+        await cache.set('345', val345)
+        await cache.set('456', val456)
+        await cache.forEach((value, key) => entriesSeen.add([value, key]), Filters.greater('ival', 300))
+        await test.compareElements([[val345, '345'], [val456, '456']], entriesSeen)
       })
     })
 
