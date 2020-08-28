@@ -118,35 +118,35 @@ let map = session.getMap('Test')
 
 Once we have the handle to our map, we can invoke the same basic operations as a standard JavaScript Map:
 ```javascript
-map.size
+await map.size
 // (zero)
 
-map.set('key1', 'value1')
-map.set('key2', 'value2')
-// returns a Promise for each call
+await map.set('key1', 'value1')
+await map.set('key2', 'value2')
+// returns a Promise vs the map itself, so these can't be chained
 
-map.size
+await map.size
 // (two)
 
-map.get('key1')
+await map.get('key1')
 // value1
 
-map.has('key2')
+await map.has('key2')
 // true
 
-map.has('key3')
+await map.has('key3')
 // false
 
-map.keys()
+await map.keys()
 // ['key1', 'key2']
 
-map.values()
+await map.values()
 // ['value1', 'value2']
 
-map.entries()
-// [['key1', 'value1`], ['key2', 'value2`]]
+await map.entries()
+// [{key: 'key1', value: 'value1'}, {key: 'key2', value: 'value2'}]
 
-map.forEach((value, key) => console.log(key + ': ' + value))
+await map.forEach((value, key) => console.log(key + ': ' + value))
 // prints all of the entries
 ```
 
@@ -169,9 +169,9 @@ Let's assume we have a `NamedMap` in which we're storing `string` keys and some 
 First, let's insert a few objects:
 
 ```javascript
-map.set('0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]})
-map.set('0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]})
-map.set('0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]})
+await map.set('0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]})
+await map.set('0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]})
+await map.set('0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]})
 ```
 
 Using a filter we can limit the result set returned by the map:
@@ -181,13 +181,13 @@ const { Filters } = require('@oracle/coherence')
 
 ...
 
-map.entries(Filters.greater('age', 40))
-// [['0002', {name: "Fred Jones"...}], ['0003', {name: "Jane Doe"...}]]
+await map.entries(Filters.greater('age', 40))
+// [{key: '0002', value: {name: "Fred Jones"...}}, {key: '0002', value: {name: "Jane Doe"...}}]
 
-map.keys(Filters.arrayContains('hobbies', 'gardening'))  
+await map.keys(Filters.arrayContains('hobbies', 'gardening'))  
 // ['0001', '0003']
 
-map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
+await map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
 // [{name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}]
 ```
 
@@ -203,13 +203,13 @@ const { Aggregators, Filters } = require('@oracle/coherence')
 
 ...
 
-map.aggregate(Aggregators.average('age'))
+await map.aggregate(Aggregators.average('age'))
 // 47.3
 
-map.aggregate(Aggregators.sum('age'))
+await map.aggregate(Aggregators.sum('age'))
 // 142
 
-map.aggregate(Filters.greater('age', 40), Aggregators.count())
+await map.aggregate(Filters.greater('age', 40), Aggregators.count())
 // 2
 ```
 
@@ -226,25 +226,25 @@ const { Filters, Processors } = require('@oracle/coherence')
 ...
 
 // targeting a specific entry
-map.invoke('0001', Processors.extract('age'))
+await map.invoke('0001', Processors.extract('age'))
 // returns: 38
 
 // target all entries across the cluster
-map.invokeAll(Processors.extract('age'))
+await map.invokeAll(Processors.extract('age'))
 // returns: [['0001', 38], ['0002', 56], ['0003', 48]]
 
 // target all entries matching filtered critera
-map.invoke(Filters.greater('age', 40), Processors.extract('age'))
+await map.invoke(Filters.greater('age', 40), Processors.extract('age'))
 // returns: [['0002', 56], ['0003', 48]]
 
 // incrementing a number 'in-place'
-map.invoke(Filters.greater('age', 40), Processors.increment('age', 1))
+await map.invoke(Filters.greater('age', 40), Processors.increment('age', 1))
 // returns [['0002', 57], ['0003', 49]]
 
 // update a value 'in-place'
-map.invoke('0001', Processors.update('age', 100))
+await map.invoke('0001', Processors.update('age', 100))
 // returns true meaning the value was updated
-map.get('0001')
+await map.get('0001')
 // the value will reflect the new age value
 ```
 
@@ -269,23 +269,23 @@ const handler = (event: MapEvent) => {
     + ', Old Value: ' + JSON.stringify(event.oldValue))
 }
 // register to receive all event types for all entries within the map
-map.addListener(MapEventType.INSERT, handler)
-map.addListener(MapEventType.DELETE, handler)
-map.addListener(MapEventType.UPDATE, handler)
+await map.addListener(MapEventType.INSERT, handler)
+await map.addListener(MapEventType.DELETE, handler)
+await map.addListener(MapEventType.UPDATE, handler)
 
-map.set('a', 'b')
+await map.set('a', 'b')
 // Event: insert, Key: a, New Value: b, Old Value: null
 
-map.set('a', 'c')
+await map.set('a', 'c')
 // Event: update, Key: a, New Value: c, Old Value: b
 
-map.delete('a')
+await map.delete('a')
 // Event: delete, Key: a, New Value: null, Old Value: c
 
 // remove the listeners
-map.removeListener(MapEventType.INSERT, handler)
-map.removeListener(MapEventType.DELETE, handler)
-map.removeListener(MapEventType.UPDATE, handler)
+await map.removeListener(MapEventType.INSERT, handler)
+await map.removeListener(MapEventType.DELETE, handler)
+await map.removeListener(MapEventType.UPDATE, handler)
 
 // =======================================
 
@@ -295,19 +295,19 @@ map.removeListener(MapEventType.UPDATE, handler)
 //   ['0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}]
 
 // Add handlers for updates to '0001'
-map.addListener(MapEventType.UPDATE, handler, '0001')
+await map.addListener(MapEventType.UPDATE, handler, '0001')
 
-map.update('0002', '0002')
+await map.update('0002', '0002')
 // does not generate any events
 
-map.invoke('0001', Processors.increment('age', 1))
+await map.invoke('0001', Processors.increment('age', 1))
 // Event: update, Key: 0001, New Value: {name: "Bill Smith", age: 39, hobbies: ["gardening", "painting"]}, Old Value: {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}
 
-map.delete('0001') 
+await map.delete('0001') 
 // does not generate any events
 
 // remove the key listener
-map.removeMapListener(MapEventType.UPDATE, handler, '0001')
+await map.removeMapListener(MapEventType.UPDATE, handler, '0001')
 
 // =======================================
 
@@ -316,14 +316,14 @@ map.removeMapListener(MapEventType.UPDATE, handler, '0001')
 const filter = Filters.event(Filters.greater('age', 40))
 
 // Listen to all updates to entries where the age property of the entry value is greater than 40
-map.addListener(MapEventType.UPDATE, handler, filter) 
+await map.addListener(MapEventType.UPDATE, handler, filter) 
 
-map.invokeAll(Processors.increment('age', 1));
+await map.invokeAll(Processors.increment('age', 1));
 // Event: update, Key: 0002, New Value: {name: "Fred Jones", age: 57, hobbies: ["racing", "golf"]}, Old Value: {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}
 // Event: update, Key: 0003, New Value: "Jane Doe", age: 49, hobbies: ["gardening", "photography"]}, Old Value: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}
 
-// remove the filter listener+
-map.removeMapListener(MapEventType.UPDATE, handler, filter)
+// remove the filter listener
+await map.removeMapListener(MapEventType.UPDATE, handler, filter)
 ```
 
 ### References
