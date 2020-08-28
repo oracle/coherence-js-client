@@ -391,7 +391,7 @@ export interface NamedMap<K, V> {
    * `true`, they *might* not contain the `OldValue` and `NewValue`
    * properties.
    *
-   * To unregister the {@link MapListener], use the `NamedMap.removeMapListener(MapListener, K)` method.
+   * To unregister the callback, use the `NamedMap.removeMapListener(string, callback, K)` method.
    *
    * @param event       the event to subscribe to
    * @param callbackFn  the function to invoke when the specified event is fired
@@ -420,7 +420,7 @@ export interface NamedMap<K, V> {
    * `true`, they *might* not contain the `OldValue` and `NewValue`
    * properties.
    *
-   * To unregister the {@link MapListener}, use the `NamedMap.remoteMapListener(MapListener, Filter)`
+   * To unregister the callback, use the `NamedMap.remoteMapListener(string, callback, Filter)`
    *
    * @param event       the event to subscribe to
    * @param callbackFn  the function to invoke when the specified event is fired

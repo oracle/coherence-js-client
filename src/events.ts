@@ -43,11 +43,7 @@ export namespace event {
      * Serialized representation of the old cache value associated with this event.
      */
     protected oldValueBytes?: Uint8Array
-    /**
-     * Array of filter IDs applied to this event.
-     * TODO(rlubke) not used - should it be?
-     */
-    protected readonly filterIDs: Array<number>
+
     /**
      * The {@link Serializer} to use to deserialize in-bound `MapEvents`.
      */
@@ -63,13 +59,12 @@ export namespace event {
      */
     constructor (cacheName: string, source: NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
       this._name = cacheName
-      this._source = source
+      this._source = () => source
       this.serializer = serializer
       this._id = mapEventResponse.getId()
       this.keyBytes = mapEventResponse.getKey_asU8()
       this.newValueBytes = mapEventResponse.getNewvalue_asU8()
       this.oldValueBytes = mapEventResponse.getOldvalue_asU8()
-      this.filterIDs = mapEventResponse.getFilteridsList()
     }
 
     /**
@@ -89,7 +84,7 @@ export namespace event {
     /**
      * The event source.
      */
-    protected _source: NamedCache<K, V>
+    protected _source: () => NamedCache<K, V> // this is a function vs a direct reference to avoid circularity errors when converting to JSON
 
     /**
      * Return the event source.
@@ -97,7 +92,7 @@ export namespace event {
      * @return the event source
      */
     get source (): NamedCache<K, V> {
-      return this._source
+      return this._source()
     }
 
     /**
@@ -212,20 +207,20 @@ export namespace event {
   type SubscriptionCallback = (uid: string, cookie: any, err?: Error | undefined) => void;
 
   /**
-   * MapEventsManager handles registration, de-registration of {@link MapListener}, and
-   * notification of {@link MapEvent}s to {@link MapListener}. Since multiple
-   * MapListeners can be registered for a single key / filter, this class
+   * MapEventsManager handles registration, de-registration of callbacks, and
+   * notification of {@link MapEvent}s to callbacks. Since multiple
+   * callbacks can be registered for a single key / filter, this class
    * relies on another internal class called ListenerGroup which maintains the
-   * collection of MapListeners.
+   * collection of callbacks.
    *
    * There are two maps that are maintained:
    *
    * 1. A Map of stringified key => ListenerGroup, which is used to identify the
-   * group of MapListeners for a single key. We stringify the key since Javascript
+   * group of callbacks for a single key. We stringify the key since Javascript
    * is not the same as Java's equals().
    *
    * 2. A Map of filter => ListenerGroup that is used to identify the group of
-   * MapListeners for a MapEventFilter.
+   * callbacks for a MapEventFilter.
    *
    * When a filter is subscribed, the server responds with a unique filterID.
    * This filterID is what is specified is a MapEvent. So, this class maintains
@@ -233,17 +228,9 @@ export namespace event {
    * ListenerGroup for a filterID.
    *
    * This class also lazily creates the "events" stream (a bidi stream). When
-   * the first listener is registered, this class calls the "events()" method
+   * the first callback is registered, this class calls the "events()" method
    * on the NamedCacheClient and obtains the duplex stream. Similarly, it
-   * closes the stream when the last listener is unregistered.
-   *
-   * Note:- Javascript Maps use only the object identity to check for equality
-   * of keys in a Map.  This is fine for Maps that use primitive and strings
-   * as keys. But for complex key objects, this wont work as a deserialized
-   * object's identity wont be the same as the original object. So, this
-   * class uses a method called stringify(obj) that converts the specified
-   * object into a stringified form. Currently, this is implemented by just
-   * using JSON,.stringify() method.
+   * closes the stream when the last callback is unregistered.
    *
    * @internal
    */
@@ -643,7 +630,7 @@ export namespace event {
     isActive: boolean = true // Initially active.
 
     /**
-     * The key or the filter for which this group of MapListener will
+     * The key or the filter for which this group of callbacks will
      * receive events.
      */
     keyOrFilter: K | filter.MapEventFilter<K, V>
@@ -660,14 +647,13 @@ export namespace event {
     registeredIsLite: boolean = true
 
     /**
-     * A map of all listeners in this group. Each listener has a isLite
+     * A map of all callbacks in this group. Each callback has a isLite
      * flag.
      */
-    //listeners: Map<MapListener<K, V>, { isLite: boolean }> = new Map()
     listeners: Map<MapEventType, Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>>
 
     /**
-     * Number of MapListeners who are registered with isLite == false.
+     * Number of callbacks who are registered with isLite == false.
      * If this transitions from zero to non-zero (or vice versa), then
      * a re-registration happens is the current registeredIsLite is true.
      */
@@ -761,12 +747,12 @@ export namespace event {
       handlers?.delete(callbackFn)
 
       if (handlers?.size == 0) {
-        // This was the last MapListener.
+        // This was the last callback.
         return await this.doUnsubscribe()
       }
 
       if (!prevStatus.isLite) {
-        // We removed a isLite == false MapListener.
+        // We removed a isLite == false callback.
         this.isLiteFalseCount--
 
         if (this.isLiteFalseCount == 0) {

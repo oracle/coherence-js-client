@@ -1043,7 +1043,7 @@ export namespace util {
      */
     protected readonly cacheName: string
     /**
-     * Unique uid generation for MapListener subscriptions.
+     * Unique uid generation for event callback subscriptions.
      */
     protected readonly uidPrefix: string
     /**
