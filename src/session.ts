@@ -160,7 +160,7 @@ export class Options {
    * Construct a new {@link Options}.
    */
   constructor () {
-    this._address = Session.DEFAULT_ADDRESS
+    this._address = process.env.grpc_proxy_address || Session.DEFAULT_ADDRESS
     this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
     this._format = Session.DEFAULT_FORMAT
     this._tls = new TlsOptions()
