@@ -12,7 +12,7 @@
   ],
   "repository": "https://github.com/oracle/coherence-js-client",
   "dependencies": {
-    "@grpc/grpc-js": "^1.1.1",
+    "grpc": "^1.24.3",
     "@grpc/proto-loader": "^0.5.4",
     "google-protobuf": "^3.12.2"
   },
@@ -29,12 +29,12 @@
   },
   "scripts": {
     "postinstall": "bin/npm-post-install.sh",
-    "compile": "npx tsc -p src",
-    "clean": "rm -rf lib docs coverage .nyc_output; bin/npm-post-install.sh",
-    "test": "npm run compile; npx mocha 'test/**.js' --recursive",
+    "compile": "tsc -p src",
+    "clean": "rm -rf lib docs coverage .nyc_output node_modules; bin/npm-post-install.sh",
+    "test": "npm run compile; mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
-    "coverage": "npx nyc mocha 'test/**.js'"
+    "coverage": "nyc mocha 'test/**.js'"
   }
 }
