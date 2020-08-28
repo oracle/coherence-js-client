@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { EventEmitter } from 'events'
 import { ClientDuplexStream } from 'grpc'
+import { EventEmitter } from 'events'
 import { filter } from './filters'
 import { MapEventResponse, MapListenerRequest, MapListenerResponse } from './grpc/messages_pb'
 import { NamedCacheServiceClient } from './grpc/services_grpc_pb'

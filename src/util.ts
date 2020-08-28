@@ -5,8 +5,8 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { ClientReadableStream } from 'grpc'
+import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { aggregator } from './aggregators'
 import { event } from './events'
 import { extractor } from './extractors'
