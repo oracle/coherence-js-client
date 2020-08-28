@@ -13,9 +13,9 @@ module.exports = {
         let testKey
         let testVal
 
-        if (typeof testEntry.getKey === 'function') {
-          testKey = testEntry.getKey()
-          testVal = testEntry.getValue()
+        if (testEntry.key) {
+          testKey = testEntry.key
+          testVal = testEntry.value
         } else if (Array.isArray(testEntry)) {
           testKey = testEntry[0]
           testVal = testEntry[1]
@@ -44,15 +44,37 @@ module.exports = {
       }
 
       if (!foundKey) {
-        console.log('Unable to find key \'' + JSON.stringify(controlKey) + '\' in entry sent from server: ')
+        console.log('Unable to find key \'' + JSON.stringify(controlKey) + '\' in entries sent from server: ')
         for await (const e of test) {
-          console.log('\t    ' + JSON.stringify(e[0]))
+          let testKey
+
+          if (e.key) {
+            testKey = e.key
+          } else if (Array.isArray(e)) {
+            testKey = e[0]
+          } else {
+            testKey = e['key']
+          }
+          console.log('\t    ' + JSON.stringify(testKey))
         }
       }
       if (!foundVal) {
         console.log('Unexpected value associated with key \'' + JSON.stringify(controlKey) + '\'.  Expected value \'' + JSON.stringify(controlVal) + '\' in entry sent from server: ')
         for await (const e of test) {
-          console.log('\t    ' + JSON.stringify(e[0]) + ', ' + JSON.stringify(e[1]))
+          let testKey
+          let testVal
+
+          if (e.key) {
+            testKey = e.key
+            testVal = e.value
+          } else if (Array.isArray(e)) {
+            testKey = e[0]
+            testVal = e[1]
+          } else {
+            testKey = e['key']
+            testVal = e['value']
+          }
+          console.log('\t    ' + JSON.stringify(testKey) + ', ' + JSON.stringify(testVal))
         }
       }
 
