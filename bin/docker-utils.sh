@@ -9,7 +9,7 @@ set -e
 
 declare -r ROOT="${PWD}"
 declare -r CONTAINER_NAME="coherence-js-test-container"
-declare -r IMAGE_NAME="oraclecoherence/coherence-ce:20.12-SNAPSHOT"
+declare -r IMAGE_NAME="oraclecoherence/coherence-ce:20.06.1"
 
 function coh-up() {
     declare -r CONTAINER_ID=$(docker ps -a -q -f name="${CONTAINER_NAME}")
