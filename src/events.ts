@@ -52,13 +52,12 @@ export namespace event {
     /**
      * Constructs a new `MapEvent`
      *
-     * @param cacheName          the name of the cache the generated the event
      * @param source             the event source
      * @param mapEventResponse   the {@link MapEventResponse} from the server
      * @param serializer
      */
-    constructor (cacheName: string, source: NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
-      this._name = cacheName
+    constructor (source: NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
+      this._name = source.name
       this._source = () => source
       this.serializer = serializer
       this._id = mapEventResponse.getId()
@@ -411,7 +410,7 @@ export namespace event {
           if (resp.hasEvent()) {
             const event = resp.getEvent()
             if (event) {
-              const mapEvent = new MapEvent(this.mapName, this.namedMap, event, this.serializer)
+              const mapEvent = new MapEvent(this.namedMap, event, this.serializer)
 
               for (const id of event.getFilteridsList()) {
                 const group = this.filterId2ListenerGroup.get(id)

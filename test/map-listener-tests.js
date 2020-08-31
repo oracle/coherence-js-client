@@ -396,7 +396,7 @@ describe('Map Events IT Test Suite', function () {
       const cache = session.getCache('event-map')
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new event.MapEvent(cache.name, cache, response, null)
+      const e = new event.MapEvent(cache, response, null)
       assert.equal(e.description, '<unknown: ' + 8 + '>')
       await cache.destroy()
     })
@@ -405,7 +405,7 @@ describe('Map Events IT Test Suite', function () {
       const cache = session.getCache('event-map')
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new event.MapEvent(cache.name, cache, response, {
+      const e = new event.MapEvent(cache, response, {
         deserialize () {
           return undefined
         }, serialize () {
