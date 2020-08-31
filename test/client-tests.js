@@ -326,16 +326,14 @@ describe('NamedCacheClient IT Test Suite', function () {
     describe('truncate()', () => {
       it('should clear the cache without raising listener events', async () => {
         let deleteCount = 0
-        const listener = new (class MyListener extends event.MapListener {
-          constructor () {
-            super()
-            this.on(event.MapEventType.DELETE, (event) => {
-              deleteCount++
-            })
+        cache.addMapListener({
+          entryDeleted (event) { deleteCount++ }
+          , entryInserted (event) {
+          }, entryUpdated (event) {
           }
         })
-        await cache.addMapListener(listener).then(() => cache.truncate()).then(() => cache.removeMapListener(listener))
 
+        await cache.truncate()
         assert.equal(await cache.size, 0)
         assert.equal(deleteCount, 0)
       })
