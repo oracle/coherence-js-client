@@ -310,14 +310,10 @@ describe('Map Events IT Test Suite', function () {
         })
       })
 
-      const listener = new (class MyListener extends MapListener {
-        constructor () {
-          super()
-          this.on(MapEventType.INSERT, async (event) => {
-              assert.deepEqual(event.source, cache)
-              await cache.destroy()
-          })
-        }
+      const listener = new MapListener()
+      listener.on(MapEventType.INSERT, async (event) => {
+        assert.deepEqual(event.source, cache)
+        await cache.destroy()
       })
 
       await cache.addMapListener(listener, Filters.event(Filters.always(), filter.MapEventFilter.INSERTED))
@@ -334,14 +330,10 @@ describe('Map Events IT Test Suite', function () {
         })
       })
 
-      const listener = new (class MyListener extends MapListener {
-        constructor () {
-          super()
-          this.on(MapEventType.INSERT, async (event) => {
-            assert.deepEqual(event.source, cache)
-            await cache.destroy()
-          })
-        }
+      const listener = new MapListener()
+      listener.on(MapEventType.INSERT, async (event) => {
+        assert.deepEqual(event.name, cache.name)
+        await cache.destroy()
       })
 
       await cache.addMapListener(listener)
@@ -359,20 +351,17 @@ describe('Map Events IT Test Suite', function () {
       })
 
       let count = 0
-      const listener = new MapListener();
-      listener.on(MapEventType.INSERT, async (event) => {
+      const listener = new MapListener().on(MapEventType.INSERT, async (event) => {
         assert.equal(event.description, 'insert')
         if (++count === 3) {
           await cache.destroy()
         }
-      })
-      listener.on(MapEventType.DELETE, async (event) => {
+      }).on(MapEventType.DELETE, async (event) => {
         assert.equal(event.description, 'delete')
         if (++count === 3) {
           await cache.destroy()
         }
-      })
-      listener.on(MapEventType.UPDATE, async (event) => {
+      }).on(MapEventType.UPDATE, async (event) => {
         assert.equal(event.description, 'update')
         if (++count === 3) {
           await cache.destroy()
