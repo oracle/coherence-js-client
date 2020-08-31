@@ -15,6 +15,12 @@ import { util } from './util'
 
 export namespace event {
 
+  /**
+   * EventEmitter implementation to receive {@link MapEvent}s.
+   */
+  export class MapListener<K, V> extends EventEmitter {
+  }
+
   export class MapEvent<K = any, V = any> {
     /**
      * This event indicates that an entry has been added to the map.
@@ -242,7 +248,7 @@ export namespace event {
     /**
      * A singleton MapEventFilter for an Always filter.
      */
-    private static DEFAULT_FILTER = new filter.MapEventFilter(filter.MapEventFilter.E_ALL, filter.AlwaysFilter.INSTANCE)
+    private static DEFAULT_FILTER = new filter.MapEventFilter(filter.MapEventFilter.ALL, filter.AlwaysFilter.INSTANCE)
 
     /**
      * The map name for which events are received.
@@ -433,33 +439,31 @@ export namespace event {
     /**
      * Registers the specified listener to listen for events matching the provided key.
      *
-     * @param event       the event to listen for
-     * @param callbackFn  the function to invoke when an event occurs
+     * @param listener    the {@link MapListener}
      * @param key         the map key to listen to
      * @param isLite      `true` if the event should only include the key, or `false`
      *                    if the event should include old and new values as well as the key
      */
-    registerKeyListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, key: K, isLite: boolean = false): Promise<void> {
+    registerKeyListener (listener: event.MapListener<K, V>, key: K, isLite: boolean = false): Promise<void> {
       let group = this.keyMap.get(key)
       if (!group) {
         group = new KeyListenerGroup(this, key)
         this.keyMap.set(key, group)
       }
 
-      return group.addListener(event, callbackFn, isLite)
+      return group.addListener(listener, isLite)
     }
 
     /**
      * Removes the registration of the listener for the provided key.
      *
-     * @param event       the event that was previously subscribed
-     * @param callbackFn  the function that was previously subscribed
+     * @param listener    the {@link MapListener}
      * @param key         the key associated with the listener
      */
-    removeKeyListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, key: K): Promise<void> {
+    removeKeyListener (listener: event.MapListener<K, V>, key: K): Promise<void> {
       const group = this.keyMap.get(key)
       if (group) {
-        return group.removeListener(event, callbackFn)
+        return group.removeListener(listener)
       }
 
       return MapEventsManager.RESOLVED
@@ -468,13 +472,12 @@ export namespace event {
     /**
      * Registers the specified listener to listen for events matching the provided filter.
      *
-     * @param event       the event to listen for
-     * @param callbackFn  the function to invoke when an event occurs
+     * @param listener    the {@link MapListener}
      * @param mapFilter   the {@link filter} associated with the listener
      * @param isLite      `true` if the event should only include the key, or `false`
      *                    if the event should include old and new values as well as the key
      */
-    registerFilterListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, mapFilter: filter.MapEventFilter<K, V> | null, isLite: boolean = false): Promise<void> {
+    registerFilterListener (listener: event.MapListener<K, V>, mapFilter: filter.MapEventFilter<K, V> | null, isLite: boolean = false): Promise<void> {
       const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
 
       let group = this.filterMap.get(filter)
@@ -483,17 +486,16 @@ export namespace event {
         this.filterMap.set(filter, group)
       }
 
-      return group.addListener(event, callbackFn, isLite)
+      return group.addListener(listener, isLite)
     }
 
     /**
      * Removes the registration of the listener for the provided filter.
      *
-     * @param event       the event that was previously subscribed
-     * @param callbackFn  the function that was previously subscribed
+     * @param listener    the {@link MapListener}
      * @param mapFilter   the {@link MapEventFilter} associated with the listener
      */
-    removeFilterListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, mapFilter: filter.MapEventFilter<K, V> | null): Promise<void> {
+    removeFilterListener (listener: event.MapListener<K, V>, mapFilter: filter.MapEventFilter<K, V> | null): Promise<void> {
       const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
 
       const group = this.filterMap.get(filter)
@@ -501,7 +503,7 @@ export namespace event {
         return MapEventsManager.RESOLVED
       }
 
-      return group.removeListener(event, callbackFn)
+      return group.removeListener(listener)
     }
 
     /**
@@ -649,7 +651,7 @@ export namespace event {
      * A map of all callbacks in this group. Each callback has a isLite
      * flag.
      */
-    listeners: Map<MapEventType, Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>>
+    listeners: Map<event.MapListener<K, V>, { isLite: boolean }> = new Map()
 
     /**
      * Number of callbacks who are registered with isLite == false.
@@ -672,10 +674,6 @@ export namespace event {
     protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | filter.MapEventFilter<K, V>) {
       this.helper = helper
       this.keyOrFilter = keyOrFilter
-      this.listeners = new Map<MapEventType, Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>>()
-        .set(MapEventType.INSERT, new Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>())
-        .set(MapEventType.DELETE, new Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>())
-        .set(MapEventType.UPDATE, new Map<(event: MapEvent<K, V>) => void, { isLite: boolean }>())
     }
 
     /**
@@ -684,16 +682,13 @@ export namespace event {
      * callback, or (b) the isLite param is false but all the previous
      * callback have isLite == true.
      *
-     * @param event       the event type
-     * @param callbackFn  the callback to register
+     * @param listener    the {@link MapListener}
      * @param isLite      `true` if the event should only include the key, or `false`
      *                    if the event should include old and new values as well as the key
      */
-    async addListener (event: event.MapEventType, callbackFn: (event: MapEvent<K, V>) => void, isLite: boolean): Promise<void> {
+    async addListener (listener: event.MapListener<K, V>, isLite: boolean): Promise<void> {
       // Check if this callback is already registered.
-      // note: handlers should never be undefined, but the compiler forces optional chaining
-      const handlers = this.listeners.get(event)
-      const prevStatus = handlers?.get(callbackFn)
+      const prevStatus = this.listeners.get(listener)
 
       if (prevStatus?.isLite === isLite) {
         // This listener is registered with the same isLite status.
@@ -701,18 +696,18 @@ export namespace event {
         return ListenerGroup.RESOLVED
       }
 
-      handlers?.set(callbackFn, { isLite })
+      this.listeners.set(listener, { isLite })
       if (!isLite) {
         this.isLiteFalseCount++
       }
 
-      const size = handlers?.size
+      const size = this.listeners.size
 
       // We need registration request only if the current
       // set of listeners are all using isLite == true, but
       // the new listener is requesting isLite = false. So we need to
       // send a new registration request with the new isLite flag.
-      const requireRegistrationRequest = handlers?.size === 1 || this.registeredIsLite && !isLite
+      const requireRegistrationRequest = size === 1 || this.registeredIsLite && !isLite
       const self = this
 
       if (requireRegistrationRequest) {
@@ -730,22 +725,20 @@ export namespace event {
     /**
      * Remove the specified callback from this group.
      *
-     * @param event       the event type
-     * @param callbackFn  the callback to remove
+     @param listener  the {@link MapListener}
      */
-    async removeListener (event: MapEventType, callbackFn: (event: MapEvent<K, V>) => void): Promise<void> {
+    async removeListener (listener: event.MapListener<K, V>): Promise<void> {
       // note: handlers should never be undefined, but the compiler forces optional chaining
-      const handlers = this.listeners.get(event)
-      const prevStatus = handlers?.get(callbackFn)
+      const prevStatus = this.listeners.get(listener)
 
-      if (!prevStatus || handlers?.size === 0) {
+      if (!prevStatus || this.listeners.size === 0) {
         // This listener was never registered.
         return ListenerGroup.RESOLVED
       }
 
-      handlers?.delete(callbackFn)
+      this.listeners.delete(listener)
 
-      if (handlers?.size == 0) {
+      if (this.listeners.size == 0) {
         // This was the last callback.
         return await this.doUnsubscribe()
       }
@@ -793,22 +786,18 @@ export namespace event {
      * @param mapEvent the {@link MapEvent}
      */
     notifyListeners (mapEvent: MapEvent): void {
-      switch (mapEvent.id) {
-        case MapEvent.ENTRY_DELETED:
-          this.listeners.get(MapEventType.DELETE)?.forEach((ignored, callback) => {
-            callback(mapEvent)
-          })
-          break
-        case MapEvent.ENTRY_INSERTED:
-          this.listeners.get(MapEventType.INSERT)?.forEach((ignored, callback) => {
-            callback(mapEvent)
-          })
-          break
-        case MapEvent.ENTRY_UPDATED:
-          this.listeners.get(MapEventType.UPDATE)?.forEach((ignored, callback) => {
-            callback(mapEvent)
-          })
-          break
+      for (const listener of this.listeners.keys()) {
+        switch (mapEvent.id) {
+          case MapEvent.ENTRY_DELETED:
+            listener.emit(MapEventType.DELETE, mapEvent)
+            break
+          case MapEvent.ENTRY_INSERTED:
+            listener.emit(MapEventType.INSERT, mapEvent)
+            break
+          case MapEvent.ENTRY_UPDATED:
+            listener.emit(MapEventType.UPDATE, mapEvent)
+            break
+        }
       }
     }
 

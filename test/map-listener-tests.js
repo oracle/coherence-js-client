@@ -7,7 +7,6 @@
 
 const { MapEventResponse } = require('../lib/grpc/messages_pb')
 const { event, Filters, Session, filter } = require('../lib')
-const events = require('events')
 const assert = require('assert').strict
 const { describe, it } = require('mocha')
 
@@ -32,15 +31,11 @@ describe('Map Events IT Test Suite', function () {
 
     const listener = new CountingMapListener('listener-default')
     setImmediate(async () => {
-      const eventFilter = Filters.event(Filters.always(), filterMask)
       if (filterMask) {
-        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener.entryInserted(event), eventFilter)
-        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener.entryUpdated(event), eventFilter)
-        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener.entryDeleted(event), eventFilter)
+        const eventFilter = Filters.event(Filters.always(), filterMask)
+        await cache.addMapListener(listener, eventFilter);
       } else {
-        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener.entryInserted(event))
-        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener.entryUpdated(event))
-        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener.entryDeleted(event))
+        await cache.addMapListener(listener)
       }
 
       await cache.set('123', { xyz: '123-xyz' })
@@ -164,7 +159,7 @@ describe('Map Events IT Test Suite', function () {
           { key: '123', new: { abc: '123-abc' }, old: { xyz: '123-xyz' } },
           { key: '123', old: { abc: '123-abc' } }]
       }
-      await runBasicEventTest(expected, filter.MapEventFilter.E_ALL)
+      await runBasicEventTest(expected, filter.MapEventFilter.ALL)
     })
 
     it('should be able to receive insert events only', async () => {
@@ -173,7 +168,7 @@ describe('Map Events IT Test Suite', function () {
         'updates': [],
         'deletes': []
       }
-      await runBasicEventTest(expected, filter.MapEventFilter.E_INSERTED)
+      await runBasicEventTest(expected, filter.MapEventFilter.INSERTED)
     })
 
     it('should be able to receive update events only', async () => {
@@ -182,7 +177,7 @@ describe('Map Events IT Test Suite', function () {
         'updates': [{ key: '123', new: { abc: '123-abc' }, old: { xyz: '123-xyz' } }],
         'deletes': []
       }
-      await runBasicEventTest(expected, filter.MapEventFilter.E_UPDATED)
+      await runBasicEventTest(expected, filter.MapEventFilter.UPDATED)
     })
 
     it('should be able to receive deleted events only', async () => {
@@ -191,7 +186,7 @@ describe('Map Events IT Test Suite', function () {
         'updates': [],
         'deletes': [{ key: '123', old: { abc: '123-abc' } }]
       }
-      await runBasicEventTest(expected, filter.MapEventFilter.E_DELETED)
+      await runBasicEventTest(expected, filter.MapEventFilter.DELETED)
     })
 
     it('should properly handle multiple listeners', (done) => {
@@ -205,12 +200,7 @@ describe('Map Events IT Test Suite', function () {
       const listener2 = new CountingMapListener('listener-2')
 
       setImmediate(async () => {
-        const l1Inserted = (event) => listener.entryInserted(event)
-        const l1Updated = (event) => listener.entryUpdated(event)
-        const l1Deleted = (event) => listener.entryDeleted(event)
-        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted)
-        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated)
-        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted)
+        await cache.addMapListener(listener)
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('123', { abc: '123-abc' })
@@ -221,9 +211,7 @@ describe('Map Events IT Test Suite', function () {
           throw error
         })
 
-        await cache.addMapListener(event.MapEventType.INSERT, (event) => listener2.entryInserted(event))
-        await cache.addMapListener(event.MapEventType.UPDATE, (event) => listener2.entryUpdated(event))
-        await cache.addMapListener(event.MapEventType.DELETE, (event) => listener2.entryDeleted(event))
+        await cache.addMapListener(listener2)
 
         await cache.set('123', { a: 2 })
         await cache.set('123', { a: 1 })
@@ -233,9 +221,7 @@ describe('Map Events IT Test Suite', function () {
           throw error
         })
 
-        await cache.removeMapListener(event.MapEventType.INSERT, l1Inserted)
-        await cache.removeMapListener(event.MapEventType.UPDATE, l1Updated)
-        await cache.removeMapListener(event.MapEventType.DELETE, l1Deleted)
+        await cache.removeMapListener(listener)
         await cache.delete('123')
 
         await listener2.waitFor(3).catch(error => {
@@ -259,12 +245,7 @@ describe('Map Events IT Test Suite', function () {
 
       const listener = new CountingMapListener('listener-default')
       setImmediate(async () => {
-        const l1Inserted = (event) => listener.entryInserted(event)
-        const l1Updated = (event) => listener.entryUpdated(event)
-        const l1Deleted = (event) => listener.entryDeleted(event)
-        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted, '123')
-        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated, '123')
-        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted, '123')
+        await cache.addMapListener(listener, '123')
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('234', { abc: '123-abc' })
@@ -294,13 +275,7 @@ describe('Map Events IT Test Suite', function () {
       const listener = new CountingMapListener('listener-default')
       setImmediate(async () => {
         const mapEventFilter = Filters.event(Filters.isNotNull('xyz'))
-        const l1Inserted = (event) => listener.entryInserted(event)
-        const l1Updated = (event) => listener.entryUpdated(event)
-        const l1Deleted = (event) => listener.entryDeleted(event)
-        await cache.addMapListener(event.MapEventType.INSERT, l1Inserted, mapEventFilter)
-        await cache.addMapListener(event.MapEventType.UPDATE, l1Updated, mapEventFilter)
-        await cache.addMapListener(event.MapEventType.DELETE, l1Deleted, mapEventFilter)
-
+        await cache.addMapListener(listener, mapEventFilter)
 
         await cache.set('123', { xyz: '123-xyz' })
         await cache.set('234', { abc: '123-abc' })
@@ -330,10 +305,17 @@ describe('Map Events IT Test Suite', function () {
         })
       })
 
-      await cache.addMapListener(event.MapEventType.INSERT, async (event) => {
-        assert.deepEqual(event.source, cache)
-        await cache.destroy()
+      const listener = new (class MyListener extends event.MapListener {
+        constructor () {
+          super()
+          this.on(event.MapEventType.INSERT, async (event) => {
+              assert.deepEqual(event.source, cache)
+              await cache.destroy()
+          })
+        }
       })
+
+      await cache.addMapListener(listener, Filters.event(Filters.always(), filter.MapEventFilter.INSERTED))
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -347,10 +329,17 @@ describe('Map Events IT Test Suite', function () {
         })
       })
 
-      await cache.addMapListener(event.MapEventType.INSERT, async (event) => {
-        assert.deepEqual(event.name, cache.name)
-        await cache.destroy()
+      const listener = new (class MyListener extends event.MapListener {
+        constructor () {
+          super()
+          this.on(event.MapEventType.INSERT, async (event) => {
+            assert.deepEqual(event.source, cache)
+            await cache.destroy()
+          })
+        }
       })
+
+      await cache.addMapListener(listener)
 
       await cache.set('a', 'b')
       await prom.catch((error) => assert.fail(error))
@@ -365,28 +354,31 @@ describe('Map Events IT Test Suite', function () {
       })
 
       let count = 0
-      const insert = async (event) => {
-        assert.equal(event.description, 'insert')
-        if (++count === 3) {
-          await cache.destroy()
+      const listener = new (class MyListener extends event.MapListener {
+        constructor () {
+          super()
+          this.on(event.MapEventType.INSERT, async (event) => {
+            assert.equal(event.description, 'insert')
+            if (++count === 3) {
+              await cache.destroy()
+            }
+          })
+          this.on(event.MapEventType.UPDATE, async (event) => {
+            assert.equal(event.description, 'update')
+            if (++count === 3) {
+              await cache.destroy()
+            }
+          })
+          this.on(event.MapEventType.DELETE, async (event) => {
+            assert.equal(event.description, 'delete')
+            if (++count === 3) {
+              await cache.destroy()
+            }
+          })
         }
-      }
-      const update = async (event) => {
-        assert.equal(event.description, 'update')
-        if (++count === 3) {
-          await cache.destroy()
-        }
-      }
-      const del = async (event) => {
-        assert.equal(event.description, 'delete')
-        if (++count === 3) {
-          await cache.destroy()
-        }
-      }
+      })
 
-      await cache.addMapListener(event.MapEventType.INSERT, insert)
-      await cache.addMapListener(event.MapEventType.UPDATE, update)
-      await cache.addMapListener(event.MapEventType.DELETE, del)
+      await cache.addMapListener(listener)
 
       await cache.set('a', 'b')
       await cache.set('a', 'c')
@@ -419,7 +411,7 @@ describe('Map Events IT Test Suite', function () {
     })
   })
 
-  class CountingMapListener extends events.EventEmitter {
+  class CountingMapListener extends event.MapListener {
     constructor (name) {
       super()
       this.name = name
@@ -428,6 +420,15 @@ describe('Map Events IT Test Suite', function () {
       this.updateEvents = []
       this.deleteEvents = []
       this.eventOrder = []
+      this.on(event.MapEventType.DELETE, (event) => {
+        this.entryDeleted(event)
+      })
+      this.on(event.MapEventType.INSERT, (event) => {
+        this.entryInserted(event)
+      })
+      this.on(event.MapEventType.UPDATE, (event) => {
+        this.entryUpdated(event)
+      })
     }
 
     waitFor (numberOfEvents) {
@@ -466,7 +467,7 @@ describe('Map Events IT Test Suite', function () {
       })
     }
 
-    // MapListener callback
+// MapListener callback
     // noinspection JSUnusedGlobalSymbols
     entryDeleted (event) {
       this.deleteEvents.push(event)

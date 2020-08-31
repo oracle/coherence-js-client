@@ -741,20 +741,20 @@ export namespace filter {
      * there is no filter specified or the filter evaluates to true for a new
      * value.
      */
-    static E_INSERTED = 0x0001
+    static INSERTED = 0x0001
 
     /**
      * This value indicates that update events should be evaluated. The event will be fired if
      * there is no filter specified or the filter evaluates to true when applied to either
      * old or new value.
      */
-    static E_UPDATED = 0x0002
+    static UPDATED = 0x0002
 
     /**
      * This value indicates that delete events should be evaluated. The event will be fired if
      * there is no filter specified or the filter evaluates to true for an old value.
      */
-    static E_DELETED = 0x0004
+    static DELETED = 0x0004
 
     /**
      * This value indicates that update events should be evaluated, but only if filter
@@ -762,7 +762,7 @@ export namespace filter {
      * that was not in a keySet filter result changing such that it would now
      * be in that keySet filter result.
      */
-    static E_UPDATED_ENTERED = 0x0008
+    static UPDATED_ENTERED = 0x0008
 
     /**
      * This value indicates that update events should be evaluated, but only if filter
@@ -770,7 +770,7 @@ export namespace filter {
      * that was in a keySet filter result changing such that it would no
      * longer be in that keySet filter result.
      */
-    static E_UPDATED_LEFT = 0x0010
+    static UPDATED_LEFT = 0x0010
 
     /**
      * This value indicates that update events should be evaluated, but only if filter
@@ -778,13 +778,13 @@ export namespace filter {
      * that was in a keySet filter result changing but not leaving the keySet
      * filter result.
      */
-    static E_UPDATED_WITHIN = 0x0020
+    static UPDATED_WITHIN = 0x0020
 
     /**
      * This value indicates that all events should be evaluated.
      */
-    static E_ALL = MapEventFilter.E_INSERTED | MapEventFilter.E_UPDATED |
-      MapEventFilter.E_DELETED
+    static ALL = MapEventFilter.INSERTED | MapEventFilter.UPDATED |
+      MapEventFilter.DELETED
 
     /**
      * This value indicates that all events that would affect the result of
@@ -792,8 +792,8 @@ export namespace filter {
      *
      * @since Coherence 3.1
      */
-    static E_KEYSET = MapEventFilter.E_INSERTED | MapEventFilter.E_DELETED |
-      MapEventFilter.E_UPDATED_ENTERED | MapEventFilter.E_UPDATED_LEFT
+    static KEYSET = MapEventFilter.INSERTED | MapEventFilter.DELETED |
+      MapEventFilter.UPDATED_ENTERED | MapEventFilter.UPDATED_LEFT
 
     /**
      * The event mask.
@@ -821,7 +821,7 @@ export namespace filter {
       } else {
         // One arg invocation.
         if (maskOrFilter instanceof Filter) {
-          this.mask = MapEventFilter.E_KEYSET
+          this.mask = MapEventFilter.KEYSET
           this.filter = maskOrFilter
         } else {
           this.mask = maskOrFilter
@@ -1116,7 +1116,7 @@ export class Filters {
    * @param ff    the event filter
    * @param mask  the event mask
    */
-  static event<K = any, V = any> (ff: filter.Filter, mask: number = filter.MapEventFilter.E_KEYSET): filter.MapEventFilter<K, V> {
+  static event<K = any, V = any> (ff: filter.Filter, mask: number = filter.MapEventFilter.KEYSET): filter.MapEventFilter<K, V> {
     return new filter.MapEventFilter<K, K>(mask, ff)
   }
 
