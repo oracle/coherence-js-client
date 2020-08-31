@@ -348,4 +348,12 @@ describe('Aggregators IT Test Suite', function () {
       assert.deepEqual(aggregator['args'], ['a', 123])
     })
   })
+
+  describe('An aggregator', function () {
+    it('should be able to be run in a sequence by using andThen', async () => {
+      const aggregator = Aggregators.max('ival').andThen(Aggregators.min('ival'))
+      const result = await cache.aggregate(aggregator)
+      assert.deepEqual(result, [456, 123])
+    })
+  })
 })

@@ -32,7 +32,7 @@ export namespace aggregator {
     protected '@class': string
 
     /**
-     * The {@linkextractor.ValueExtractor} to apply when aggregating results.
+     * The {@link extractor.ValueExtractor} to apply when aggregating results.
      *
      */
     protected extractor?: extractor.ValueExtractor
@@ -56,6 +56,17 @@ export namespace aggregator {
           this.extractor = new extractor.UniversalExtractor(extractorOrProperty)
         }
       }
+    }
+
+    /**
+     * Returns a {@link CompositeAggregator} comprised of this and the provided aggregator.
+     *
+     * @param aggregator  the next aggregator
+     *
+     * @return a {@link CompositeAggregator} comprised of this and the provided aggregator
+     */
+    andThen(aggregator: EntryAggregator<K, V, R>): EntryAggregator<K, V, R> {
+      return new CompositeAggregator([this, aggregator])
     }
   }
 
@@ -150,7 +161,7 @@ export namespace aggregator {
    */
   export class CompositeAggregator<K = any, V = any>
     extends EntryAggregator<K, V, Array<any>> {
-    aggregators: Array<EntryAggregator<any, any, any>>
+    aggregators: Array<EntryAggregator>
 
     /**
      * Construct a CompositeAggregator based on a specified {@link EntryAggregator}
@@ -158,7 +169,7 @@ export namespace aggregator {
      *
      * @param aggregators  an array of EntryAggregator objects; may not be `null`
      */
-    constructor (aggregators: Array<EntryAggregator<any, any, any>>,) {
+    constructor (aggregators: Array<EntryAggregator>,) {
       super(aggregatorName('CompositeAggregator'))
 
       if (aggregators) {
@@ -260,10 +271,10 @@ export namespace aggregator {
     protected filter?: filter.Filter
 
     /**
-     * Construct a `GroupAggregator` based on a specified {@linkextractor.ValueExtractor} and
+     * Construct a `GroupAggregator` based on a specified {@link extractor.ValueExtractor} and
      * underlying {@link EntryAggregator}.
      *
-     * @param extractorOrProperty   aextractor.ValueExtractor object that is used to split entries into non-intersecting
+     * @param extractorOrProperty   a {@link extractor.ValueExtractor} object that is used to split entries into non-intersecting
      *                              subsets; may not be `null`. This parameter can also be a dot-delimited
      *                              sequence of method names which would result in an aggregator based on the
      *                              {@link ChainedExtractor} that is based on an array of corresponding
@@ -510,7 +521,7 @@ export namespace aggregator {
    * The `ReducerAggregator` is used to implement functionality similar to
    * {@link NamedMap} *getAll()* API.  Instead of returning the complete
    * set of values, it will return a portion of value attributes based on the
-   * provided {@linkextractor.ValueExtractor}.
+   * provided {@link extractor.ValueExtractor}.
    *
    * This aggregator could be used in combination with {@link MultiExtractor} allowing one
    * to collect tuples that are a subset of the attributes of each object stored in

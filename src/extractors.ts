@@ -8,20 +8,6 @@
 import { util } from './util'
 
 export namespace extractor {
-  /**
-   * This enum describes the possible extraction targets when working with a map entry.
-   */
-  export enum Target {
-    /**
-     * Indicates that the extraction operation should use the entry's value.
-     */
-    VALUE = 0,
-
-    /**
-     * Indicates that the extraction operation should use the entry's key.
-     */
-    KEY = 1
-  }
 
   /**
    * ValueExtractor is used to both extract values (for example, for sorting
@@ -37,34 +23,9 @@ export namespace extractor {
      * Construct a ValueExtractor.
      *
      * @param clz     server-side ValueExtractor implementation type identifier
-     * @param target  the extraction target
      */
-    protected constructor (clz: string, target: Target = Target.VALUE) {
+    protected constructor (clz: string) {
       this['@class'] = clz
-      this._target = target
-    }
-
-    /**
-     * The extraction target.
-     */
-    protected _target: Target
-
-    /**
-     * Return the extraction target.
-     *
-     * @return the extraction target
-     */
-    get target (): Target {
-      return this._target
-    }
-
-    /**
-     * Set the extraction target.
-     *
-     * @param target
-     */
-    set target (target: Target) {
-      this._target = target
     }
 
     /**
@@ -150,8 +111,8 @@ export namespace extractor {
     protected params?: any[]
 
     /**
-     * Construct a UniversalExtractor based on a name, optional
-     * parameters and the entry extraction target.
+     * Construct a UniversalExtractor based on a name and optional
+     * parameters.
      *
      * If *name* does not end in `()`, this extractor is a property extractor.
      * If `name` is prefixed with one of `set` or `get` and ends in `()`,
@@ -161,10 +122,9 @@ export namespace extractor {
      * @param name    a method or property name
      * @param params  the array of arguments to be used in the method
      *                invocation; may be `null`
-     * @param target  one of the {@link #VALUE} or {@link #KEY} values
      */
-    constructor (name: string, params?: any[], target?: Target) {
-      super(extractorName('UniversalExtractor'), target)
+    constructor (name: string, params?: any[]) {
+      super(extractorName('UniversalExtractor'))
       this.name = name
       if (params) {
         this.params = params
@@ -192,7 +152,6 @@ export namespace extractor {
         ((typeof extractorsOrMethod === 'string')
           ? ChainedExtractor.createExtractors(extractorsOrMethod)
           : extractorsOrMethod))
-      this.target = this.computeTarget()
     }
 
     /**
@@ -210,24 +169,6 @@ export namespace extractor {
       }
 
       return arr
-    }
-
-    /**
-     * Return the target of the first extractor in a composite extractor.
-     *
-     * @return the target of the first extractor in a composite extractor
-     */
-    protected computeTarget (): Target {
-      const aExtractor = this.extractors
-
-      let result = Target.VALUE
-      if (aExtractor != null && aExtractor.length > 0) {
-        const extType: string = typeof aExtractor[0]
-        if (extType === 'AbstractExtractor') {
-          result = aExtractor[0].target
-        }
-      }
-      return result
     }
   }
 
