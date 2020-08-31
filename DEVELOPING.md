@@ -12,13 +12,15 @@ http://oss.oracle.com/licenses/upl.
 * NPM version 6.x or later
 
 ### Runnable NPM Scripts
-* `compile` - compiles the TypeScript sources to the 'lib' directory
+* `compile` - compiles the TypeScript sources to the `lib` directory
 * `clean` - removes all generated code, coverage, and documentation artifacts
+* `full-clean` - runs `clean` and removes the local `node_modules` directory 
 * `test` - runs the unit tests
 * `coverage` - runs the unit tests and gathers coverage metrics (results found in `coverage` directory)
 * `coh-up` - starts a Coherence container for testing/developing against
 * `coh-down` - stops the previously started Coherence container
 * `coh-clean` - removes the local image
+* `dist` - creates a test distribution for inspection prior to publish
 
 ### Project Structure
 * `bin` - various shell scripts that will be called by npm
@@ -27,7 +29,7 @@ http://oss.oracle.com/licenses/upl.
 * `test` - contains the library test cases in plain JavaScript
 
 ### Generating Documentation
-* Install `typedoc` globally: `npm install -g typedoc`
+* Install `typedoc` globally: `npm install -g typescript && npm install -g typedoc`
 * Run `typedoc` from project root.  The Generated documentation
   will be available in the `docs` directory.
 
