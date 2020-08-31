@@ -409,7 +409,7 @@ export namespace filter {
      * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
      *                           via reflection
      *
-     * @param setValues the {@link Set} of values that a Collection or array is tested to contain
+     * @param setValues the Set of values that a Collection or array is tested to contain
      */
     constructor (extractorOrMethod: extractor.ValueExtractor | string, setValues: Set<any>) {
       super(filterName('ContainsAllFilter'), extractorOrMethod, setValues)
@@ -429,7 +429,7 @@ export namespace filter {
      * @param extractorOrMethod  the {@link extractor.ValueExtractor} used by this filter or the name of the method to invoke
      *                           via reflection
      *
-     * @param setValues the {@link Set} of values that a Collection or array is tested to contain
+     * @param setValues the Set of values that a Collection or array is tested to contain
      */
     constructor (extractorOrMethod: extractor.ValueExtractor | string, setValues: Set<any>) {
       super(filterName('ContainsAnyFilter'), extractorOrMethod, setValues)

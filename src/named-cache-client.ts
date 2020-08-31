@@ -29,7 +29,7 @@ import { util } from './util'
 import EntryAggregator = aggregator.EntryAggregator
 import MapEvent = event.MapEvent
 import MapEventsManager = event.MapEventsManager
-import CacheLifecycleEvent = event.MapLifecycleEvent
+import MapLifecycleEvent = event.MapLifecycleEvent
 import RequestStateEvent = event.RequestStateEvent
 import ValueExtractor = extractor.ValueExtractor
 import Filter = filter.Filter
@@ -107,7 +107,7 @@ export interface NamedMap<K, V> {
    * which may imply (for caches that can load behind the scenes) that the requested data
    * could not be loaded.
    *
-   * @param keys  an {@link Iterable} of keys that may be in this map
+   * @param keys  an Iterable of keys that may be in this map
    *
    * @returns a `Promise`resolving to a Map of keys to values for the specified keys
    *          passed in `keys`
@@ -318,7 +318,7 @@ export interface NamedMap<K, V> {
    *
    * @typeParam R  the type of value returned by the {@link EntryProcessor}
    *
-   * @param keys        the {@link Iterable} of keys that specify the entries within this Map to aggregate across
+   * @param keys        the Iterable of keys that specify the entries within this Map to aggregate across
    * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
    */
   aggregate<R> (keys: Iterable<K>, aggregator: EntryAggregator<K, V, R>): Promise<R>
@@ -405,7 +405,7 @@ export interface NamedMap<K, V> {
    * @param eventName  the event
    * @param handler    the event handler
    */
-  on (eventName: CacheLifecycleEvent.RELEASED | CacheLifecycleEvent.TRUNCATED | CacheLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
+  on (eventName: MapLifecycleEvent.RELEASED | MapLifecycleEvent.TRUNCATED | MapLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
 
   /**
    * Add a callback function that will receive events (inserts,
@@ -509,7 +509,7 @@ export interface NamedMap<K, V> {
   addIndex (extractor: ValueExtractor, ordered?: boolean, comparator?: Comparator): Promise<void>
 
   /**
-   * Returns a {@link Set} view of the keys contained in this map.
+   * Returns a Set view of the keys contained in this map.
    * The set is backed by the map, so changes to the map are
    * reflected in the set, and vice-versa.  If the map is modified
    * while an iteration over the set is in progress (except through
@@ -538,7 +538,7 @@ export interface NamedMap<K, V> {
   keys (filter: Filter, comparator?: Comparator): Promise<RemoteSet<K>>
 
   /**
-   * Returns a {@link Set} view of the mappings contained in this map.
+   * Returns a Set view of the mappings contained in this map.
    * The set is backed by the map, so changes to the map are
    * reflected in the set, and vice-versa.  If the map is modified
    * while an iteration over the set is in progress (except through
@@ -1309,7 +1309,7 @@ export class NamedCacheClient<K = any, V = any>
         // that were setup in the constructor. So once this receives
         // the event, we can be sure that *all other* listeners have
         // be notified!!
-        self.internalEmitter.once(CacheLifecycleEvent.DESTROYED, () => resolve())
+        self.internalEmitter.once(MapLifecycleEvent.DESTROYED, () => resolve())
 
         // Now that we have setup our 'once & only once' listener, we
         // can now send out the 'truncate' request. The handleResponse()
@@ -1337,12 +1337,12 @@ export class NamedCacheClient<K = any, V = any>
       // that were setup in the constructor. So once this receives
       // the event, we can be sure that *all other* listeners have
       // be notified!!
-      self.internalEmitter.once(CacheLifecycleEvent.RELEASED, () => resolve())
+      self.internalEmitter.once(MapLifecycleEvent.RELEASED, () => resolve())
 
       // Now that we have setup our 'once & only once' listener, we
-      // can emit the CacheLifecycleEvent.RELEASED event on the internalEmitter
+      // can emit the MapLifecycleEvent.RELEASED event on the internalEmitter
       // for which our 'once & only once' listener is setup.
-      self.internalEmitter.emit(CacheLifecycleEvent.RELEASED, self.cacheName)
+      self.internalEmitter.emit(MapLifecycleEvent.RELEASED, self.cacheName)
     })
   }
 
@@ -1356,7 +1356,7 @@ export class NamedCacheClient<K = any, V = any>
       // that were setup in the constructor. So once this receives
       // the event, we can be sure that *all other* listeners have
       // be notified!!
-      self.internalEmitter.once(CacheLifecycleEvent.TRUNCATED, () => {
+      self.internalEmitter.once(MapLifecycleEvent.TRUNCATED, () => {
         resolve()
       })
 
@@ -1404,25 +1404,25 @@ export class NamedCacheClient<K = any, V = any>
    */
   protected setupEventHandlers () {
     const self = this
-    self.internalEmitter.on(CacheLifecycleEvent.DESTROYED, (cacheName: string) => {
+    self.internalEmitter.on(MapLifecycleEvent.DESTROYED, (cacheName: string) => {
       if (cacheName == self.cacheName) {
         self.mapEventsHandler.closeEventStream()
         self._destroyed = true
-        self.emit(CacheLifecycleEvent.DESTROYED, cacheName) // notify NamedCacheClient level listeners
+        self.emit(MapLifecycleEvent.DESTROYED, cacheName) // notify NamedCacheClient level listeners
       }
     })
 
-    self.internalEmitter.on(CacheLifecycleEvent.TRUNCATED, (cacheName: string) => {
+    self.internalEmitter.on(MapLifecycleEvent.TRUNCATED, (cacheName: string) => {
       if (cacheName == self.cacheName) {
-        self.emit(CacheLifecycleEvent.TRUNCATED, cacheName) // notify NamedCacheClient level listeners
+        self.emit(MapLifecycleEvent.TRUNCATED, cacheName) // notify NamedCacheClient level listeners
       }
     })
 
-    self.internalEmitter.on(CacheLifecycleEvent.RELEASED, (cacheName: string) => {
+    self.internalEmitter.on(MapLifecycleEvent.RELEASED, (cacheName: string) => {
       if (cacheName == self.cacheName) {
         self.mapEventsHandler.closeEventStream()
         self._released = true
-        self.emit(CacheLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners
+        self.emit(MapLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners
       }
     })
   }

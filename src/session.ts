@@ -40,7 +40,7 @@ export class Options {
   private readonly _format: string
 
   /**
-   * A function taking no arguments returning a {@link CallOptions} instance.
+   * A function taking no arguments returning a gRPC CallOptions instance.
    * If not explicitly configured, then the call options will simply define
    * the request timeout.  If the developer explicitly sets this, they are responsible
    * for configuring the timeout (i.e., the call options deadline)
@@ -127,9 +127,9 @@ export class Options {
   }
 
   /**
-   * Sets the {@link CallOptions} that will be applied to each request made using this session.
+   * Sets the gRPC CallOptions that will be applied to each request made using this session.
    *
-   * @param callOptions the {@link CallOptions} that will be applied to each request made using this session
+   * @param callOptions the gRPC CallOptions that will be applied to each request made using this session
    */
   set callOptions (callOptions: () => CallOptions) {
     if (this.locked) {
@@ -139,9 +139,9 @@ export class Options {
   }
 
   /**
-   * Returns a function that will return the {@link CallOptions} that will be applied to each request made using this session.
+   * Returns a function that will return the gRPC CallOptions that will be applied to each request made using this session.
    *
-   * @return a function that will return the {@link CallOptions} that will be applied to each request made using this session
+   * @return a function that will return the gRPC CallOptions that will be applied to each request made using this session
    */
   get callOptions (): () => CallOptions {
     return this._callOptions
@@ -302,9 +302,9 @@ export class TlsOptions {
  *
  * This class also extends EventEmitter and emits the following
  * events:
- * 1. {@link CacheLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
- * 2. {@link CacheLifecycleEvent.TRUNCATED}: When the underlying cache is truncated
- * 3. {@link CacheLifecycleEvent.RELEASED}: When the underlying cache is released
+ * 1. {@link MapLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
+ * 2. {@link MapLifecycleEvent.TRUNCATED}: When the underlying cache is truncated
+ * 3. {@link MapLifecycleEvent.RELEASED}: When the underlying cache is released
  */
 export class Session
   extends EventEmitter {
@@ -346,17 +346,17 @@ export class Session
   private readonly _sessionOptions: Options
 
   /**
-   * The {@link ChannelCredentials} to use.
+   * The gRPC ChannelCredentials to use.
    */
   private readonly _channelCredentials: ChannelCredentials
 
   /**
-   * The {@link Channel} to use for all the {@link NamedCacheClient} that are created by this {@link Session}.
+   * The gRPC Channel to use for all the {@link NamedCacheClient} that are created by this {@link Session}.
    */
   private readonly _channel: Channel
 
   /**
-   * The set of options to use while creating a {@link Channel}.
+   * The set of options to use while creating a gRPC Channel.
    * <p>
    * Review the `gRPC` channel argument key
    * [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html) to obtain a list of possible options.
@@ -449,9 +449,9 @@ export class Session
   }
 
   /**
-   * Return the {@link ChannelCredentials} used by this session.
+   * Return the gRPC ChannelCredentials used by this session.
    *
-   * @return the {@link ChannelCredentials} used by this session
+   * @return the gRPC ChannelCredentials used by this session
    */
   get channelCredentials (): ChannelCredentials {
     return this._channelCredentials
@@ -523,7 +523,7 @@ export class Session
   /**
    * This is a shortcut to invoke the {@link Session options callOptions} function.
    *
-   * @return the {@link CallOptions} that will be applied to each request made using this session
+   * @return the gRPC CallOptions that will be applied to each request made using this session
    */
   callOptions (): CallOptions {
     return this._sessionOptions.callOptions()
