@@ -267,6 +267,7 @@ Now, let's register a listener:
 import { event } from '@oracle/coherence'
 
 const MapEventType = event.MapEventType
+const MapListener = event.MapListener
 
 const handler = (event: MapEvent) => { 
   console.log('Event: ' + event.description 
@@ -274,10 +275,14 @@ const handler = (event: MapEvent) => {
     + ', New Value: ' + JSON.stringify(event.newValue)
     + ', Old Value: ' + JSON.stringify(event.oldValue))
 }
+
+const listener = new MapListener()
+  .on(MapEventType.INSERT, handler)
+  .on(MapEventType.UPDATE, handler)
+  .on(MapEventType.DELETE, handler)
+
 // register to receive all event types for all entries within the map
-await map.addListener(MapEventType.INSERT, handler)
-await map.addListener(MapEventType.DELETE, handler)
-await map.addListener(MapEventType.UPDATE, handler)
+await map.addListener(listener)
 
 await map.set('a', 'b')
 // Event: insert, Key: a, New Value: b, Old Value: null
@@ -289,19 +294,17 @@ await map.delete('a')
 // Event: delete, Key: a, New Value: null, Old Value: c
 
 // remove the listeners
-await map.removeListener(MapEventType.INSERT, handler)
-await map.removeListener(MapEventType.DELETE, handler)
-await map.removeListener(MapEventType.UPDATE, handler)
+await map.removeListener(listener)
 
 // =======================================
 
-// Assume the previous event callback as well as the following key and values:
+// Assume the previous listener as well as the following key and values
 //   ['0001', {name: "Bill Smith", age: 38, hobbies: ["gardening", "painting"]}]
 //   ['0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}]
 //   ['0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}]
 
 // Add handlers for updates to '0001'
-await map.addListener(MapEventType.UPDATE, handler, '0001')
+await map.addListener(listener, '0001')
 
 await map.update('0002', '0002')
 // does not generate any events
@@ -313,23 +316,23 @@ await map.delete('0001')
 // does not generate any events
 
 // remove the key listener
-await map.removeMapListener(MapEventType.UPDATE, handler, '0001')
+await map.removeMapListener(listener, '0001')
 
 // =======================================
 
 // Assume the same setup as the previous example, except instead of listening to events for a single key,
 // we'll instead listen for events raised for entries that match the filtered criteria.
-const filter = Filters.event(Filters.greater('age', 40))
+const filter = Filters.event(Filters.greater('age', 40), filter.MapEventFilter.UPDATED)
 
 // Listen to all updates to entries where the age property of the entry value is greater than 40
-await map.addListener(MapEventType.UPDATE, handler, filter) 
+await map.addListener(listener, filter) 
 
 await map.invokeAll(Processors.increment('age', 1));
 // Event: update, Key: 0002, New Value: {name: "Fred Jones", age: 57, hobbies: ["racing", "golf"]}, Old Value: {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}
 // Event: update, Key: 0003, New Value: "Jane Doe", age: 49, hobbies: ["gardening", "photography"]}, Old Value: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}
 
 // remove the filter listener
-await map.removeMapListener(MapEventType.UPDATE, handler, filter)
+await map.removeMapListener(listener, filter)
 ```
 
 ### Cut/Paste Example
