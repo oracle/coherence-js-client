@@ -165,7 +165,7 @@ export namespace extractor {
       const names = fields.split('.').filter(f => f != null && f.length > 0)
       const arr = new Array<ValueExtractor>()
       for (const name of names) {
-        arr.concat(new UniversalExtractor(name))
+        arr.push(new UniversalExtractor(name))
       }
 
       return arr
@@ -227,7 +227,7 @@ export namespace extractor {
       const names = methods.split(',').filter(f => f != null && f.length > 0)
       const arr = new Array<ValueExtractor>()
       for (const name of names) {
-        arr.concat(name.indexOf('.') < 0 ? new UniversalExtractor(name) : new ChainedExtractor(name))
+        arr.push(name.indexOf('.') < 0 ? new UniversalExtractor(name) : new ChainedExtractor(name))
       }
 
       return arr
@@ -459,13 +459,6 @@ export class Extractors {
    * @return an extractor that extracts the value(s) of the specified field(s)
    */
   static multi (extractorOrFields: extractor.ValueExtractor[] | string): extractor.MultiExtractor {
-    let extractors: extractor.ValueExtractor[] = new Array<extractor.ValueExtractor>()
-    if (typeof extractorOrFields[0] === 'string') {
-      extractors.push(Extractors.chained(extractorOrFields as string))
-    } else {
-      extractors = extractorOrFields as extractor.ValueExtractor[]
-    }
-
-    return new extractor.MultiExtractor(extractors)
+    return new extractor.MultiExtractor(extractorOrFields)
   }
 }

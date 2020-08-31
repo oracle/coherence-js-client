@@ -14,7 +14,7 @@ describe('Extractor IT Test Suite', function () {
   const session = new Session()
   this.timeout(30000)
 
-  describe('An Extractor', () => {
+  describe('A ValueExtractor', () => {
     const toKey = { name: 'To' }
     const tscKey = { name: 'TypeScript' }
     const trieKey = { name: 'Trie' }
@@ -45,7 +45,7 @@ describe('Extractor IT Test Suite', function () {
       cache.release().finally(() => session.close().catch())
     })
 
-    it('should be composable using multiple extractors', async () => {
+    it('should be composable by chaining extractors to narrow results', async () => {
       const f1 = Filters.equal(
         Extractors.chained(
           [Extractors.extract('t'),   // t field
@@ -55,9 +55,26 @@ describe('Extractor IT Test Suite', function () {
       await test.compareEntries([[trieKey, trieObj]], await cache.entries(f1))
     })
 
-    it('should be composable using a compound string', async () => {
+    it('should be composable using a compound string to chain extractors to narrow results', async () => {
       const ext = Extractors.chained('t.r.word')
       const f1 = Filters.equal(ext, 'Trie')
+      await test.compareEntries([[trieKey, trieObj]], await cache.entries(f1))
+    })
+
+    it('should be composable by applying a multi extractor', async () => {
+      const f1 = Filters.equal(
+        Extractors.multi(
+          [Extractors.chained('t.r.word'),
+            Extractors.chained('t.r.word'),
+            Extractors.chained('t.r.word')]
+        ), ['Trie', 'Trie', 'Trie'])
+
+      await test.compareEntries([[trieKey, trieObj]], await cache.entries(f1))
+    })
+
+    it('should be composable by applying a multi extractor as a string', async () => {
+      const ext = Extractors.multi('t.r.word')
+      const f1 = Filters.equal(ext, ['Trie'])
       await test.compareEntries([[trieKey, trieObj]], await cache.entries(f1))
     })
   })
