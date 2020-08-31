@@ -413,7 +413,7 @@ export namespace extractor {
      * specified name and this method will have exactly one parameter;
      * if the method is a property name, there should be a corresponding
      * JavaBean property modifier method or it will be used as a
-     * key in a {@link Map}.
+     * key in a Map.
      *
      * @param method a method or property name
      */
