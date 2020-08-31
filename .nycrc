@@ -1,7 +1,7 @@
 {
   "exclude": [
-    "src/net/grpc/**",
-    "lib/net/grpc/**",
+    "src/grpc/**",
+    "lib/grpc/**",
     "test/**"
   ],
   "reporter": "html"
