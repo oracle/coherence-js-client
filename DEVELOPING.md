@@ -31,6 +31,9 @@ http://oss.oracle.com/licenses/upl.
 * Run `typedoc` from project root.  The Generated documentation
   will be available in the `docs` directory.
 
+### Code Style
+* Currently based on https://google.github.io/styleguide/jsguide#formatting
+
 ### FAQ
 * Question:  How do I use the library locally in another project to test?
 > Answer: First, run `npm link` within the `coherence-js-client` project to create a global NPM reference.
