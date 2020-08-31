@@ -10,6 +10,11 @@ const { event, Filters, Session, filter } = require('../lib')
 const assert = require('assert').strict
 const { describe, it } = require('mocha')
 
+const MapListener = event.MapListener
+const MapLifecycleEvent = event.MapLifecycleEvent
+const MapEventType = event.MapEventType
+const MapEvent = event.MapEvent
+
 describe('Map Events IT Test Suite', function () {
   const session = new Session()
   const stringify = JSON.stringify
@@ -24,7 +29,7 @@ describe('Map Events IT Test Suite', function () {
   async function runBasicEventTest (expectedEvents /* object */, filterMask /* number */) {
     const cache = session.getCache('event-map' + Date.now())
     const prom = new Promise((resolve) => {
-      cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+      cache.on(MapLifecycleEvent.DESTROYED, () => {
         resolve()
       })
     })
@@ -192,7 +197,7 @@ describe('Map Events IT Test Suite', function () {
     it('should properly handle multiple listeners', (done) => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -238,7 +243,7 @@ describe('Map Events IT Test Suite', function () {
     it('should be registrable with a key', (done) => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -267,7 +272,7 @@ describe('Map Events IT Test Suite', function () {
     it('should be registrable with a filter', (done) => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
@@ -300,15 +305,15 @@ describe('Map Events IT Test Suite', function () {
     it('should have the correct source', async () => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
-      const listener = new (class MyListener extends event.MapListener {
+      const listener = new (class MyListener extends MapListener {
         constructor () {
           super()
-          this.on(event.MapEventType.INSERT, async (event) => {
+          this.on(MapEventType.INSERT, async (event) => {
               assert.deepEqual(event.source, cache)
               await cache.destroy()
           })
@@ -324,15 +329,15 @@ describe('Map Events IT Test Suite', function () {
     it('should have the same name as the source cache', async () => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
-      const listener = new (class MyListener extends event.MapListener {
+      const listener = new (class MyListener extends MapListener {
         constructor () {
           super()
-          this.on(event.MapEventType.INSERT, async (event) => {
+          this.on(MapEventType.INSERT, async (event) => {
             assert.deepEqual(event.source, cache)
             await cache.destroy()
           })
@@ -348,33 +353,29 @@ describe('Map Events IT Test Suite', function () {
     it('should produce a readable description of the event type', async () => {
       const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
-        cache.on(event.MapLifecycleEvent.DESTROYED, () => {
+        cache.on(MapLifecycleEvent.DESTROYED, () => {
           resolve()
         })
       })
 
       let count = 0
-      const listener = new (class MyListener extends event.MapListener {
-        constructor () {
-          super()
-          this.on(event.MapEventType.INSERT, async (event) => {
-            assert.equal(event.description, 'insert')
-            if (++count === 3) {
-              await cache.destroy()
-            }
-          })
-          this.on(event.MapEventType.UPDATE, async (event) => {
-            assert.equal(event.description, 'update')
-            if (++count === 3) {
-              await cache.destroy()
-            }
-          })
-          this.on(event.MapEventType.DELETE, async (event) => {
-            assert.equal(event.description, 'delete')
-            if (++count === 3) {
-              await cache.destroy()
-            }
-          })
+      const listener = new MapListener();
+      listener.on(MapEventType.INSERT, async (event) => {
+        assert.equal(event.description, 'insert')
+        if (++count === 3) {
+          await cache.destroy()
+        }
+      })
+      listener.on(MapEventType.DELETE, async (event) => {
+        assert.equal(event.description, 'delete')
+        if (++count === 3) {
+          await cache.destroy()
+        }
+      })
+      listener.on(MapEventType.UPDATE, async (event) => {
+        assert.equal(event.description, 'update')
+        if (++count === 3) {
+          await cache.destroy()
         }
       })
 
@@ -390,7 +391,7 @@ describe('Map Events IT Test Suite', function () {
       const cache = session.getCache('event-map' + Date.now())
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new event.MapEvent(cache, response, null)
+      const e = new MapEvent(cache, response, null)
       assert.equal(e.description, '<unknown: ' + 8 + '>')
       await cache.destroy()
     })
@@ -399,7 +400,7 @@ describe('Map Events IT Test Suite', function () {
       const cache = session.getCache('event-map' + Date.now())
       const response = new MapEventResponse()
       response.setId(8)
-      const e = new event.MapEvent(cache, response, {
+      const e = new MapEvent(cache, response, {
         deserialize () {
           return undefined
         }, serialize () {
@@ -411,7 +412,7 @@ describe('Map Events IT Test Suite', function () {
     })
   })
 
-  class CountingMapListener extends event.MapListener {
+  class CountingMapListener extends MapListener {
     constructor (name) {
       super()
       this.name = name
@@ -420,14 +421,37 @@ describe('Map Events IT Test Suite', function () {
       this.updateEvents = []
       this.deleteEvents = []
       this.eventOrder = []
-      this.on(event.MapEventType.DELETE, (event) => {
-        this.entryDeleted(event)
-      })
-      this.on(event.MapEventType.INSERT, (event) => {
-        this.entryInserted(event)
-      })
-      this.on(event.MapEventType.UPDATE, (event) => {
-        this.entryUpdated(event)
+
+      this.on(MapEventType.DELETE, (event) => {
+        this.deleteEvents.push(event)
+        this.eventOrder.push(event)
+        this.counter++
+        if (debug) {
+          console.log('[' + this.name + '] Received \'delete\' event: {key: ' +
+            stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
+            ', old-value: ' + stringify(event.oldValue) + '}')
+        }
+        super.emit('event', 'delete')
+      }).on(MapEventType.INSERT, (event) => {
+        this.insertEvents.push(event)
+        this.eventOrder.push(event)
+        this.counter++
+        if (debug) {
+          console.log('[' + this.name + '] Received \'insert\' event: {key: ' +
+            stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
+            ', old-value: ' + stringify(event.oldValue) + '}')
+        }
+        super.emit('event', 'insert')
+      }).on(MapEventType.UPDATE, (event) => {
+        this.updateEvents.push(event)
+        this.eventOrder.push(event)
+        this.counter++
+        if (debug) {
+          console.log('[' + this.name + '] Received \'updated\' event: {key: ' +
+            stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
+            ', old-value: ' + stringify(event.oldValue) + '}')
+        }
+        super.emit('event', 'update')
       })
     }
 
@@ -465,48 +489,6 @@ describe('Map Events IT Test Suite', function () {
         clearTimeout(id)
         return result
       })
-    }
-
-// MapListener callback
-    // noinspection JSUnusedGlobalSymbols
-    entryDeleted (event) {
-      this.deleteEvents.push(event)
-      this.eventOrder.push(event)
-      this.counter++
-      if (debug) {
-        console.log('[' + this.name + '] Received \'delete\' event: {key: ' +
-          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
-          ', old-value: ' + stringify(event.oldValue) + '}')
-      }
-      super.emit('event', 'delete')
-    }
-
-    // MapListener callback
-    // noinspection JSUnusedGlobalSymbols
-    entryInserted (event) {
-      this.insertEvents.push(event)
-      this.eventOrder.push(event)
-      this.counter++
-      if (debug) {
-        console.log('[' + this.name + '] Received \'insert\' event: {key: ' +
-          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
-          ', old-value: ' + stringify(event.oldValue) + '}')
-      }
-      super.emit('event', 'insert')
-    }
-
-    // MapListener callback
-    // noinspection JSUnusedGlobalSymbols
-    entryUpdated (event) {
-      this.updateEvents.push(event)
-      this.eventOrder.push(event)
-      this.counter++
-      if (debug) {
-        console.log('[' + this.name + '] Received \'updated\' event: {key: ' +
-          stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
-          ', old-value: ' + stringify(event.oldValue) + '}')
-      }
-      super.emit('event', 'update')
     }
   }
 })

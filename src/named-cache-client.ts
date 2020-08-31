@@ -419,7 +419,7 @@ export interface NamedMap<K, V> {
    * @param isLite       optionally pass `true` to indicate that the MapEvent objects do not have to include the
    *                     old or new values in order to allow optimizations
    */
-  addMapListener (listener: event.MapListener<K, V>, keyOrFilter?: K | MapEventFilter<K, V>, isLite?: boolean): Promise<void>
+  addMapListener (listener: event.MapListener<K, V>, keyOrFilter?: K | Filter, isLite?: boolean): Promise<void>
 
   /**
    * Remove a standard map listener that previously signed up for all
@@ -960,7 +960,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  addMapListener (listener: event.MapListener<K, V>, keyOrFilterOrLite?: MapEventFilter<K, V> | K | boolean, isLite?: boolean): Promise<void> {
+  addMapListener (listener: event.MapListener<K, V>, keyOrFilterOrLite?: Filter | K | boolean, isLite?: boolean): Promise<void> {
     let lite = false
 
     if (isLite !== undefined) {
@@ -968,7 +968,7 @@ export class NamedCacheClient<K = any, V = any>
       lite = isLite
     }
     if (keyOrFilterOrLite) {
-      if (keyOrFilterOrLite instanceof MapEventFilter) {
+      if (keyOrFilterOrLite instanceof Filter) {
         return this.mapEventsHandler.registerFilterListener(listener, keyOrFilterOrLite, lite)
       } else if (typeof keyOrFilterOrLite === 'boolean') {
         // Two arg invocation.

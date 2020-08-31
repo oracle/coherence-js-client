@@ -15,6 +15,8 @@ import { util } from './util'
 
 export namespace event {
 
+  import Filter = filter.Filter
+
   /**
    * EventEmitter implementation to receive {@link MapEvent}s.
    */
@@ -298,7 +300,7 @@ export namespace event {
     /**
      * The Map of MapEventFilter => set of listeners (ListenerGroup).
      */
-    private filterMap: Map<filter.MapEventFilter<K, V>, ListenerGroup<K, V>>
+    private filterMap: Map<filter.Filter, ListenerGroup<K, V>>
 
     /**
      * A Map of filter ID =>  ListenerGroup.
@@ -477,7 +479,7 @@ export namespace event {
      * @param isLite      `true` if the event should only include the key, or `false`
      *                    if the event should include old and new values as well as the key
      */
-    registerFilterListener (listener: event.MapListener<K, V>, mapFilter: filter.MapEventFilter<K, V> | null, isLite: boolean = false): Promise<void> {
+    registerFilterListener (listener: event.MapListener<K, V>, mapFilter: Filter | null, isLite: boolean = false): Promise<void> {
       const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
 
       let group = this.filterMap.get(filter)
@@ -634,7 +636,7 @@ export namespace event {
      * The key or the filter for which this group of callbacks will
      * receive events.
      */
-    keyOrFilter: K | filter.MapEventFilter<K, V>
+    keyOrFilter: K | filter.Filter
 
     /**
      * The current value of isLite that is registered with the cache.
@@ -671,7 +673,7 @@ export namespace event {
      * @param helper       the {@link MapEventsManager}
      * @param keyOrFilter  the key or filter for this group of listeners
      */
-    protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | filter.MapEventFilter<K, V>) {
+    protected constructor (helper: MapEventsManager<K, V>, keyOrFilter: K | filter.Filter) {
       this.helper = helper
       this.keyOrFilter = keyOrFilter
     }
@@ -861,7 +863,7 @@ export namespace event {
      * @param helper  the {@link MapEventsManager}
      * @param filter  the group filter
      */
-    constructor (helper: MapEventsManager<K, V>, filter: filter.MapEventFilter<K, V>) {
+    constructor (helper: MapEventsManager<K, V>, filter: Filter) {
       super(helper, filter)
     }
 

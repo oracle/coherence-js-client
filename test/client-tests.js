@@ -9,6 +9,7 @@ const { event, Filters, Extractors, Session, Aggregators } = require('../lib')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
+const MapListener = event.MapListener
 
 describe('NamedCacheClient IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
@@ -326,14 +327,7 @@ describe('NamedCacheClient IT Test Suite', function () {
     describe('truncate()', () => {
       it('should clear the cache without raising listener events', async () => {
         let deleteCount = 0
-        const listener = new (class MyListener extends event.MapListener {
-          constructor () {
-            super()
-            this.on(event.MapEventType.DELETE, (event) => {
-              deleteCount++
-            })
-          }
-        })
+        const listener = new MapListener().on(event.MapEventType.DELETE, () => deleteCount++)
         await cache.addMapListener(listener).then(() => cache.truncate()).then(() => cache.removeMapListener(listener))
 
         assert.equal(await cache.size, 0)

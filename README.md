@@ -267,28 +267,19 @@ Now, let's register a listener:
 import { event } from '@oracle/coherence'
 
 const MapEventType = event.MapEventType
+const MapListener = event.MapListener
 
-const listener = new (class MyListener extends event.MapListener {
-
-        constructor () {
-          super()
-          const handler = (event: MapEvent) => { 
-            console.log('Event: ' + event.description 
-              + ', Key: ' + JSON.stringify(event.key) 
-              + ', New Value: ' + JSON.stringify(event.newValue)
-              + ', Old Value: ' + JSON.stringify(event.oldValue))
+const handler = (event: MapEvent) => { 
+  console.log('Event: ' + event.description 
+    + ', Key: ' + JSON.stringify(event.key) 
+    + ', New Value: ' + JSON.stringify(event.newValue)
+    + ', Old Value: ' + JSON.stringify(event.oldValue))
 }
-          this.on(MapEventType.INSERT, (event) => {
-            handler(event)
-          })
-          this.on(MapEventType.DELETE, (event) => {
-            handler(event)
-          })
-          this.on(MapEventType.UPDATE, (event) => {
-            handler(event)
-          })
-        }
-      })
+
+const listener = new MapListener()
+  .on(MapEventType.INSERT, handler)
+  .on(MapEventType.UPDATE, handler)
+  .on(MapEventType.DELETE, handler)
 
 // register to receive all event types for all entries within the map
 await map.addListener(listener)
