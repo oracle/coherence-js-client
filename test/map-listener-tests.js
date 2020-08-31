@@ -18,6 +18,10 @@ describe('Map Events IT Test Suite', function () {
 
   this.timeout(10000)
 
+  after(async () => {
+    await session.close()
+  })
+
   async function runBasicEventTest (expectedEvents /* object */, filterMask /* number */) {
     const cache = session.getCache('event-map')
     const prom = new Promise((resolve) => {
@@ -48,9 +52,7 @@ describe('Map Events IT Test Suite', function () {
       listener.waitFor(numberOfEvents).catch(error => console.log(error)).finally(() => cache.destroy())
     })
 
-    await prom
-
-    validateEventsForListener(listener, expectedEvents)
+    await prom.then(() => validateEventsForListener(listener, expectedEvents)).catch(error => console.log(error))
   }
 
   function validateEventsForListener (listener, expectedEvents) {
@@ -216,7 +218,7 @@ describe('Map Events IT Test Suite', function () {
 
         await listener.waitFor(3).catch(error => {
           cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-          done(error)
+          throw error
         })
 
         await cache.addMapListener(event.MapEventType.INSERT, (event) => listener2.entryInserted(event))
@@ -225,19 +227,20 @@ describe('Map Events IT Test Suite', function () {
 
         await cache.set('123', { a: 2 })
         await cache.set('123', { a: 1 })
+
+        await listener.waitFor(5).catch(error => {
+          cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
+          throw error
+        })
+
         await cache.removeMapListener(event.MapEventType.INSERT, l1Inserted)
         await cache.removeMapListener(event.MapEventType.UPDATE, l1Updated)
         await cache.removeMapListener(event.MapEventType.DELETE, l1Deleted)
         await cache.delete('123')
 
-        await listener.waitFor(5).catch(error => {
-          cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-          done(error)
-        })
-
         await listener2.waitFor(3).catch(error => {
           cache.destroy().catch(error => console.log('cache destroy raised error: ' + error))
-          done(error)
+          throw error
         })
 
         await cache.destroy()
@@ -288,7 +291,6 @@ describe('Map Events IT Test Suite', function () {
         })
       })
 
-      let failure
       const listener = new CountingMapListener('listener-default')
       setImmediate(async () => {
         const mapEventFilter = Filters.event(Filters.isNotNull('xyz'))
@@ -304,7 +306,7 @@ describe('Map Events IT Test Suite', function () {
         await cache.set('234', { abc: '123-abc' })
         await cache.delete('123')
 
-        await listener.waitFor(2).catch(error => failure = error).finally(() => cache.destroy())
+        await listener.waitFor(2).catch(error => console.log(error)).finally(() => cache.destroy())
 
       })
 
@@ -432,15 +434,15 @@ describe('Map Events IT Test Suite', function () {
       if (this.counter === numberOfEvents) {
         return Promise.resolve()
       }
-      if (this.counter >= numberOfEvents) {
+      if (this.counter > numberOfEvents) {
         return Promise.reject(new Error('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter))
       }
-      return this.promiseTimeout(5000, new Promise((resolve, reject) => {
+      return this.promiseTimeout(10000, new Promise((resolve, reject) => {
         this.on('event', () => {
           if (this.counter === numberOfEvents) {
             resolve()
           }
-          if (this.counter >= numberOfEvents) {
+          if (this.counter > numberOfEvents) {
             return reject(new Error('Received more events than expected.  Expected: ' + numberOfEvents + ', actual: ' + this.counter))
           }
         })
@@ -471,7 +473,7 @@ describe('Map Events IT Test Suite', function () {
       this.eventOrder.push(event)
       this.counter++
       if (debug) {
-        console.log('Received \'delete\' event: {key: ' +
+        console.log('[' + this.name + '] Received \'delete\' event: {key: ' +
           stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
@@ -485,7 +487,7 @@ describe('Map Events IT Test Suite', function () {
       this.eventOrder.push(event)
       this.counter++
       if (debug) {
-        console.log('Received \'insert\' event: {key: ' +
+        console.log('[' + this.name + '] Received \'insert\' event: {key: ' +
           stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
@@ -499,7 +501,7 @@ describe('Map Events IT Test Suite', function () {
       this.eventOrder.push(event)
       this.counter++
       if (debug) {
-        console.log('Received \'updated\' event: {key: ' +
+        console.log('[' + this.name + '] Received \'updated\' event: {key: ' +
           stringify(event.key) + ', new-value: ' + stringify(event.newValue) +
           ', old-value: ' + stringify(event.oldValue) + '}')
       }
