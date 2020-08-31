@@ -23,7 +23,7 @@ describe('Map Events IT Test Suite', function () {
   })
 
   async function runBasicEventTest (expectedEvents /* object */, filterMask /* number */) {
-    const cache = session.getCache('event-map')
+    const cache = session.getCache('event-map' + Date.now())
     const prom = new Promise((resolve) => {
       cache.on(event.MapLifecycleEvent.DESTROYED, () => {
         resolve()
@@ -195,7 +195,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should properly handle multiple listeners', (done) => {
-      const cache = session.getCache('map-list-3')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -250,7 +250,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should be registrable with a key', (done) => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -284,7 +284,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should be registrable with a filter', (done) => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -323,7 +323,7 @@ describe('Map Events IT Test Suite', function () {
 
   describe('A MapEvent', () => {
     it('should have the correct source', async () => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -340,7 +340,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should have the same name as the source cache', async () => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -357,7 +357,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should produce a readable description of the event type', async () => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const prom = new Promise((resolve) => {
         cache.on(event.MapLifecycleEvent.DESTROYED, () => {
           resolve()
@@ -395,7 +395,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should return unknown string for unknown event IDs', async () => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const response = new MapEventResponse()
       response.setId(8)
       const e = new event.MapEvent(cache, response, null)
@@ -404,7 +404,7 @@ describe('Map Events IT Test Suite', function () {
     })
 
     it('should throw if key cannot be deserialized', async () => {
-      const cache = session.getCache('event-map')
+      const cache = session.getCache('event-map' + Date.now())
       const response = new MapEventResponse()
       response.setId(8)
       const e = new event.MapEvent(cache, response, {
