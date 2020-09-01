@@ -1,10 +1,8 @@
 .github
 .idea
-bin
 .nyc_output
 coverage
 node_modules
-etc
 test
 .gitignore
 .nycrc

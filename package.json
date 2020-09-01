@@ -1,6 +1,6 @@
 {
   "name": "@oracle/coherence",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "license": "UPL-1.0",
   "main": "lib/index.js",
   "keywords": [
@@ -27,7 +27,7 @@
     "typescript": "^3.9.7"
   },
   "scripts": {
-    "postinstall": "bin/npm-post-install.sh",
+    "grpc": "bin/npm-post-install.sh",
     "compile": "tsc -p src",
     "full-clean": "npm run clean; rm -rf node_modules",
     "clean": "rm -rf lib docs coverage .nyc_output oracle-*tgz",
