@@ -32,6 +32,8 @@ jobs:
           # Specifies the registry, this field is required!
           registry-url: https://registry.npmjs.org/
       # use "npm ci" to avoid package lock changes
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
       - run: npm ci
       # start test container
       - run: npm run coh-up
