@@ -18,7 +18,7 @@ import {
   ContainsEntryRequest,
   ContainsKeyRequest,
   ContainsValueRequest,
-  DestroyRequest,
+  DestroyRequest, Entry,
   EntryResult,
   EntrySetRequest,
   GetAllRequest,
@@ -27,7 +27,7 @@ import {
   InvokeRequest,
   KeySetRequest,
   MapListenerRequest,
-  PageRequest,
+  PageRequest, PutAllRequest,
   PutIfAbsentRequest,
   PutRequest,
   RemoveIndexRequest,
@@ -1293,6 +1293,22 @@ export namespace util {
       if (ttl) {
         request.setTtl(ttl)
       }
+
+      return request
+    }
+
+    putAll(map: Map<K, V>): PutAllRequest {
+      const request = new PutAllRequest()
+      request.setFormat(this._serializer.format)
+      request.setCache(this.cacheName)
+      map.forEach((value, key) => {
+        const e = new Entry();
+        e.setKey(this._serializer.serialize(key))
+        if (value) {
+          e.setValue(this._serializer.serialize(value))
+        }
+        request.addEntry(e)
+      })
 
       return request
     }

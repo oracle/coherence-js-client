@@ -312,6 +312,16 @@ describe('NamedCacheClient IT Test Suite', function () {
       })
     })
 
+    describe('setAll()', () => {
+      it('should be to store a map of entries', async () => {
+        await cache.clear();
+        await cache.setAll(new Map().set(val123, val123).set(val234, val234))
+        assert.equal(await cache.size, 2)
+        assert.deepEqual(await cache.get(val123), val123)
+        assert.deepEqual(await cache.get(val234), val234)
+      })
+    })
+
     describe('{add,remove}Index()', () => {
       it('should add and remove an index to the remote cache', async () => {
         await cache.addIndex(Extractors.extract('ival'))

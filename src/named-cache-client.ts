@@ -185,6 +185,13 @@ export interface NamedMap<K, V> {
   set (key: K, value: V): Promise<V | null>
 
   /**
+   * Copies all of the mappings from the specified map to this map
+   *
+   * @param map the map to copy from
+   */
+  setAll(map: Map<K, V>): Promise<void>
+
+  /**
    * If the specified key is not already associated with a value (or is mapped to `null`) associates
    * it with the given value and returns `null`, else returns the current value.
    *
@@ -1172,6 +1179,18 @@ export class NamedCacheClient<K = any, V = any>
     return new Promise((resolve, reject) => {
       self.client.put(self.requestFactory.put(key, value, ttl), this.session.callOptions(), (err, resp) => {
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
+      })
+    })
+  }
+
+  /**
+   * @inheritDoc
+   */
+  setAll (map: Map<K, V>): Promise<void> {
+    const self = this
+    return new Promise((resolve, reject) => {
+      self.client.putAll(self.requestFactory.putAll(map), this.session.callOptions(), (err: ServiceError | null) => {
+        self.resolveValue(resolve, reject, err)
       })
     })
   }
