@@ -33,5 +33,5 @@ jobs:
     - run: npm install
     - run: npm run coh-up
     - run: npm run grpc
-    - run: run run test
+    - run: npm run test
     - run: npm run coh-down
