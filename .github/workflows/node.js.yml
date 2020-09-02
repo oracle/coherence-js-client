@@ -28,6 +28,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1
     - run: npm install
     - run: npm run coh-up
     - run: npm run grpc
