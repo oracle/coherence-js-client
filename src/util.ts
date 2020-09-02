@@ -1297,6 +1297,11 @@ export namespace util {
       return request
     }
 
+    /**
+     * Creates a new `PutAllRequest`.
+     *
+     * @param map the entries to insert
+     */
     putAll(map: Map<K, V>): PutAllRequest {
       const request = new PutAllRequest()
       request.setFormat(this._serializer.format)
