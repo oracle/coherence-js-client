@@ -35,8 +35,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Install Protoc
       uses: arduino/setup-protoc@v1
-    # use "npm ci" to avoid package lock changes
-    - run: npm ci
+    - run: npm install
     # start test container
     - run: npm run coh-up
     # compile grpc stubs
