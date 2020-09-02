@@ -51,7 +51,7 @@ jobs:
       # clean up
       - run: npm run coh-clean
       # generate dist which runs other tasks
-      - run: rpm run dist
+      - run: npm run dist
       # publish to NPM
       - run: npm publish
         env:
