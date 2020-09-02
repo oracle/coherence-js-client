@@ -34,5 +34,9 @@ jobs:
     - run: npm run coh-up
     - run: npm run grpc
     - run: docker ps -a
+    - name: Sleep for 30 seconds
+      uses: jakejarvis/wait-action@master
+      with:
+        time: '30s'
     - run: npm run test
     - run: npm run coh-down
