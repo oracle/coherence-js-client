@@ -55,7 +55,7 @@ export class Options {
   /**
    * Optional TLS configuration.
    */
-  private readonly _tls: TlsOptions
+  private _tls: TlsOptions
 
   /**
    * Return the IPv4 host address and port in the format of `[host]:[port]`.
@@ -118,12 +118,30 @@ export class Options {
   }
 
   /**
+   * Set the format.  This is a no-op
+   *
+   * @param format  the serialization format
+   */
+  set format(format: string) {
+    // no-op
+  }
+
+  /**
    * Returns the TLS-specific configuration options.
    *
    * @return the TLS-specific configuration options
    */
   get tls (): TlsOptions {
     return this._tls
+  }
+
+  /**
+   * Set the TLS-specific configuration options.
+   *
+   * @param tls the TLS-specific configuration options
+   */
+  set tls (tls: TlsOptions) {
+    this._tls = tls
   }
 
   /**
@@ -179,7 +197,7 @@ export class Options {
  */
 export class TlsOptions {
   /**
-   * TODO
+   * If `true`, prevents further mutations to the options.
    */
   private locked: boolean = false
 
@@ -374,24 +392,25 @@ export class Session
   private readonly sessionClosedPromise: Promise<boolean>
 
   /**
-   * The default options to use if no Options are explicitly specified.
-   */
-  private static readonly DEFAULT_OPTIONS = new Options();
-
-  /**
    * Construct a new `Session` based on the provided {@link Options}.
    *
    * @param sessionOptions  the {@link Options}
    */
-  constructor (sessionOptions?: Options) {
+  constructor (sessionOptions?: Options | object) {
     super()
-    this._sessionOptions = sessionOptions ? sessionOptions : Session.DEFAULT_OPTIONS
+    if (sessionOptions) {
+      this._sessionOptions = Object.assign(new Options(), sessionOptions)
+      // @ts-ignore  -- added for 'tls' index access
+      this._sessionOptions.tls = Object.assign(new TlsOptions(), sessionOptions['tls'])
+    } else {
+      this._sessionOptions = new Options()
+    }
 
     // If TLS is enabled then create a SSL channel credentials object.
     this._channelCredentials = this.options.tls.enabled
       ? credentials.createSsl(Session.readFile('caCert', this.options.tls.caCertPath),
-                              Session.readFile('clientKey', this.options.tls.clientKeyPath),
-                              Session.readFile('clientCert', this.options.tls.clientCertPath))
+        Session.readFile('clientKey', this.options.tls.clientKeyPath),
+        Session.readFile('clientCert', this.options.tls.clientCertPath))
       : credentials.createInsecure()
 
     this._channel = new Channel(this.options.address, this.channelCredentials, this.channelOptions)
@@ -401,27 +420,19 @@ export class Session
       channelOverride: this._channel
     }
 
-    const self = this
     this.sessionClosedPromise = new Promise((resolve) => {
-      self.on(event.MapLifecycleEvent.RELEASED, () => {
+      const self = this
+      const handler = function () {
         if (self.markedForClose && self.caches.size == 0) {
           self._closed = true
           resolve(true)
         }
-      })
-      self.on(event.MapLifecycleEvent.DESTROYED, () => {
-        if (self.markedForClose && self.caches.size == 0) {
-          self._closed = true
-          resolve(true)
-        }
-      })
-      self.on(event.SessionLifecycleEvent.CLOSED, () => {
-        if (self.markedForClose && self.caches.size == 0) {
-          self._closed = true
-          resolve(true)
-        }
-      })
+      }
+      self.on(event.MapLifecycleEvent.RELEASED, handler)
+        .on(event.MapLifecycleEvent.DESTROYED, handler)
+        .on(event.SessionLifecycleEvent.CLOSED, handler)
     })
+    this._sessionOptions.lock()
   }
 
   /**

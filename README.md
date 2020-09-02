@@ -62,7 +62,9 @@ a serializer configured on the server to match that used by the client.
 
 > NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
 
-A `Session` is constructed using an `Options` instance.  This instance provides configuration for:
+A `Session` is constructed using an `Options` instance, or a generic object with the same keys and values.
+
+The currently supported properties are:
 * `address` - the address of the Coherence gRPC proxy.  This defaults to `localhost:1408`.
 * `requestTimeoutInMillis` - the gRPC request timeout in milliseconds.  This defaults to `60000`.
 * `callOptions` - per-request gRPC call options.
@@ -91,6 +93,16 @@ const { Session, Options } = require('@oracle/coherence')
 
 const opts = new Options()
 opts.address = 'example.com:4444'
+
+let session = new Session(opts)
+```
+
+or instead of an `Options` instance, using a generic JavaScript object:
+
+```javascript
+const { Session } = require('@oracle/coherence')
+
+const opts = new Options({address: 'example.com:4444'})
 
 let session = new Session(opts)
 ```

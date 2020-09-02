@@ -697,8 +697,6 @@ export class NamedCacheClient<K = any, V = any>
   constructor (cacheName: string, session: Session, serializer: Serializer) {
     super()
 
-    session.options.lock()
-
     this.cacheName = cacheName
     this.session = session
     this.serializer = serializer

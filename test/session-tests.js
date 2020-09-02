@@ -5,9 +5,10 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-const { event, Session, Options } = require('../lib')
+const { event, Session } = require('../lib')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
+const path = require('path')
 
 describe('Session Tests Suite (unit/IT)', () => {
   describe('Session Unit Test Suite', () => {
@@ -25,32 +26,35 @@ describe('Session Tests Suite (unit/IT)', () => {
       })
 
       it('should be able to specify a custom address', () => {
-        const opts = new Options();
-        opts.address = 'localhost:14444'
-        const session = new Session(opts)
-
+        const session = new Session({ address: 'localhost:14444' })
         assert.equal(session.address, 'localhost:14444')
       })
 
       it('should be able to specify a custom request timeout', () => {
-        const opts = new Options();
-        opts.requestTimeoutInMillis = 1000
-        const session = new Session(opts)
-
+        const session = new Session({ requestTimeoutInMillis: 1000 })
         assert.equal(session.options.requestTimeoutInMillis, 1000)
       })
 
-      it('should be able enable tls', () => {
-        const opts = new Options();
-        opts.tls.enabled = true
-        opts.tls.clientKeyPath = '/tmp'
-        opts.tls.clientCertPath = '/tmp'
-        opts.tls.caCertPath = '/tmp'
+      it('should be able to specify custom call options', () => {
+        const fn = function () { Date.now() }
+        const session = new Session({ callOptions: fn})
+        assert.equal(session.options.callOptions, fn)
+      })
 
-        assert.equal(opts.tls.enabled, true)
-        assert.equal(opts.tls.caCertPath, '/tmp')
-        assert.equal(opts.tls.clientCertPath, '/tmp')
-        assert.equal(opts.tls.clientKeyPath, '/tmp')
+      it('should be able enable tls', () => {
+        const opts1 = {
+          tls: {
+            enabled: true,
+            clientKeyPath: path.normalize(process.cwd() + '/etc/cert/clientKey.pem'),
+            clientCertPath: path.normalize(process.cwd() + '/etc/cert/clientCert.pem'),
+            caCertPath: path.normalize(process.cwd() + '/etc/cert/ca.pem') }
+        }
+        const session = new Session(opts1)
+
+        assert.equal(session.options.tls.enabled, true)
+        assert.equal(session.options.tls.caCertPath, process.cwd() + '/etc/cert/ca.pem')
+        assert.equal(session.options.tls.clientCertPath, process.cwd() + '/etc/cert/clientCert.pem')
+        assert.equal(session.options.tls.clientKeyPath, process.cwd() + '/etc/cert/clientKey.pem')
       })
     })
   })

@@ -4,6 +4,7 @@
 coverage
 node_modules
 test
+etc/cert
 .gitignore
 .nycrc
 CONTRIBUTING.md
