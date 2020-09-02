@@ -35,13 +35,20 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Install Protoc
       uses: arduino/setup-protoc@v1
-    - run: npm install
+    # use "npm ci" to avoid package lock changes
+    - run: npm ci
+    # start test container
     - run: npm run coh-up
+    # compile grpc stubs
     - run: npm run grpc
-    - run: docker ps -a
+    # give the container time to bootstrap
     - name: Sleep for 30 seconds
       uses: jakejarvis/wait-action@master
       with:
         time: '30s'
+    # run the tests
     - run: npm run test
+    # top the test container
     - run: npm run coh-down
+    # clean up
+    - run: npm run coh-clean
