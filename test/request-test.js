@@ -16,7 +16,7 @@ const { describe, it } = require('mocha');
 describe('The RequestFactory', function () {
   this.timeout(10000)
   const serializer = util.SerializerRegistry.instance().serializer('json')
-  const reqFactory = new util.RequestFactory('States', serializer)
+  const reqFactory = new util.RequestFactory('States', 'test', serializer)
 
   const states = {
     ca: {
@@ -48,6 +48,7 @@ describe('The RequestFactory', function () {
   it('should be able to create a clear request', () => {
     const request = reqFactory.clear()
     assert.equal(request.getCache(), 'States')
+    assert.equal(request.getScope(), 'test')
     assert.equal(request instanceof ClearRequest, true)
   })
 
@@ -57,6 +58,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(request instanceof AddIndexRequest, true)
     assert.equal(request.getCache(), 'States')
+    assert.equal(request.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
     assert.equal(request.getSorted(), false)
     assert.equal(request.getComparator_asU8().length, 0)
@@ -68,6 +70,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(request instanceof AddIndexRequest, true)
     assert.equal(request.getCache(), 'States')
+    assert.equal(request.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(request.getExtractor()), ue)
     assert.equal(request.getSorted(), true)
     assert.equal(request.getComparator_asU8().length, 30)
@@ -79,6 +82,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof ContainsEntryRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.equal(serializer.deserialize(ce.getKey()), 'key1')
     assert.deepEqual(serializer.deserialize(ce.getValue()), states.ca)
   })
@@ -88,6 +92,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof ContainsKeyRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.equal(serializer.deserialize(ce.getKey()), 'key1')
   })
 
@@ -96,6 +101,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof ContainsValueRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(ce.getValue()), states.ca)
   })
 
@@ -104,6 +110,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof GetRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.equal(serializer.deserialize(ce.getKey()), 'key1')
   })
 
@@ -113,6 +120,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof EntrySetRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
     assert.equal(ce.getComparator_asU8().length, 0)
   })
@@ -123,6 +131,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof EntrySetRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
     assert.equal(ce.getComparator_asU8().length, 30)
     assert.deepEqual(serializer.deserialize(ce.getComparator()), {'@class': 'SimpleComparator'})
@@ -134,6 +143,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof KeySetRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
   })
 
@@ -143,6 +153,7 @@ describe('The RequestFactory', function () {
 
     assert.equal(ce instanceof ValuesRequest, true)
     assert.equal(ce.getCache(), 'States')
+    assert.equal(ce.getScope(), 'test')
     assert.deepEqual(serializer.deserialize(ce.getFilter()), filterSer)
     assert.equal(ce.getComparator_asU8().length, 30)
     assert.deepEqual(serializer.deserialize(ce.getComparator()), {'@class': 'SimpleComparator'})

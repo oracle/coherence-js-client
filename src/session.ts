@@ -28,6 +28,14 @@ export class Options {
   private _address: string
 
   /**
+   * The scope name used to link this `Session` with to the corresponding
+   * `ConfigurableCacheFactory` on the server.
+   *
+   * @private
+   */
+  private _scope: string
+
+  /**
    * Defines the request timeout, in `milliseconds`, that will be applied to each remote call.
    *
    * If not explicitly set, this defaults to `60000`.
@@ -108,6 +116,28 @@ export class Options {
   }
 
   /**
+   * Return the scope name used to link this `Session` with to the corresponding
+   * `ConfigurableCacheFactory` on the server.
+   *
+   * @return the scope name used to link this `Session` with to the corresponding
+   *         `ConfigurableCacheFactory` on the server
+   */
+  get scope (): string {
+    return this._scope
+  }
+
+  /**
+   * Set the scope name used to link this `Session` with to the corresponding
+   * `ConfigurableCacheFactory` on the server.
+   *
+   * @return the scope name used to link this `Session` with to the corresponding
+   *         `ConfigurableCacheFactory` on the server
+   */
+  set scope (value: string) {
+    this._scope = value
+  }
+
+  /**
    * The serialization format used by this session.  This library currently supports JSON serialization only, thus
    * this always returns 'json'.
    *
@@ -181,6 +211,7 @@ export class Options {
     this._address = process.env.grpc_proxy_address || Session.DEFAULT_ADDRESS
     this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
     this._format = Session.DEFAULT_FORMAT
+    this._scope = Session.DEFAULT_SCOPE
     this._tls = new TlsOptions()
 
     const self = this
@@ -337,6 +368,11 @@ export class Session
   public static readonly DEFAULT_REQUEST_TIMEOUT = 60000
 
   /**
+   * The default scope.
+   */
+  public static readonly DEFAULT_SCOPE = ''
+
+  /**
    * The default serialization format: 'json'
    */
   public static readonly DEFAULT_FORMAT = 'json'
@@ -466,6 +502,17 @@ export class Session
    */
   get channelCredentials (): ChannelCredentials {
     return this._channelCredentials
+  }
+
+  /**
+   * Return the scope name used to link this `Session` with to the corresponding
+   * `ConfigurableCacheFactory` on the server.
+   *
+   * @return return the scope name used to link this `Session` with to the corresponding
+   * `ConfigurableCacheFactory` on the server.
+   */
+  get scope (): string {
+    return this._sessionOptions.scope
   }
 
   /**

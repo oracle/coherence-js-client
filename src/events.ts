@@ -322,10 +322,11 @@ export namespace event {
      *
      * @param namedMap    the {@link NamedMap} to manage events for
      * @param client      the `gRPC` interface for making requests
+     * @param scope       the {@link NamedMap} scope
      * @param serializer  the {@link Serializer} used by this map
      * @param emitter     the {@link EventEmitter} to use
      */
-    constructor (namedMap: NamedMap<K, V>, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
+    constructor (namedMap: NamedMap<K, V>, scope: string, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
       this.mapName = namedMap.name
       this.client = client
       this.namedMap = namedMap
@@ -336,7 +337,7 @@ export namespace event {
       this.keyMap = new Map()
       this.filterMap = new Map()
       this.filterId2ListenerGroup = new Map()
-      this.reqFactory = new util.RequestFactory(this.mapName, serializer)
+      this.reqFactory = new util.RequestFactory(this.mapName, scope, serializer)
       this.streamPromise = this.ensureStream()
     }
 

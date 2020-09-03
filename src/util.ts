@@ -1037,23 +1037,31 @@ export namespace util {
    * @hidden
    */
   export class RequestFactory<K, V> {
-
     /**
      * The cache this `RequestFactory` will be making requests for.
      */
     protected readonly cacheName: string
+
+    /**
+     * The cache this `RequestFactory` will be making requests for.
+     */
+    protected readonly scope: string
+
     /**
      * Unique uid generation for event callback subscriptions.
      */
     protected readonly uidPrefix: string
+
     /**
      * The next requestID to be used for subscribe requests.
      */
     protected nextRequestId: number = 0
+
     /**
      * The next filterID to be used for filter subscriptions.
      */
     protected nextFilterId: number = 0
+
     /**
      * The payload serializer.
      */
@@ -1063,14 +1071,16 @@ export namespace util {
      * Constructs a new `RequestFactory`.
      *
      * @param cacheName   the cache name
+     * @param scope       the cache scope
      * @param serializer  the payload serializer
      */
-    constructor (cacheName: string, serializer: Serializer) {
+    constructor (cacheName: string, scope: string, serializer: Serializer) {
       if (!cacheName) {
         throw new Error('cache name cannot be null or undefined')
       }
       this.cacheName = cacheName
       this._serializer = serializer
+      this.scope = scope
       this.uidPrefix = '-' + cacheName + '-' + Date.now() + '-'
     }
 
@@ -1088,8 +1098,7 @@ export namespace util {
      */
     aggregate<R = any> (kfa: Iterable<K> | filter.Filter | aggregator.EntryAggregator<K, V, R>, aggregator?: aggregator.EntryAggregator<K, V, R>): AggregateRequest {
       const request = new AggregateRequest()
-      request.setCache(this.cacheName)
-      request.setFormat(this._serializer.format)
+      this.initRequest(request)
       if (aggregator) {
         // Two args invocation
         request.setAggregator(this._serializer.serialize(aggregator))
@@ -1114,8 +1123,7 @@ export namespace util {
     addIndex (extractor: extractor.ValueExtractor, sorted?: boolean, comparator?: Comparator): AddIndexRequest {
       const request = new AddIndexRequest()
 
-      request.setCache(this.cacheName)
-      request.setFormat(this._serializer.format)
+      this.initRequest(request)
       request.setExtractor(this._serializer.serialize(extractor))
       if (sorted) {
         request.setSorted(sorted)
@@ -1134,8 +1142,7 @@ export namespace util {
     removeIndex (extractor: extractor.ValueExtractor): RemoveIndexRequest {
       const request = new RemoveIndexRequest()
 
-      request.setCache(this.cacheName)
-      request.setFormat(this._serializer.format)
+      this.initRequest(request)
       request.setExtractor(this._serializer.serialize(extractor))
 
       return request
@@ -1146,7 +1153,7 @@ export namespace util {
      */
     clear (): ClearRequest {
       const request = new ClearRequest()
-      request.setCache(this.cacheName)
+      this.initRequest(request)
 
       return request
     }
@@ -1156,8 +1163,7 @@ export namespace util {
      */
     containsEntry (key: K, value: V): ContainsEntryRequest {
       const request = new ContainsEntryRequest()
-      request.setCache(this.cacheName)
-      request.setFormat(this._serializer.format)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setValue(this._serializer.serialize(value))
@@ -1171,8 +1177,7 @@ export namespace util {
      */
     containsKey (key: K): ContainsKeyRequest {
       const request = new ContainsKeyRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
 
       return request
@@ -1183,8 +1188,7 @@ export namespace util {
      */
     containsValue (value: V): ContainsValueRequest {
       const request = new ContainsValueRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       if (value) {
         request.setValue(this._serializer.serialize(value))
       }
@@ -1197,8 +1201,7 @@ export namespace util {
      */
     get (key: K): GetRequest {
       const request = new GetRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
 
       return request
@@ -1209,8 +1212,7 @@ export namespace util {
      */
     getAll (keys: Iterable<K>): GetAllRequest {
       const request = new GetAllRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       for (const key of keys) {
         request.addKey(this._serializer.serialize(key))
       }
@@ -1223,8 +1225,7 @@ export namespace util {
      */
     entrySet (filter?: filter.Filter, comparator?: any): EntrySetRequest {
       const request = new EntrySetRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       if (filter) {
         request.setFilter(this._serializer.serialize(filter))
       }
@@ -1240,8 +1241,7 @@ export namespace util {
      */
     invoke<R> (key: K, processor: processor.EntryProcessor<K, V, R>): InvokeRequest {
       const request = new InvokeRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       request.setProcessor(this._serializer.serialize(processor))
 
@@ -1253,8 +1253,7 @@ export namespace util {
      */
     invokeAll<R = any> (keysOrFilter: Iterable<K> | filter.Filter, processor?: processor.EntryProcessor<K, V, R>): InvokeAllRequest {
       const request = new InvokeAllRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       if (isIterableType(keysOrFilter)) {
         for (const key of keysOrFilter) {
           request.addKeys(this._serializer.serialize(key))
@@ -1271,8 +1270,7 @@ export namespace util {
      */
     keySet<T> (filter?: filter.Filter): KeySetRequest {
       const request = new KeySetRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       if (filter) {
         request.setFilter(this._serializer.serialize(filter))
       }
@@ -1284,8 +1282,7 @@ export namespace util {
      */
     put (key: K, value: V, ttl?: number): PutRequest {
       const request = new PutRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setValue(this._serializer.serialize(value))
@@ -1304,8 +1301,7 @@ export namespace util {
      */
     putAll(map: Map<K, V>): PutAllRequest {
       const request = new PutAllRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       map.forEach((value, key) => {
         const e = new Entry();
         e.setKey(this._serializer.serialize(key))
@@ -1323,8 +1319,7 @@ export namespace util {
      */
     page (cookie: Uint8Array | string): PageRequest {
       const request = new PageRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setCookie(cookie)
 
       return request
@@ -1335,8 +1330,7 @@ export namespace util {
      */
     putIfAbsent (key: K, value: V, ttl?: number): PutIfAbsentRequest {
       const request = new PutIfAbsentRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setValue(this._serializer.serialize(value))
@@ -1353,8 +1347,7 @@ export namespace util {
      */
     remove (key: K): RemoveRequest {
       const request = new RemoveRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
 
       return request
@@ -1365,8 +1358,7 @@ export namespace util {
      */
     removeMapping (key: K, value: V): RemoveMappingRequest {
       const request = new RemoveMappingRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setValue(this._serializer.serialize(value))
@@ -1380,8 +1372,7 @@ export namespace util {
      */
     replace (key: K, value: V): ReplaceRequest {
       const request = new ReplaceRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setValue(this._serializer.serialize(value))
@@ -1395,8 +1386,7 @@ export namespace util {
      */
     replaceMapping (key: K, value: V, newValue: V): ReplaceMappingRequest {
       const request = new ReplaceMappingRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setKey(this._serializer.serialize(key))
       if (value) {
         request.setPreviousvalue(this._serializer.serialize(value))
@@ -1413,8 +1403,7 @@ export namespace util {
      */
     pageRequest (cookie: Uint8Array | string | undefined): PageRequest {
       const request = new PageRequest()
-      request.setCache(this.cacheName)
-      request.setFormat(this._serializer.format)
+      this.initRequest(request)
       if (cookie) {
         request.setCookie(cookie)
       }
@@ -1429,10 +1418,9 @@ export namespace util {
       const request = new MapListenerRequest()
       const filterType = keyOrFilter instanceof filter.MapEventFilter
 
+      this.initRequest(request)
       request.setUid(this.generateNextRequestId(filterType ? 'filter' : 'key'))
-      request.setCache(this.cacheName)
       request.setSubscribe(isSubscribe)
-      request.setFormat(this._serializer.format)
       if (isLite) {
         request.setLite(isLite)
       }
@@ -1455,7 +1443,7 @@ export namespace util {
      */
     mapEventSubscribe (): MapListenerRequest {
       const request = new MapListenerRequest()
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       request.setUid(this.generateNextRequestId('init'))
       request.setSubscribe(true)
       request.setFormat(this._serializer.format)
@@ -1469,7 +1457,7 @@ export namespace util {
      */
     destroy (): DestroyRequest {
       const request = new DestroyRequest()
-      request.setCache(this.cacheName)
+      this.initRequest(request)
 
       return request
     }
@@ -1479,8 +1467,7 @@ export namespace util {
      */
     values (filter?: filter.Filter, comparator?: any): ValuesRequest {
       const request = new ValuesRequest()
-      request.setFormat(this._serializer.format)
-      request.setCache(this.cacheName)
+      this.initRequest(request)
       if (filter) {
         request.setFilter(this._serializer.serialize(filter))
       }
@@ -1496,6 +1483,21 @@ export namespace util {
      */
     private generateNextRequestId (prefix: string): string {
       return prefix + this.uidPrefix + (++this.nextRequestId)
+    }
+
+    /**
+     * Set initial properties common to all requests.
+     */
+    private initRequest (request: object) {
+      // @ts-ignore
+      request.setCache(this.cacheName)
+      // @ts-ignore
+      request.setScope(this.scope)
+      // @ts-ignore
+      if (typeof request.setFormat === 'function') {
+        // @ts-ignore
+        request.setFormat(this._serializer.format)
+      }
     }
   }
 

@@ -35,6 +35,12 @@ describe('Session Tests Suite (unit/IT)', () => {
         assert.equal(session.options.requestTimeoutInMillis, 1000)
       })
 
+      it ('should be possible to specify a custom scope', () => {
+        const session = new Session({ scope: 'test' })
+        assert.equal(session.options.scope, 'test')
+        assert.equal(session.scope, 'test')
+      })
+
       it('should be able to specify custom call options', () => {
         const fn = function () { Date.now() }
         const session = new Session({ callOptions: fn})

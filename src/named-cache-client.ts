@@ -708,7 +708,7 @@ export class NamedCacheClient<K = any, V = any>
     this.session = session
     this.serializer = serializer
 
-    this.requestFactory = new RequestFactory(this.cacheName, this.serializer)
+    this.requestFactory = new RequestFactory(this.cacheName, this.session.scope, this.serializer)
     this.client = new NamedCacheServiceClient(
       session.address, // Ignored since we are using a shared Channel
       session.channelCredentials,
@@ -727,7 +727,7 @@ export class NamedCacheClient<K = any, V = any>
     this.setupEventHandlers()
 
     // Now open the events channel.
-    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>, this.client, this.serializer, this.internalEmitter)
+    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>, this.session.scope, this.client, this.serializer, this.internalEmitter)
   }
 
   /**
