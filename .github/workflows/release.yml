@@ -53,7 +53,6 @@ jobs:
       # generate dist which runs other tasks
       - run: npm run dist
       # publish to NPM
-      - run: npm publish
-        env:
-          # Use a token to publish to NPM. See below for how to set it up
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
+      - uses: JS-DevTools/npm-publish@v1
+          with:
+            token: ${{ secrets.NPM_PUBLISH_KEY }}
