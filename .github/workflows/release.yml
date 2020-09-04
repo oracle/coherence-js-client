@@ -50,6 +50,7 @@ jobs:
       - run: npm run coh-down
       # clean up
       - run: npm run coh-clean
+      - run: npm install typedoc
       # generate dist which runs other tasks
       - run: npm run dist
       # publish to NPM
