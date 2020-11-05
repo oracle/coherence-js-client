@@ -36,6 +36,7 @@
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
     "coverage": "nyc mocha 'test/**.js'",
+    "wait": "sleep 30",
     "dist": "npm run compile; typedoc; npm pack"
   }
 }

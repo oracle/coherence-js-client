@@ -33,18 +33,16 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install Protoc
-      uses: arduino/setup-protoc@v1
+    # install protoc
+    - run: sudo apt-get install protoc
+    # install project deps
     - run: npm install
     # start test container
     - run: npm run coh-up
     # compile grpc stubs
     - run: npm run grpc
     # give the container time to bootstrap
-    - name: Sleep for 30 seconds
-      uses: jakejarvis/wait-action@master
-      with:
-        time: '30s'
+    - run: npm run wait
     # run the tests
     - run: npm run test
     # top the test container
