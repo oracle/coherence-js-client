@@ -252,11 +252,11 @@ await map.invokeAll(Processors.extract('age'))
 // returns: [['0001', 38], ['0002', 56], ['0003', 48]]
 
 // target all entries matching filtered critera
-await map.invoke(Filters.greater('age', 40), Processors.extract('age'))
+await map.invokeAll(Filters.greater('age', 40), Processors.extract('age'))
 // returns: [['0002', 56], ['0003', 48]]
 
 // incrementing a number 'in-place'
-await map.invoke(Filters.greater('age', 40), Processors.increment('age', 1))
+await map.invokeAll(Filters.greater('age', 40), Processors.increment('age', 1))
 // returns [['0002', 57], ['0003', 49]]
 
 // update a value 'in-place'
