@@ -34,7 +34,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     # install protoc
-    - run: sudo apt-get install protoc
+    - run: sudo apt-get install protobuf-compiler
     # install project deps
     - run: npm install
     # start test container
