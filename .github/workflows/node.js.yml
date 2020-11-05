@@ -37,7 +37,7 @@ jobs:
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip"
     - run: unzip protoc-3.13.0-linux-x86_64.zip -d /tmp/grpc
     - run: export PATH="$PATH:/tmp/grpc/bin"
-    - run: ls /tmp/bin
+    - run: ls /tmp/grpc/bin
     - run: echo $PATH
     # install project deps
     - run: npm install
