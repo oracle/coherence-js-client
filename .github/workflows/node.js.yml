@@ -34,7 +34,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     # install protoc
-    - run: sudo apt-get install protobuf-compiler
+    - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip"
+    - run: unzip protoc-3.13.0-linux-x86_64.zip -d $HOME/.local
+    - run: export PATH="$PATH:$HOME/.local/bin"
     # install project deps
     - run: npm install
     # start test container
