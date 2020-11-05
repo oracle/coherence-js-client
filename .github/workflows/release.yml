@@ -31,29 +31,27 @@ jobs:
           node-version: 14.x
           # Specifies the registry, this field is required!
           registry-url: https://registry.npmjs.org/
-      # use "npm ci" to avoid package lock changes
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+      # install protoc
+      - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip"
+      - run: unzip protoc-3.13.0-linux-x86_64.zip -d /tmp/grpc
+      - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
       - run: npm install
       # start test container
       - run: npm run coh-up
       # compile grpc stubs
       - run: npm run grpc
       # give the container time to bootstrap
-      - name: Sleep for 30 seconds
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '30s'
+      - run: npm run wait 
       # run the tests
       - run: npm run test
       # top the test container
       - run: npm run coh-down
       # clean up
       - run: npm run coh-clean
-      - run: npm install typedoc
+      - run: npm install --no-save typedoc
       # generate dist which runs other tasks
       - run: npm run dist
       # publish to NPM
-      - uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NPM_PUBLISH_KEY }}
+      - run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
