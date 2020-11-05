@@ -253,6 +253,12 @@ export class TlsOptions {
   private _clientKeyPath?: PathLike
 
   /**
+   * The gRPC channel options.  See [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html)
+   * to obtain a list of possible options
+   */
+  private _channelOptions?: { [key: string]: string | number }
+
+  /**
    * Returns `true` if TLS is to be enabled.
    *
    * @return `true` if TLS is to be enabled.
@@ -337,6 +343,26 @@ export class TlsOptions {
   }
 
   /**
+   * Return the defined gRPC channel options.
+   */
+  get channelOptions (): { [key: string]: string | number } | undefined {
+    return this._channelOptions
+  }
+
+  /**
+   * Set the gRPC channel options.  See [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html)
+   * to obtain a list of possible options
+   *
+   * @param value the gRPC channel options
+   */
+  set channelOptions (value: { [key: string]: string | number } | undefined) {
+    if (this.locked) {
+      return;
+    }
+    this._channelOptions = value
+  }
+
+  /**
    * Once called, no further mutations can be made.
    * @hidden
    */
@@ -411,11 +437,8 @@ export class Session
 
   /**
    * The set of options to use while creating a gRPC Channel.
-   * <p>
-   * Review the `gRPC` channel argument key
-   * [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html) to obtain a list of possible options.
    */
-  private readonly channelOptions: { [key: string]: string | number } = {}
+  private readonly _channelOptions: { [key: string]: string | number } = {}
 
   /**
    * The set of options to use while creating a {@link NamedCacheClient}.
@@ -449,7 +472,7 @@ export class Session
         Session.readFile('clientCert', this.options.tls.clientCertPath))
       : credentials.createInsecure()
 
-    this._channel = new Channel(this.options.address, this.channelCredentials, this.channelOptions)
+    this._channel = new Channel(this.options.address, this.channelCredentials, this._channelOptions)
 
     // channel will now be shared by all caches created by this session
     this._clientOptions = {
