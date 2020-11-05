@@ -53,5 +53,5 @@ jobs:
       - run: npm run dist
       # publish to NPM
       - run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
