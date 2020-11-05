@@ -41,6 +41,11 @@ describe('Session Tests Suite (unit/IT)', () => {
         assert.equal(session.scope, 'test')
       })
 
+      it ('should be possible to specify a custom channel options', () => {
+        const session = new Session({ channelOptions: {'grpc.max_receive_message_length': 1024 * 1024 * 1024 }})
+        assert.deepEqual(session.options.channelOptions, {'grpc.max_receive_message_length': 1024 * 1024 * 1024 })
+      })
+
       it('should be able to specify custom call options', () => {
         const fn = function () { Date.now() }
         const session = new Session({ callOptions: fn})
