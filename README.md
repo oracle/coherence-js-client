@@ -294,7 +294,7 @@ const listener = new MapListener()
   .on(MapEventType.DELETE, handler)
 
 // register to receive all event types for all entries within the map
-await map.addListener(listener)
+await map.addMapListener(listener)
 
 await map.set('a', 'b')
 // Event: insert, Key: a, New Value: b, Old Value: null
@@ -306,7 +306,7 @@ await map.delete('a')
 // Event: delete, Key: a, New Value: null, Old Value: c
 
 // remove the listeners
-await map.removeListener(listener)
+await map.removeMapListener(listener)
 
 // =======================================
 
@@ -316,7 +316,7 @@ await map.removeListener(listener)
 //   ['0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]}]
 
 // Add handlers for updates to '0001'
-await map.addListener(listener, '0001')
+await map.addMapListener(listener, '0001')
 
 await map.update('0002', '0002')
 // does not generate any events
@@ -337,7 +337,7 @@ await map.removeMapListener(listener, '0001')
 const filter = Filters.event(Filters.greater('age', 40), filter.MapEventFilter.UPDATED)
 
 // Listen to all updates to entries where the age property of the entry value is greater than 40
-await map.addListener(listener, filter) 
+await map.addMapListener(listener, filter) 
 
 await map.invokeAll(Processors.increment('age', 1));
 // Event: update, Key: 0002, New Value: {name: "Fred Jones", age: 57, hobbies: ["racing", "golf"]}, Old Value: {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}
