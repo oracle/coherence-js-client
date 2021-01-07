@@ -18,7 +18,7 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 20.06.1 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
+* Coherence CE 20.12 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
 * Node 14
 * NPM 6.x
 
@@ -27,7 +27,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.06.1
+docker run -d -p 1408:1408 oraclecoherence/coherence-ce:20.12
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
@@ -171,7 +171,7 @@ await map.forEach((value, key) => console.log(key + ': ' + value))
 
 Coherence provides a rich set of primitives that allow developers to create advanced queries against
 a set of entries returning only those keys and/or values matching the specified criteria.
-See the [documentation](https://oracle.github.io/coherence/20.06/api/java/index.html) for details 
+See the [documentation](https://oracle.github.io/coherence/20.12/api/java/index.html) for details 
 on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
@@ -212,7 +212,7 @@ await map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
 #### Aggregation
 
 Coherence provides developers with the ability to process some subset of the entries in a map,
-resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/20.06/api/java/index.html) for aggregators provided by this client.
+resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/20.12/api/java/index.html) for aggregators provided by this client.
 
 Assuming the same set of keys and values are present from the filtering example above:
 
@@ -234,7 +234,7 @@ await map.aggregate(Filters.greater('age', 40), Aggregators.count())
 #### Entry Processing
 
 An entry processor allows mutation of map entries in-place within the cluster instead of bringing the entire object
-to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/20.06/api/java/index.html) for the processors provided by this client.
+to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/20.12/api/java/index.html) for the processors provided by this client.
 
 Assuming the same set of keys and values are present from the filtering and aggregation examples:
 
@@ -380,4 +380,4 @@ Map size is 0
 
 ### References
 * Oracle Coherence JavaScript Client - https://oracle.github.io/coherence/20.06/api/js/index.html 
-* Oracle Coherence CE Documentation - https://coherence.community/20.06/docs/#/docs/about/01_overview
+* Oracle Coherence CE Documentation - https://coherence.community/20.12/docs/#/docs/about/01_overview

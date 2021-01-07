@@ -9,6 +9,8 @@
 name: Node.js CI
 
 on:
+  schedule:
+    - cron: "0 5 * * *"
   push:
     branches-ignore:
     - gh-pages
