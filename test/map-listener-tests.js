@@ -382,7 +382,6 @@ describe('Map Events IT Test Suite', function () {
       response.setId(8)
       const e = new MapEvent(cache, response, null)
       assert.equal(e.description, '<unknown: ' + 8 + '>')
-      await cache.destroy()
     })
 
     it('should throw if key cannot be deserialized', async () => {
@@ -397,7 +396,6 @@ describe('Map Events IT Test Suite', function () {
         }, format: 'Lossy'
       })
       assert.throws(() => e.getKey())
-      await cache.destroy()
     })
   })
 
