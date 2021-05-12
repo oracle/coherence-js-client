@@ -11,14 +11,14 @@
   ],
   "repository": "https://github.com/oracle/coherence-js-client",
   "dependencies": {
-    "grpc": "^1.24.9",
     "@grpc/proto-loader": "^0.5.4",
-    "google-protobuf": "^3.12.2"
+    "google-protobuf": "^3.12.2",
+    "grpc": "^1.24.9"
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.7.2",
+    "grpc_tools_node_protoc_ts": "^5.2.2",
     "grpc-tools": "^1.10.0",
-    "grpc_tools_node_protoc_ts": "^4.1.0",
     "mocha": "^8.0.1",
     "nyc": "^15.0.1",
     "source-map-support": "^0.5.19",
