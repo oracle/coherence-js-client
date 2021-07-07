@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.7.2",
+    "glob-parent": ">=5.1.2",
     "grpc_tools_node_protoc_ts": "^5.2.2",
     "grpc-tools": "^1.10.0",
     "mocha": "^8.0.1",
