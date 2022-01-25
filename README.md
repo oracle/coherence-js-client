@@ -171,7 +171,7 @@ await map.forEach((value, key) => console.log(key + ': ' + value))
 
 Coherence provides a rich set of primitives that allow developers to create advanced queries against
 a set of entries returning only those keys and/or values matching the specified criteria.
-See the [documentation](https://oracle.github.io/coherence/21.06/api/java/index.html) for details
+See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for details
 on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
@@ -212,7 +212,7 @@ await map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
 #### Aggregation
 
 Coherence provides developers with the ability to process some subset of the entries in a map,
-resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/21.06/api/java/index.html) for aggregators provided by this client.
+resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for aggregators provided by this client.
 
 Assuming the same set of keys and values are present from the filtering example above:
 
@@ -234,7 +234,7 @@ await map.aggregate(Filters.greater('age', 40), Aggregators.count())
 #### Entry Processing
 
 An entry processor allows mutation of map entries in-place within the cluster instead of bringing the entire object
-to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/21.06/api/java/index.html) for the processors provided by this client.
+to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for the processors provided by this client.
 
 Assuming the same set of keys and values are present from the filtering and aggregation examples:
 
@@ -379,5 +379,5 @@ Map size is 0
 ```
 
 ### References
-* Oracle Coherence JavaScript Client - https://oracle.github.io/coherence/20.06/api/js/index.html
-* Oracle Coherence CE Documentation - https://coherence.community/21.06/docs/#/docs/about/01_overview
+* Oracle Coherence JavaScript Client - https://oracle.github.io/coherence/20.12/api/js/index.html
+* Oracle Coherence CE Documentation - https://coherence.community/21.12/docs/#/docs/about/01_overview
