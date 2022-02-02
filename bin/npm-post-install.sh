@@ -11,7 +11,7 @@ declare -r ROOT="${PWD}"
 
 # Grabs the proto files from the Coherence project.
 function grab_proto_files() {
-  declare -r BASE_URL="https://raw.githubusercontent.com/oracle/coherence/master/prj/coherence-grpc/src/main/proto/"
+  declare -r BASE_URL="https://raw.githubusercontent.com/oracle/coherence/v21.12/prj/coherence-grpc/src/main/proto/"
   declare -r PROTO_FILES=("messages.proto" "services.proto")
   declare -r PROTO_DIR="${ROOT}/etc/proto"
 
