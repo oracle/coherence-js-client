@@ -379,5 +379,5 @@ Map size is 0
 ```
 
 ### References
-* Oracle Coherence JavaScript Client - https://oracle.github.io/coherence/20.12/api/js/index.html
+* Oracle Coherence JavaScript Client - https://coherence.community/20.06/api/js/index.html
 * Oracle Coherence CE Documentation - https://coherence.community/21.12/docs/#/docs/about/01_overview
