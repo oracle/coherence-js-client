@@ -30,7 +30,7 @@
     "compile": "tsc -p src",
     "full-clean": "npm run clean; rm -rf node_modules",
     "clean": "rm -rf lib docs coverage .nyc_output oracle-*tgz",
-    "test": "npm run compile; NODE_TLS_REJECT_UNAUTHORIZED='0' mocha 'test/**.js' --recursive",
+    "test": "npm run compile; mocha 'test/**.js' --recursive",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
