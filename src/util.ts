@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ClientReadableStream } from 'grpc'
+import { ClientReadableStream } from '@grpc/grpc-js'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { aggregator } from './aggregators'
 import { event } from './events'
@@ -818,6 +818,7 @@ export namespace util {
      * @inheritDoc
      */
     loadNextPage (cookie: Cookie): ClientReadableStream<EntryResult> {
+      // @ts-ignore
       return this.namedCache.nextKeySetPage(cookie)
     }
   }

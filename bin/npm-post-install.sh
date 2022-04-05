@@ -33,13 +33,13 @@ function gen_compile_proto_files() {
   rm -rf "${PROTO_GEN_SRC_DIR}" "${PROTO_GEN_OUT_DIR}"
   mkdir -p "${PROTO_GEN_SRC_DIR}" "${PROTO_GEN_OUT_DIR}"
 
-  npx protoc --proto_path="${PROTO_SRC_DIR}" \
+  npx grpc_tools_node_protoc \
     --plugin=protoc-gen-ts=node_modules/.bin/protoc-gen-ts \
-    --plugin=protoc-gen-grpc=node_modules/.bin/grpc_tools_node_protoc_plugin \
-    --js_out=import_style=commonjs:"${PROTO_GEN_OUT_DIR}" \
-    --ts_out="service=grpc-node:${PROTO_GEN_SRC_DIR}" \
-    --grpc_out="${PROTO_GEN_OUT_DIR}" \
-    "${PROTO_SRC_DIR}"/*.proto
+    --ts_out=grpc_js:${PROTO_GEN_SRC_DIR} \
+    --js_out=import_style=commonjs:${PROTO_GEN_OUT_DIR} \
+    --grpc_out=grpc_js:${PROTO_GEN_OUT_DIR} \
+    -I ${PROTO_SRC_DIR} \
+    ${PROTO_SRC_DIR}/*.proto
 }
 
 function main() {

@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { CallOptions, Channel, ChannelCredentials, credentials } from 'grpc'
+import { CallOptions, Channel, ChannelCredentials, credentials } from '@grpc/grpc-js'
 import { EventEmitter } from 'events'
 import { PathLike, readFileSync } from 'fs'
 import { event } from './events'

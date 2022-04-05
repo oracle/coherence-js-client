@@ -5,7 +5,7 @@
  * http://oss.oracle.com/licenses/upl.
  */
 
-import { ClientDuplexStream } from 'grpc'
+import { ClientDuplexStream } from '@grpc/grpc-js'
 import { EventEmitter } from 'events'
 import { filter } from './filters'
 import { MapEventResponse, MapListenerRequest, MapListenerResponse } from './grpc/messages_pb'
