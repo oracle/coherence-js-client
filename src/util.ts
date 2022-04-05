@@ -1553,13 +1553,9 @@ export namespace util {
      * @inheritDoc
      */
     public serialize (obj: any): Buffer {
-      const str = JSON.stringify(obj)
-      const buf = Buffer.alloc(str.length + 1)
-
-      buf.writeInt8(JSONSerializer.JSON_SERIALIZER_PREFIX, 0) // Write at index 0
-      buf.write(str, 1) // Write at index 1
-
-      return buf
+      return Buffer.concat(
+        [Buffer.from(JSONSerializer.JSON_SERIALIZER_PREFIX.toString()),
+         Buffer.from(JSON.stringify(obj))]);
     }
 
     /**
