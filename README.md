@@ -358,11 +358,26 @@ let map = session.getMap('Test')
 
 setImmediate(async () => {
   console.log("Map size is " + (await map.size))
+
   console.log("Inserting entry (key=1, value=One)")
   await map.set(1, "One")
-  console.log("Map entry is " + (await map.get(1)))
+
+  console.log("Inserting entry (key=2, value=Two)")
+  await map.set(2, "Two")
+
+  let entries = await map.entries();
+
+  console.log("All entries")
+  for await (const entry of entries) {
+    console.log(entry.key + '=' + entry.value)
+  }
+
+  console.log("Key 1 is " + (await map.get(1)))
+  console.log("Key 2 is " + (await map.get(2)))
+
   console.log("Deleting entry (key=1)")
   await map.delete(1)
+
   console.log("Map size is " + (await map.size))
   await session.close()
 })
