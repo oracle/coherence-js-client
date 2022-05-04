@@ -8,8 +8,7 @@ http://oss.oracle.com/licenses/upl.
 # Developing Coherence JavaScript Client
 
 ### Requirements
-* [Protoc](https://grpc.io/docs/protoc-installation/) version 3.10.0 or later
-* NPM version 14.x or later
+* NPM version 8.x or later
 
 ### Runnable NPM Scripts
 * `compile` - compiles the TypeScript sources to the `lib` directory
