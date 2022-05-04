@@ -9,7 +9,7 @@ http://oss.oracle.com/licenses/upl.
 
 ### Requirements
 * [Protoc](https://grpc.io/docs/protoc-installation/) version 3.10.0 or later
-* NPM version 6.x or later
+* NPM version 14.x or later
 
 ### Runnable NPM Scripts
 * `compile` - compiles the TypeScript sources to the `lib` directory
@@ -28,6 +28,15 @@ http://oss.oracle.com/licenses/upl.
 * `src` - TypeScript source files and related resources
 * `test` - contains the library test cases in plain JavaScript
 
+### Building the Project
+* run `npm install` - this will install the necessary dependencies and compile the grpc artifacts
+* run `npm run compile` - this compiles the `Typescript` sources
+
+### Running the Unit Tests
+* run `npm run coh-up` - this starts a Coherence test Docker container.  This instance exposes the `grpc` port `1408` and exposes port `5005` for java debugging of the Coherence instance.  To view the JSON payloads being sent to Coherence, check the docker container log for the instance this command started.
+* run `npm run test` - this will run all unit tests.  You may optionally run the tests individually via an IDE as long as the Coherence container mentioned in the previous step was started.
+* run `npm run coh-down` when testing is complete and the Coherence test container is no longer needed.
+
 ### Generating Documentation
 * Install `typedoc` globally: `npm install -g typescript && npm install -g typedoc`
 * Run `typedoc` from project root.  The Generated documentation
@@ -37,7 +46,7 @@ http://oss.oracle.com/licenses/upl.
 * Currently based on https://google.github.io/styleguide/jsguide#formatting
 
 ### FAQ
-* Question:  How do I use the library locally in another project to test?
+* Question:  How do I use the library locally in another project for testing purposes?
 > Answer: First, run `npm link` within the `coherence-js-client` project to create a global NPM reference.
 > then, from the project you want to use the library with, run `npm link @oracle/coherence` which
 > will install the library for use with that project

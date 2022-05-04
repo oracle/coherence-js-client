@@ -43,8 +43,6 @@ jobs:
     - run: npm install
     # start test container
     - run: npm run coh-up
-    # compile grpc stubs
-    - run: npm run grpc
     # give the container time to bootstrap
     - run: npm run wait
     # run the tests
