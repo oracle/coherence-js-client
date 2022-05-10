@@ -471,7 +471,7 @@ export namespace processor {
      * Construct a Null EntryProcessor.
      */
     protected constructor () {
-      super(processorName('NullEntryProcessor'))
+      super('util.NullEntryProcessor')
     }
   }
 
