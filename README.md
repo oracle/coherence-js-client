@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020 Oracle and/or its affiliates.
+Copyright (c) 2020, 2022 Oracle and/or its affiliates.
 
 Licensed under the Universal Permissive License v 1.0 as shown at
 http://oss.oracle.com/licenses/upl.
@@ -8,7 +8,7 @@ http://oss.oracle.com/licenses/upl.
 # Coherence JavaScript Client
 
 Coherence JavaScript Client allows Node applications to act as
-cache clients to a Coherence Cluster using gRPC framework as
+cache clients to a Coherence Cluster using Google's gRPC framework for
 the network transport.
 
 ### Features
@@ -18,16 +18,16 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 20.12 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
+* Coherence CE 22.06 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
 * Node 14
-* NPM 6.x
+* NPM 8.x
 
 ### Usage
 
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 oraclecoherence/coherence-ce:21.12.1
+docker run -d -p 1408:1408 oraclecoherence/coherence-ce:22.06
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
@@ -39,7 +39,7 @@ project's `package.json`:
 ```
 ...
 "dependencies": {
-    "@oracle/coherence": "^1.0.0",
+    "@oracle/coherence": "^1.1.0",
 },
 ...
 ```
@@ -56,8 +56,8 @@ such as maps and/or caches. When using the Coherence JavaScript Client, a `Sessi
 gRPC endpoint and uses a specific serialization format to marshal requests and responses.
 This means that different sessions using different serializers may connect to the same server endpoint. Typically,
 for efficiency the client and server would be configured to use matching serialization formats to avoid
-deserialization of data on the server but this does not have to be the case. If the server is using a different
-serializer for the server-side caches it must be able to deserialize the client's requests, so there must be
+deserialization of data on the server, but this does not have to be the case. If the server is using a different
+serializer for the server-side caches, it must be able to deserialize the client's requests, so there must be
 a serializer configured on the server to match that used by the client.
 
 > NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
@@ -122,10 +122,11 @@ by JavaScript except for the following differences:
 * insertion order is not maintained
 * `set()` calls cannot be chained because of the asynchronous nature of the API
 
-> NOTE:  The only difference between `NamedCache` and `NamedMap` is that the 'NamedCache' allows associating a
+> NOTE: The only difference between `NamedCache` and `NamedMap` is that the 'NamedCache' allows associating a
 > `time-to-live` on the cache entry, while `NamedMap` does not
 
-For the following examples, let's assume that we have a Map defined in Coherence named `Test`.  To get access to the map from the client:
+For the following examples, let's assume that we have a Map defined in Coherence named `Test`.
+To get access to the map from the client:
 
 > NOTE: If using the Docker image previously mentioned for testing, you don't need to worry about the details of the map name.  Any name will work.
 
@@ -133,7 +134,7 @@ For the following examples, let's assume that we have a Map defined in Coherence
 let map = session.getMap('Test')
 ```
 
-Once we have the handle to our map, we can invoke the same basic operations as a standard JavaScript Map:
+Once we have a handle to our map, we can invoke the same basic operations as a standard JavaScript Map:
 ```javascript
 await map.size
 // (zero)
@@ -171,7 +172,7 @@ await map.forEach((value, key) => console.log(key + ': ' + value))
 
 Coherence provides a rich set of primitives that allow developers to create advanced queries against
 a set of entries returning only those keys and/or values matching the specified criteria.
-See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for details
+See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for details
 on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
@@ -192,12 +193,12 @@ await map.set('0002', {name: "Fred Jones", age: 56, hobbies: ["racing", "golf"]}
 await map.set('0003', {name: "Jane Doe", age: 48, hobbies: ["gardening", "photography"]})
 ```
 
-Using a filter we can limit the result set returned by the map:
+Using a filter, we can limit the result set returned by the map:
 
 ```javascript
 const { Filters } = require('@oracle/coherence')
 
-...
+// ...
 
 await map.entries(Filters.greater('age', 40))
 // [{key: '0002', value: {name: "Fred Jones"...}}, {key: '0002', value: {name: "Jane Doe"...}}]
@@ -212,14 +213,14 @@ await map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
 #### Aggregation
 
 Coherence provides developers with the ability to process some subset of the entries in a map,
-resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for aggregators provided by this client.
+resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for aggregators provided by this client.
 
-Assuming the same set of keys and values are present from the filtering example above:
+Assume the same set of keys and values are present from the filtering example above:
 
 ```javascript
 const { Aggregators, Filters } = require('@oracle/coherence')
 
-...
+// ...
 
 await map.aggregate(Aggregators.average('age'))
 // 47.3
@@ -234,14 +235,14 @@ await map.aggregate(Filters.greater('age', 40), Aggregators.count())
 #### Entry Processing
 
 An entry processor allows mutation of map entries in-place within the cluster instead of bringing the entire object
-to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/21.12/api/java/index.html) for the processors provided by this client.
+to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for the processors provided by this client.
 
-Assuming the same set of keys and values are present from the filtering and aggregation examples:
+Assume the same set of keys and values are present from the filtering and aggregation examples:
 
 ```javascript
 const { Filters, Processors } = require('@oracle/coherence')
 
-...
+// ...
 
 // targeting a specific entry
 await map.invoke('0001', Processors.extract('age'))
@@ -269,8 +270,8 @@ await map.get('0001')
 ### Events
 
 Coherence provides the ability to subscribe to notifications pertaining to a particular map/cache.
-Registration is works similarly to event registration with Node, with some key differences.  In addition
-to listening for a specific event, it is possible to listen to events for changes made to a specific key, or using
+Registration works similarly to event registration with Node, with some key differences.  In addition
+to listening for specific events, it is possible to listen to events for changes made to a specific key, or using
 a Filter, it's possible to limit the events raised to be for a subset of the map entries.
 
 Now, let's register a listener:
@@ -395,4 +396,4 @@ Map size is 0
 
 ### References
 * Oracle Coherence JavaScript Client - https://coherence.community/20.06/api/js/index.html
-* Oracle Coherence CE Documentation - https://coherence.community/21.12/docs/#/docs/about/01_overview
+* Oracle Coherence CE Documentation - https://coherence.community/22.06/docs/#/docs/about/01_overview
