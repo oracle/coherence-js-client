@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * http://oss.oracle.com/licenses/upl.
@@ -60,18 +60,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(result, '123')
+      assert.equal(result, 123)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 345, 456, true, true)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(result, '345')
+      assert.equal(result, 345)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val345, val456], agg)
-      assert.equal(result, '345')
+      assert.equal(result, 345)
     })
   })
 
@@ -162,18 +162,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(Number(result), 1158)
+      assert.equal(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(Number(result), 702)
+      assert.equal(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(Number(result), 579)
+      assert.equal(result, 579)
     })
   })
 
@@ -199,18 +199,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(Number(result), 1158)
+      assert.equal(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(Number(result), 702)
+      assert.equal(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(Number(result), 579)
+      assert.equal(result, 579)
     })
   })
 

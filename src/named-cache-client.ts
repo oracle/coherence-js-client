@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * http://oss.oracle.com/licenses/upl.
  */
 
+import { ClientReadableStream, Metadata, ServiceError } from '@grpc/grpc-js'
 import { EventEmitter } from 'events'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
-import { ClientReadableStream, Metadata, ServiceError } from '@grpc/grpc-js'
 import { aggregator } from './aggregators'
 
 import { event } from './events'
@@ -26,7 +26,9 @@ import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
 import { processor } from './processors'
 import { Session } from './session'
 import { util } from './util'
+import AbstractDoubleAggregator = aggregator.AbstractDoubleAggregator
 import EntryAggregator = aggregator.EntryAggregator
+import PriorityAggregator = aggregator.PriorityAggregator
 import MapEventsManager = event.MapEventsManager
 import MapLifecycleEvent = event.MapLifecycleEvent
 import RequestStateEvent = event.RequestStateEvent
@@ -840,6 +842,15 @@ export class NamedCacheClient<K = any, V = any>
   aggregate<R = any> (kfa: Iterable<K> | Filter | EntryAggregator<K, V, R>, agg?: EntryAggregator<K, V, R>): Promise<any> {
     const self = this
     const request = this.requestFactory.aggregate(kfa, agg)
+
+    let numericReturn = (kfa instanceof AbstractDoubleAggregator || agg instanceof AbstractDoubleAggregator)
+    if (kfa instanceof PriorityAggregator) {
+      numericReturn = (kfa as any).aggregator instanceof AbstractDoubleAggregator
+    }
+    if (agg instanceof PriorityAggregator) {
+      numericReturn = (agg as any).aggregator instanceof AbstractDoubleAggregator
+    }
+
     return new Promise((resolve, reject) => {
       self.client.aggregate(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         if (err) {
@@ -854,6 +865,9 @@ export class NamedCacheClient<K = any, V = any>
                 result = result.entries
               }
             }
+          }
+          if (numericReturn && typeof result === 'string') {
+              result = Number(result)
           }
           resolve(result)
         }
@@ -941,26 +955,6 @@ export class NamedCacheClient<K = any, V = any>
         .catch(error => reject(error))
     })
   }
-
-  /**
-   * @inheritDoc
-   */
-  // forEach (keys: Iterable<K>, action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void> {
-  //   if (thisArg) {
-  //     action.bind(thisArg)
-  //   }
-  //   return new Promise((resolve, reject) => {
-  //     this.getAll(keys)
-  //       .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
-  //       .then(() => resolve(undefined))
-  //       .catch(error => reject(error))
-  //   })
-  // }
-
-
-
-
-
 
   /**
    * @inheritDoc
