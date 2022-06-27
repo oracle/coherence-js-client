@@ -541,7 +541,7 @@ export namespace event {
       if (!self.markedForClose && self.streamPromise != null) {
         self.markedForClose = true
         const bidiStream = await self.streamPromise
-        await new Promise(async (resolve) => {
+        await new Promise<void>(async (resolve) => {
           // Setup an event handler for 'error' as calling cancel() on
           // the bidi stream will result in a CANCELLED status.
           bidiStream.on('error', (err) => {

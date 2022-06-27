@@ -513,7 +513,7 @@ export namespace util {
     /**
      * Logical identifier for page types.
      */
-    [Symbol.toStringTag]: string
+    [Symbol.toStringTag]: string | undefined
     /**
      * {@link NamedCacheClient} reference to allow manipulate of underlying cache
      * while pages processed.
@@ -588,7 +588,7 @@ export namespace util {
       return new Promise((resolve) => {
         return this.namedCache.delete(key)
           .then((v) => {
-            resolve(v != null || undefined)
+            resolve(v != null || false)
           })
       })
     }

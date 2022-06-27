@@ -769,6 +769,7 @@ export class NamedCacheClient<K = any, V = any>
       const request = new IsEmptyRequest()
       request.setCache(this.cacheName)
       self.client.isEmpty(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -831,6 +832,7 @@ export class NamedCacheClient<K = any, V = any>
     return new Promise((resolve, reject) => {
       const request = self.requestFactory.containsEntry(key, value)
       self.client.containsEntry(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -885,6 +887,7 @@ export class NamedCacheClient<K = any, V = any>
         if (err) {
           reject(err)
         } else {
+          // @ts-ignore
           self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
         }
       })
@@ -1115,6 +1118,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = self.requestFactory.containsKey(key)
     return new Promise((resolve, reject) => {
       self.client.containsKey(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1128,6 +1132,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.containsValue(value)
     return new Promise((resolve, reject) => {
       self.client.containsValue(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1157,6 +1162,7 @@ export class NamedCacheClient<K = any, V = any>
     return new Promise((resolve, reject) => {
       self.client.get(self.requestFactory.get(key), new Metadata(), this.session.callOptions(), (err, resp) => {
         if (resp && resp.getPresent()) {
+          // @ts-ignore
           self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
         } else {
           resolve(defaultValue)
@@ -1172,6 +1178,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     return new Promise((resolve, reject) => {
       self.client.put(self.requestFactory.put(key, value, ttl), new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1197,6 +1204,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = self.requestFactory.putIfAbsent(key, value, ttl)
     return new Promise((resolve, reject) => {
       self.client.putIfAbsent(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1209,6 +1217,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     return new Promise((resolve, reject) => {
       self.client.remove(this.requestFactory.remove(key), new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1222,6 +1231,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.removeMapping(key, value)
     return new Promise((resolve, reject) => {
       self.client.removeMapping(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
@@ -1235,6 +1245,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.replace(key, value)
     return new Promise((resolve, reject) => {
       self.client.replace(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
       })
     })
@@ -1249,6 +1260,7 @@ export class NamedCacheClient<K = any, V = any>
 
     return new Promise((resolve, reject) => {
       self.client.replaceMapping(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
       })
     })
