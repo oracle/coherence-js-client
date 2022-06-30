@@ -254,8 +254,8 @@ describe('processor.Processors IT Test Suite', function () {
 
       await cache.invokeAll([val123, 'a'], ep)
 
-      await t.compareEntries([[val123, val123], [val234, val123],
-        [val345, val123], [val456, val456], ['a', 'b']], await cache.entries())
+      await t.compareEntries([[val123, val123], [val234, val234],
+        [val345, val345], [val456, val456], ['a', 'b']], await cache.entries())
     })
   })
 
