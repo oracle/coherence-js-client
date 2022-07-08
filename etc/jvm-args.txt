@@ -5,6 +5,9 @@
 
 -Xms1g
 -Xmx1g
+-Djava.net.preferIPv4Stack=true
+-Dcoherence.wka=0.0.0.0
+-Dcoherence.ttl=0
 -Dcoherence.cluster=test-cluster
 -Dcoherence.log.level=9
 -Dcoherence.io.json.debug=true
