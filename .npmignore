@@ -4,9 +4,12 @@
 coverage
 node_modules
 test
-etc/cert
+etc
+bin
+src/tsconfig.json
 .gitignore
 .nycrc
 CONTRIBUTING.md
 DEVELOPING.md
+SECURITY.md
 typedoc.json
