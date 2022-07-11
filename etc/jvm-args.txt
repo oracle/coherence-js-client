@@ -9,6 +9,7 @@
 -Dcoherence.wka=0.0.0.0
 -Dcoherence.ttl=0
 -Dcoherence.cluster=test-cluster
+-Dcoherence.health.http.port=9999
 -Dcoherence.log.level=9
 -Dcoherence.io.json.debug=true
 "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005"

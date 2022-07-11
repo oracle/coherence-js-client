@@ -16,7 +16,7 @@ function coh_up() {
   if [[ -n "${CONTAINER_ID}" ]]; then
     docker start "${CONTAINER_ID}"
   else
-    docker run -d -p 1408:1408 -p 5005:5005 --name "${CONTAINER_NAME}" -v \
+    docker run -d -p 1408:1408 -p 5005:5005 -p 9999:9999 --name "${CONTAINER_NAME}" -v \
       "${ROOT}"/etc:/args "${IMAGE_NAME}"
   fi
 }
