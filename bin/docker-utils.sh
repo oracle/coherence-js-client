@@ -9,14 +9,14 @@ set -e
 
 declare -r ROOT="${PWD}"
 declare -r CONTAINER_NAME="coherence-js-test-container"
-declare -r IMAGE_NAME="oraclecoherence/coherence-ce:22.06"
+declare -r IMAGE_NAME="oraclecoherence/coherence-ce:22.06.1"
 
 function coh_up() {
   declare -r CONTAINER_ID=$(docker ps -a -q -f name="${CONTAINER_NAME}")
   if [[ -n "${CONTAINER_ID}" ]]; then
     docker start "${CONTAINER_ID}"
   else
-    docker run -d -p 1408:1408 -p 5005:5005 -p 9999:9999 --name "${CONTAINER_NAME}" -v \
+    docker run -d -p 1408:1408 -p 5005:5005 -p 9612:9612 -p 6676:6676 --name "${CONTAINER_NAME}" -v \
       "${ROOT}"/etc:/args "${IMAGE_NAME}"
   fi
 }
