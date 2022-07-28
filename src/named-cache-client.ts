@@ -485,11 +485,10 @@ export interface NamedMap<K, V> {
    *
    * @param filter      the Filter object representing the criteria that the
    *                    entries of this map should satisfy
-   * @param comparator  the comparator for sorting
    *
    * @return a set of keys for entries that satisfy the specified criteria
    */
-  keys (filter: Filter, comparator?: Comparator): Promise<RemoteSet<K>>
+  keys (filter: Filter): Promise<RemoteSet<K>>
 
   /**
    * Returns a Set view of the mappings contained in this map.
@@ -1037,7 +1036,7 @@ export class NamedCacheClient<K = any, V = any>
   /**
    * @inheritDoc
    */
-  keys (filter?: Filter, comparator?: Comparator): Promise<RemoteSet<K>> {
+  keys (filter?: Filter): Promise<RemoteSet<K>> {
     const self = this
     if (!filter) {
       return Promise.resolve(new KeySet(this))
