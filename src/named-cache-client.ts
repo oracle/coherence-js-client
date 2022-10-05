@@ -2,10 +2,10 @@
  * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
-import { ClientReadableStream, Metadata, ServiceError } from '@grpc/grpc-js'
+import {ClientReadableStream, Deadline, Metadata, ServiceError} from '@grpc/grpc-js'
 import { EventEmitter } from 'events'
 import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
 import { aggregator } from './aggregators'
@@ -87,7 +87,7 @@ export interface NamedMap<K, V> {
   readonly name: string
 
   /**
-   * Signifies whether or not this `NamedMap` has been destroyed.
+   * Signifies if this `NamedMap` has been destroyed.
    */
   readonly destroyed: boolean
 
@@ -139,7 +139,7 @@ export interface NamedMap<K, V> {
    * @param value the value
    *
    * @return a `Promise` resolving to `true` if the key is mapped
-   *         to the specified value value, or `false` if it does not
+   *         to the specified value, or `false` if it does not
    */
   hasEntry (key: K, value: V): Promise<boolean>
 
@@ -187,7 +187,7 @@ export interface NamedMap<K, V> {
   set (key: K, value: V): Promise<V | null>
 
   /**
-   * Copies all of the mappings from the specified map to this map
+   * Copies all mappings from the specified map to this map
    *
    * @param map the map to copy from
    */
@@ -480,7 +480,7 @@ export interface NamedMap<K, V> {
    * satisfy the criteria expressed by the filter.
    *
    * Unlike the {@link keySet()} method, the set returned by this method may
-   * not be backed by the map, so changes to the set may not reflected in the
+   * not be backed by the map, so changes to the set may not be reflected in the
    * map, and vice-versa.
    *
    * @param filter      the Filter object representing the criteria that the
@@ -629,7 +629,7 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
    * @param value  the value to be associated with the specified key
    * @param ttl    the expiry time in millis
    *
-   * @return a `Promise` resolving to the the previous value associated with the specified key, or
+   * @return a `Promise` resolving to the previous value associated with the specified key, or
    *         `null` if there was no mapping for the key. (A `null` return can also indicate that the map previously
    *         associated `null` with the key, if the implementation supports `null` values.)
    */
@@ -662,7 +662,7 @@ export class NamedCacheClient<K = any, V = any>
    * @internal
    * The session with the remote Coherence cluster.
    */
-  private session: Session
+  private readonly session: Session
   /**
    * The name of the Coherence `NamedCache`.
    */
@@ -728,7 +728,8 @@ export class NamedCacheClient<K = any, V = any>
     this.setupEventHandlers()
 
     // Now open the events channel.
-    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>, this.session.scope, this.client, this.serializer, this.internalEmitter)
+    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>,
+        this.session, this.client, this.serializer, this.internalEmitter)
   }
 
   /**
@@ -764,7 +765,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   get empty (): Promise<boolean> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       const request = new IsEmptyRequest()
       request.setCache(this.cacheName)
       self.client.isEmpty(request, new Metadata(), this.session.callOptions(), (err, resp) => {
@@ -778,7 +779,7 @@ export class NamedCacheClient<K = any, V = any>
    * @inheritDoc
    */
   get size () {
-    return new Promise<number>((resolve, reject) => {
+    return this.promisify<number>((resolve, reject) => {
       const request = new SizeRequest()
       request.setCache(this.cacheName)
       this.client.size(request, new Metadata(), this.session.callOptions(), (err, resp) => {
@@ -828,7 +829,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   hasEntry (key: K, value: V): Promise<boolean> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       const request = self.requestFactory.containsEntry(key, value)
       self.client.containsEntry(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
@@ -852,7 +853,7 @@ export class NamedCacheClient<K = any, V = any>
       numericReturn = (agg as any).aggregator instanceof AbstractDoubleAggregator
     }
 
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.aggregate(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         if (err) {
           reject(err)
@@ -881,7 +882,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   invoke<R = any> (key: K, processor: EntryProcessor<K, V, R>): Promise<R | null> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.invoke(self.requestFactory.invoke(key, processor), (err, resp) => {
         if (err) {
           reject(err)
@@ -927,14 +928,14 @@ export class NamedCacheClient<K = any, V = any>
     }
     if (keysOrFilter) {
       if (util.isIterableType(keysOrFilter)) {
-        return new Promise((resolve, reject) => {
+        return this.promisify((resolve, reject) => {
           this.getAll(keysOrFilter as Iterable<K>)
             .then(entries => entries.forEach((value: V, key: K) => action(value, key, this)))
             .then(() => resolve(undefined))
             .catch(error => reject(error))
         })
       } else {
-        return new Promise((resolve, reject) => {
+        return this.promisify((resolve, reject) => {
           this.entries(keysOrFilter as filter.Filter)
             .then(entries => {
               for (const entry of entries) {
@@ -946,7 +947,7 @@ export class NamedCacheClient<K = any, V = any>
         })
       }
     }
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       this.entries(Filters.always())
         .then(entries => {
           for (const entry of entries) {
@@ -1001,7 +1002,7 @@ export class NamedCacheClient<K = any, V = any>
   addIndex (extractor: ValueExtractor, ordered?: boolean, comparator?: Comparator): Promise<void> {
     const self = this
     const request = this.requestFactory.addIndex(extractor, ordered, comparator)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.addIndex(request, new Metadata(), this.session.callOptions(), (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
@@ -1021,7 +1022,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.entrySet(filter, comp)
     const call = self.client.entrySet(request, this.session.callOptions())
 
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (e: GrpcEntry) {
         const entry = new NamedCacheEntry<K, V>(e.getKey_asU8(), e.getValue_asU8(), self.getRequestFactory().serializer)
         set.add(entry)
@@ -1046,7 +1047,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.keySet(filter)
     const call = self.client.keySet(request, this.session.callOptions())
 
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (r: BytesValue) {
         const k = self.getRequestFactory().serializer.deserialize(r.getValue_asU8())
         if (k) {
@@ -1066,7 +1067,7 @@ export class NamedCacheClient<K = any, V = any>
   removeIndex (extractor: ValueExtractor): Promise<void> {
     const self = this
     const request = this.requestFactory.removeIndex(extractor)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.removeIndex(request, (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
@@ -1086,7 +1087,7 @@ export class NamedCacheClient<K = any, V = any>
     const request = this.requestFactory.values(filter, comparator)
     const call = self.client.values(request, this.session.callOptions())
 
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       call.on(RequestStateEvent.DATA, function (b: BytesValue) {
         set.add(self.getRequestFactory().serializer.deserialize(b.getValue_asU8()))
       })
@@ -1102,7 +1103,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   clear (): Promise<void> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.clear(self.requestFactory.clear(), new Metadata(), this.session.callOptions(), (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
@@ -1115,7 +1116,7 @@ export class NamedCacheClient<K = any, V = any>
   has (key: K): Promise<boolean> {
     const self = this
     const request = self.requestFactory.containsKey(key)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.containsKey(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
@@ -1129,7 +1130,7 @@ export class NamedCacheClient<K = any, V = any>
   hasValue (value: V): Promise<boolean> {
     const self = this
     const request = this.requestFactory.containsValue(value)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.containsValue(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
@@ -1158,7 +1159,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   getOrDefault (key: K, defaultValue: V | null): Promise<V | null> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.get(self.requestFactory.get(key), new Metadata(), this.session.callOptions(), (err, resp) => {
         if (resp && resp.getPresent()) {
           // @ts-ignore
@@ -1175,7 +1176,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   set (key: K, value: V, ttl?: number): Promise<V> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.put(self.requestFactory.put(key, value, ttl), new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
@@ -1188,7 +1189,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   setAll (map: Map<K, V>): Promise<void> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.putAll(self.requestFactory.putAll(map), new Metadata(), this.session.callOptions(), (err: ServiceError | null) => {
         self.resolveValue(resolve, reject, err)
       })
@@ -1201,7 +1202,7 @@ export class NamedCacheClient<K = any, V = any>
   setIfAbsent (key: K, value: V, ttl?: number): Promise<V> {
     const self = this
     const request = self.requestFactory.putIfAbsent(key, value, ttl)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.putIfAbsent(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
@@ -1214,7 +1215,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   delete (key: K): Promise<V> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.remove(this.requestFactory.remove(key), new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
@@ -1228,7 +1229,7 @@ export class NamedCacheClient<K = any, V = any>
   removeMapping (key: K, value: V): Promise<boolean> {
     const self = this
     const request = this.requestFactory.removeMapping(key, value)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.removeMapping(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
@@ -1242,7 +1243,7 @@ export class NamedCacheClient<K = any, V = any>
   replace (key: K, value: V): Promise<V> {
     const self = this
     const request = this.requestFactory.replace(key, value)
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.replace(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? self.toValue(resp.getValue_asU8()) : resp)
@@ -1257,7 +1258,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     const request = this.requestFactory.replaceMapping(key, value, newValue)
 
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       self.client.replaceMapping(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
@@ -1272,19 +1273,19 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
 
     if (this.active) {
-      return new Promise((resolve, reject) => {
+      return this.promisify((resolve, reject) => {
         // Note that this listener will be after the default listeners
-        // that were setup in the constructor. So once this receives
+        // that were registered in the constructor. So once this receives
         // the event, we can be sure that *all other* listeners have
         // be notified!!
         self.internalEmitter.once(MapLifecycleEvent.DESTROYED, () => resolve())
 
-        // Now that we have setup our 'once & only once' listener, we
+        // Now that we have registered our 'once & only once' listener, we
         // can now send out the 'truncate' request. The handleResponse()
         // method will generate the appropriate event on the internalEmitter
-        // for which our 'once & only once' listener is setup.
+        // for which our 'once & only once' listener is registered.
         const request = self.requestFactory.destroy()
-        self.client.destroy(request, new Metadata(), self.session.callOptions(), (err: ServiceError | null) => {
+        self.client.destroy(request, new Metadata(), self.session.callOptions(), async (err: ServiceError | null) => {
           if (err) {
             reject(err)
           }
@@ -1300,16 +1301,16 @@ export class NamedCacheClient<K = any, V = any>
    */
   release (): Promise<void> {
     const self = this
-    return new Promise((resolve) => {
+    return this.promisify((resolve) => {
       // Note that this listener will be after the default listeners
-      // that were setup in the constructor. So once this receives
+      // that were registered in the constructor. So once this receives
       // the event, we can be sure that *all other* listeners have
       // be notified!!
       self.internalEmitter.once(MapLifecycleEvent.RELEASED, () => resolve())
 
-      // Now that we have setup our 'once & only once' listener, we
+      // Now that we have registered our 'once & only once' listener, we
       // can emit the MapLifecycleEvent.RELEASED event on the internalEmitter
-      // for which our 'once & only once' listener is setup.
+      // for which our 'once & only once' listener is registered.
       self.internalEmitter.emit(MapLifecycleEvent.RELEASED, self.cacheName)
     })
   }
@@ -1319,19 +1320,19 @@ export class NamedCacheClient<K = any, V = any>
    */
   truncate (): Promise<void> {
     const self = this
-    return new Promise((resolve, reject) => {
+    return this.promisify((resolve, reject) => {
       // Note that this listener will be after the default listeners
-      // that were setup in the constructor. So once this receives
+      // that were registered in the constructor. So once this receives
       // the event, we can be sure that *all other* listeners have
       // be notified!!
       self.internalEmitter.once(MapLifecycleEvent.TRUNCATED, () => {
         resolve()
       })
 
-      // Now that we have setup our 'once & only once' listener, we
+      // Now that we have registered our 'once & only once' listener, we
       // can now send out the 'truncate' request. The handleResponse()
       // method will generate the appropriate event on the internalEmitter
-      // for which our 'once & only once' listener is setup.
+      // for which our 'once & only once' listener is registered.
       const request = new TruncateRequest()
       request.setCache(this.cacheName)
       this.client.truncate(request, new Metadata(), this.session.callOptions(), (err, resp) => {
@@ -1343,6 +1344,36 @@ export class NamedCacheClient<K = any, V = any>
   }
 
   // ----- helper functions -------------------------------------------------
+
+  /**
+   * Create a promise wrapping the provided execution logic. This logic will be called
+   * when the `gRPC` client's channel is ready.
+   *
+   * @param logic execution logic
+   */
+  promisify<T> (logic: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T> {
+    const self = this
+    return new Promise((resolve, reject) => {
+      if (!self.active) {
+        let message: string = 'Cache [' + this.cacheName + '] has been ' + (this.released ? 'release.' : 'destroyed.')
+        reject(new Error(message))
+        }
+
+      self.client.waitForReady(self.readyTimeout(), error => {
+        if (error) {
+          reject(error)
+        }
+        logic(resolve, reject)
+      })
+    })
+  }
+
+  /**
+   * The deadline for a `gRPC` channel to be ready.
+   */
+  readyTimeout(): Deadline {
+    return Date.now() + this.session.options.readyTimeoutInMillis;
+  }
 
   /**
    * Obtain the next page of entries from the cache.
@@ -1374,6 +1405,7 @@ export class NamedCacheClient<K = any, V = any>
     const self = this
     self.internalEmitter.on(MapLifecycleEvent.DESTROYED, (cacheName: string) => {
       if (cacheName == self.cacheName) {
+        // noinspection JSIgnoredPromiseFromCall
         self.mapEventsHandler.closeEventStream()
         self._destroyed = true
         self.emit(MapLifecycleEvent.DESTROYED, cacheName) // notify NamedCacheClient level listeners
@@ -1388,6 +1420,7 @@ export class NamedCacheClient<K = any, V = any>
 
     self.internalEmitter.on(MapLifecycleEvent.RELEASED, (cacheName: string) => {
       if (cacheName == self.cacheName) {
+        // noinspection JSIgnoredPromiseFromCall
         self.mapEventsHandler.closeEventStream()
         self._released = true
         self.emit(MapLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners

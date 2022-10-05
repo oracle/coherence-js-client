@@ -31,11 +31,11 @@
     "compile": "tsc -p src",
     "full-clean": "npm run clean; rm -rf node_modules",
     "clean": "rm -rf lib docs coverage .nyc_output oracle-*tgz",
-    "test": "npm run compile; mocha 'test/**.js' --recursive",
+    "test": "npm run compile; mocha 'test/**.js' --recursive --exit",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coh-clean": "bin/docker-utils.sh -c",
-    "coverage": "nyc mocha 'test/**.js'",
+    "coverage": "nyc mocha 'test/**.js' --exit",
     "wait": "sleep 30",
     "dist": "npm run compile; typedoc; npm pack",
     "prepare": "bin/npm-post-install.sh"

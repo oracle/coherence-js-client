@@ -1,17 +1,18 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
-import { CallOptions, Channel, ChannelCredentials, credentials } from '@grpc/grpc-js'
-import { EventEmitter } from 'events'
-import { PathLike, readFileSync } from 'fs'
-import { event } from './events'
+import {CallOptions, Channel, ChannelCredentials, credentials} from '@grpc/grpc-js'
+import {EventEmitter} from 'events'
+import {PathLike, readFileSync} from 'fs'
+import {event} from './events'
 
-import { NamedCache, NamedCacheClient, NamedMap } from './named-cache-client'
-import { util } from './util'
+import {NamedCache, NamedCacheClient, NamedMap} from './named-cache-client'
+import {util} from './util'
+import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state";
 
 /**
  * Supported {@link Session} options.
@@ -43,9 +44,24 @@ export class Options {
   private _requestTimeoutInMillis: number
 
   /**
+   * Defines the timeout, in `milliseconds`, that will be applied when waiting for
+   * the `gRPC` stream to become ready.
+   *
+   * If not explicitly set, this defaults to `60000`.
+   */
+  private _readyTimeoutInMillis: number
+
+  /**
    * The serialization format.  Currently, this is always `json`.
    */
   private readonly _format: string
+
+  /**
+   * The `gRPC` `ChannelOptions`.
+   *
+   * @see https://github.com/grpc/grpc-node/tree/master/packages/grpc-js
+   */
+  private _channelOptions: { [key: string]: any }
 
   /**
    * A function taking no arguments returning a gRPC CallOptions instance.
@@ -116,6 +132,30 @@ export class Options {
   }
 
   /**
+   * Returns the ready timeout in `milliseconds`.
+   *
+   * @return the ready timeout in `milliseconds`
+   */
+  get readyTimeoutInMillis(): number {
+    return this._readyTimeoutInMillis;
+  }
+
+  /**
+   * Set the ready timeout in `milliseconds`.  If the timeout value is zero or less, then no timeout will be applied.
+   *
+   * @param timeout the request timeout in `milliseconds`
+   */
+  set readyTimeoutInMillis(timeout: number) {
+    if (this.locked) {
+      return;
+    }
+    if (timeout <= 0) {
+      timeout = Number.POSITIVE_INFINITY
+    }
+    this._readyTimeoutInMillis = timeout;
+  }
+
+  /**
    * Return the scope name used to link this `Session` with to the corresponding
    * `ConfigurableCacheFactory` on the server.
    *
@@ -135,6 +175,27 @@ export class Options {
    */
   set scope (value: string) {
     this._scope = value
+  }
+
+  /**
+   * Return the `gRPC` `ChannelOptions`.
+   */
+  get channelOptions(): { [p: string]: any } {
+    return this._channelOptions;
+  }
+
+  /**
+   * Set the `gRPC` `ChannelOptions`.
+   *
+   * @param value the `gRPC` `ChannelOptions`
+   *
+   * @see https://github.com/grpc/grpc-node/tree/master/packages/grpc-js
+   */
+  set channelOptions(value: { [p: string]: any }) {
+    if (this.locked) {
+      return;
+    }
+    this._channelOptions = value;
   }
 
   /**
@@ -210,8 +271,10 @@ export class Options {
   constructor () {
     this._address = process.env.grpc_proxy_address || Session.DEFAULT_ADDRESS
     this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
+    this._readyTimeoutInMillis = Session.DEFAULT_READY_TIMEOUT
     this._format = Session.DEFAULT_FORMAT
     this._scope = Session.DEFAULT_SCOPE
+    this._channelOptions = {}
     this._tls = new TlsOptions()
 
     const self = this
@@ -251,12 +314,6 @@ export class TlsOptions {
    * The client certificate key.
    */
   private _clientKeyPath?: PathLike
-
-  /**
-   * The gRPC channel options.  See [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html)
-   * to obtain a list of possible options
-   */
-  private _channelOptions?: { [key: string]: string | number }
 
   /**
    * Returns `true` if TLS is to be enabled.
@@ -343,26 +400,6 @@ export class TlsOptions {
   }
 
   /**
-   * Return the defined gRPC channel options.
-   */
-  get channelOptions (): { [key: string]: string | number } | undefined {
-    return this._channelOptions
-  }
-
-  /**
-   * Set the gRPC channel options.  See [documentation](https://grpc.github.io/grpc/core/group__grpc__arg__keys.html)
-   * to obtain a list of possible options
-   *
-   * @param value the gRPC channel options
-   */
-  set channelOptions (value: { [key: string]: string | number } | undefined) {
-    if (this.locked) {
-      return;
-    }
-    this._channelOptions = value
-  }
-
-  /**
    * Once called, no further mutations can be made.
    * @hidden
    */
@@ -380,6 +417,10 @@ export class TlsOptions {
  * 1. {@link MapLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
  * 2. {@link MapLifecycleEvent.TRUNCATED}: When the underlying cache is truncated
  * 3. {@link MapLifecycleEvent.RELEASED}: When the underlying cache is released
+ * 4. {@link event.SessionLifecycleEvent.CONNECT}`: when the Session detects the underlying `gRPC` channel has connected.
+ * 4. {@link event.SessionLifecycleEvent.DISCONNECT}`: when the Session detects the underlying `gRPC` channel has disconnected
+ * 5. {@link event.SessionLifecycleEvent.DISCONNECT}`: when the Session detects the underlying `gRPC` channel has re-connected
+ * 5. {@link event.SessionLifecycleEvent.CLOSED}`: when the Session has been closed
  */
 export class Session
   extends EventEmitter {
@@ -392,6 +433,11 @@ export class Session
    * The default request timeout.
    */
   public static readonly DEFAULT_REQUEST_TIMEOUT = 60000
+
+  /**
+   * The default `gRPC` stream ready timeout.
+   */
+  public static readonly DEFAULT_READY_TIMEOUT = 30000
 
   /**
    * The default scope.
@@ -436,11 +482,6 @@ export class Session
   private readonly _channel: Channel
 
   /**
-   * The set of options to use while creating a gRPC Channel.
-   */
-  private readonly _channelOptions: { [key: string]: string | number } = {}
-
-  /**
    * The set of options to use while creating a {@link NamedCacheClient}.
    */
   private readonly _clientOptions: object = {}
@@ -465,18 +506,57 @@ export class Session
       this._sessionOptions = new Options()
     }
 
-    // If TLS is enabled then create a SSL channel credentials object.
+    // If TLS is enabled then create an SSL channel credentials object.
     this._channelCredentials = this.options.tls.enabled
       ? credentials.createSsl(Session.readFile('caCert', this.options.tls.caCertPath),
         Session.readFile('clientKey', this.options.tls.clientKeyPath),
         Session.readFile('clientCert', this.options.tls.clientCertPath))
       : credentials.createInsecure()
 
-    this._channel = new Channel(this.options.address, this.channelCredentials, this._channelOptions)
+    let channel = this._channel = new Channel(this.options.address,
+                                              this.channelCredentials,
+                                              this.options.channelOptions)
+
+    // register handler to monitoring gRPC channel state.
+    // When transitioning from READY to any other state, other than SHUTDOWN,
+    // emit the `disconnect` event.
+    // When transitioning from any other state,
+    // other than SHUTDOWN, to READY, emit the 'reconnect' event.
+    let connected: boolean = false;
+    let firstConnect: boolean = true;
+    let lastState: number = 0;
+    let callback = async () => {
+      let state = channel.getConnectivityState(false);
+      lastState = state;
+      if (state === ConnectivityState.SHUTDOWN) {
+        // nothing to do
+        return;
+      } else if (state === ConnectivityState.READY) {
+        if (!firstConnect && !connected) {
+          this.emit(event.SessionLifecycleEvent.RECONNECTED)
+          connected = true
+        } else if (firstConnect && !connected){
+          this.emit(event.SessionLifecycleEvent.CONNECTED)
+          firstConnect = false
+          connected = true
+        }
+      } else {
+        if (connected) {
+          this.emit(event.SessionLifecycleEvent.DISCONNECTED)
+          connected = false;
+        }
+      }
+      let deadline = Number.POSITIVE_INFINITY
+      if (state !== ConnectivityState.READY) {
+        deadline = Date.now() + this._sessionOptions.readyTimeoutInMillis
+      }
+      channel.watchConnectivityState(state, deadline, callback)
+    }
+    channel.watchConnectivityState(ConnectivityState.READY, Number.POSITIVE_INFINITY, callback)
 
     // channel will now be shared by all caches created by this session
     this._clientOptions = {
-      channelOverride: this._channel
+      channelOverride: channel
     }
 
     this.sessionClosedPromise = new Promise((resolve) => {

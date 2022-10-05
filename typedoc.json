@@ -1,34 +1,19 @@
 {
-  "inputFiles": [
+  "tsconfig": "src/tsconfig.json",
+  "entryPoints": [
     "./src"
   ],
-  "mode": "file",
+  "entryPointStrategy": "expand",
   "out": "docs",
-  "excludeNotExported": true,
   "excludePrivate": true,
-  "module": "commonjs",
-  "target": "ES6",
   "name": "Oracle Coherence JavaScript Client",
   "includeVersion": true,
   "readme": "README.md",
   "hideGenerator": true,
-  "includeDeclarations": false,
   "excludeExternals": false,
-  "stripInternal": true,
   "disableSources": true,
   "exclude": [
     "**/grpc/**"
-  ],
-  "toc": [
-    "NamedMap",
-    "NamedCache",
-    "Aggregators",
-    "Extractors",
-    "Filters",
-    "Processors",
-    "Session",
-    "Options",
-    "TlsOptions"
   ]
 }
 

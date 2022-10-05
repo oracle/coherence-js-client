@@ -1,17 +1,19 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
-import { ClientDuplexStream } from '@grpc/grpc-js'
-import { EventEmitter } from 'events'
-import { filter } from './filters'
-import { MapEventResponse, MapListenerRequest, MapListenerResponse } from './grpc/messages_pb'
-import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
-import { NamedCache, NamedMap } from './named-cache-client'
-import { util } from './util'
+import {ClientDuplexStream} from '@grpc/grpc-js'
+import {EventEmitter} from 'events'
+import {filter} from './filters'
+import {MapEventResponse, MapListenerRequest, MapListenerResponse} from './grpc/messages_pb'
+import {NamedCacheServiceClient} from './grpc/services_grpc_pb'
+import {NamedCache, NamedMap} from './named-cache-client'
+import {util} from './util'
+import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state";
+import {Session} from "./session";
 
 export namespace event {
 
@@ -222,7 +224,7 @@ export namespace event {
    *
    * There are two maps that are maintained:
    *
-   * 1. A Map of stringified key => ListenerGroup, which is used to identify the
+   * 1. A Map of string keys mapped to a ListenerGroup, which is used to identify the
    * group of callbacks for a single key. We stringify the key since Javascript
    * is not the same as Java's equals().
    *
@@ -263,7 +265,7 @@ export namespace event {
     protected client: NamedCacheServiceClient
 
     /**
-     * The `NamedMap` that will used as the *source* of the events.
+     * The `NamedMap` used as the *source* of the events.
      */
     protected namedMap: NamedMap<K, V>
 
@@ -277,7 +279,7 @@ export namespace event {
      * will resolve to a ClientDuplexStream<MapListenerRequest, MapListenerResponse>
      * that will be used by this class to send subscriptions and to receive all events.
      */
-    private streamPromise: Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse>> | null = null
+    private streamPromise: Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse> | null> | null = null
 
     /**
      * Used to track if a cancel call was due to this object
@@ -318,63 +320,117 @@ export namespace event {
     private emitter: EventEmitter
 
     /**
+     * The `Session` associated with this event stream.
+     *
+     * @private
+     */
+    private session: Session;
+
+    /**
+     * Callback for session reconnect events.
+     * @private
+     */
+    private readonly onReconnect: () => void
+
+    /**
+     * Callback for session disconnect events.
+     * @private
+     */
+    private readonly onDisconnect: () => void
+
+    /**
      * Constructs a new `MapEventsManager`
      *
      * @param namedMap    the {@link NamedMap} to manage events for
+     * @param session     the associated {@link Session}
      * @param client      the `gRPC` interface for making requests
-     * @param scope       the {@link NamedMap} scope
      * @param serializer  the {@link Serializer} used by this map
      * @param emitter     the {@link EventEmitter} to use
      */
-    constructor (namedMap: NamedMap<K, V>, scope: string, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
+    constructor (namedMap: NamedMap<K, V>, session: Session, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
       this.mapName = namedMap.name
       this.client = client
       this.namedMap = namedMap
       this.serializer = serializer
       this.emitter = emitter
+      this.session = session;
 
       // Initialize internal data structures.
       this.keyMap = new Map()
       this.filterMap = new Map()
       this.filterId2ListenerGroup = new Map()
-      this.reqFactory = new util.RequestFactory(this.mapName, scope, serializer)
+      this.reqFactory = new util.RequestFactory(this.mapName, session.scope, serializer)
       this.streamPromise = this.ensureStream()
+
+      this.onDisconnect = async () => {
+        let st: ClientDuplexStream<MapListenerRequest, MapListenerResponse> | null = null;
+        try {
+          st = await this.streamPromise
+        } catch (err: any) {
+          // ignore
+        }
+        if (st !== null) {
+          st.cancel()
+        }
+        this.streamPromise = null;
+      }
+      session.on(SessionLifecycleEvent.DISCONNECTED, this.onDisconnect)
+
+      this.onReconnect = () => {
+        this.keyMap.forEach(async value =>  {
+          await value.doSubscribe(value.registeredIsLite)
+        })
+        this.filterMap.forEach(async value => {
+          await value.doSubscribe(value.registeredIsLite)
+        })
+      }
+      session.on(SessionLifecycleEvent.RECONNECTED, this.onReconnect)
     }
 
     /**
      * Create a BiDi stream lazily.
      */
-    ensureStream (): Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse>> {
+    ensureStream (): Promise<ClientDuplexStream<MapListenerRequest, MapListenerResponse> | null> {
       const self = this
       if (self.streamPromise == null) {
-        const bidiStream = self.client.events()
-
-        bidiStream.on('data', (resp) => self.handleResponse(resp))
-        bidiStream.on('end', () => self.onEnd())
-        bidiStream.on('error', (err) => self.onError(err))
-        bidiStream.on('cancelled', () => self.onCancel())
-
-        // Create a SubscribeRequest (with RequestType.INIT)
-        const request = self.reqFactory.mapEventSubscribe()
-        const initUid = request.getUid()
-        self.streamPromise = new Promise((resolve, reject) => {
-          // Setup pending subscriptions map so that when the
-          // subscribe response comes back, or an error occurs
-          // we can resolve or reject the connection.
-          self.pendingSubscriptions.set(initUid, (uid, resp, err) => {
-            self.pendingSubscriptions.delete(uid)
+        self.streamPromise = new Promise((resolve) => {
+          self.client.waitForReady(Date.now() + this.session.options.readyTimeoutInMillis, (err) => {
             if (err) {
-              reject(err)
-            } else {
-              // If we received a successful subscribed response,
-              // the connection is initialized. So resolve it.
-              resolve(bidiStream)
+              this.streamPromise = this.ensureStream()
+              resolve(null)
             }
-          })
+            const bidiStream = self.client.events()
 
-          // Now that we have set up the pending subscriptions map,
-          // write the init request.
-          bidiStream.write(request)
+            bidiStream.on('data', (resp) => self.handleResponse(resp))
+            bidiStream.on('error', (err) => self.onError(err))
+
+            // Create a SubscribeRequest (with RequestType.INIT)
+            const request = self.reqFactory.mapEventSubscribe()
+            const initUid = request.getUid()
+
+            // If we received a successful subscribed response,
+            // the connection is initialized. So resolve it.
+            resolve(bidiStream)
+
+            // Setup pending subscriptions map so that when the
+            // subscribe response comes back, or an error occurs
+            // we can resolve or reject the connection.
+            self.pendingSubscriptions.set(initUid, (uid, resp, err) => {
+              self.pendingSubscriptions.delete(uid)
+              if (err) {
+                this.streamPromise = this.ensureStream()
+                resolve(null)
+              } else {
+                // If we received a successful subscribed response,
+                // the connection is initialized. So resolve it.
+                resolve(bidiStream)
+              }
+            })
+
+            // Now that we have set up the pending subscriptions map,
+            // write the init request.
+            bidiStream.write(request)
+          })
         })
       }
 
@@ -518,17 +574,20 @@ export namespace event {
     writeRequest (request: MapListenerRequest): Promise<void> {
       const self = this
       return this.ensureStream()
-        .then((stream: ClientDuplexStream<MapListenerRequest, MapListenerResponse>) => {
-          return new Promise<void>((resolve, reject) => {
-            self.pendingSubscriptions.set(request.getUid(), (uid, resp, err) => {
-              self.pendingSubscriptions.delete(uid)
-              if (err) {
-                reject(err)
-              } else {
+        .then((stream: ClientDuplexStream<MapListenerRequest, MapListenerResponse> | null) => {
+          return new Promise<void>((resolve) => {
+            if (!stream) {
+              resolve()
+            } else {
+              self.pendingSubscriptions.set(request.getUid(), (uid, resp, err) => {
+                self.pendingSubscriptions.delete(uid)
+                if (err) {
+                  this.streamPromise = this.ensureStream()
+                }
                 resolve()
-              }
-            })
-            stream.write(request)
+              })
+              stream.write(request)
+            }
           })
         })
     }
@@ -540,17 +599,29 @@ export namespace event {
       const self = this
       if (!self.markedForClose && self.streamPromise != null) {
         self.markedForClose = true
-        const bidiStream = await self.streamPromise
+        let bidiStream: ClientDuplexStream<MapListenerRequest, MapListenerResponse> | null = null;
+        try {
+          bidiStream = await self.streamPromise;
+        } catch (err: any) {
+        }
+
+        self.session.removeListener(SessionLifecycleEvent.CONNECTED, self.onReconnect)
+        self.session.removeListener(SessionLifecycleEvent.RECONNECTED, self.onReconnect)
+        self.session.removeListener(SessionLifecycleEvent.DISCONNECTED, self.onDisconnect)
+
         await new Promise<void>(async (resolve) => {
-          // Setup an event handler for 'error' as calling cancel() on
+          // Add an event handler for 'error' as calling cancel() on
           // the bidi stream will result in a CANCELLED status.
-          bidiStream.on('error', (err) => {
-            if (err.toString().indexOf('CANCELLED')) {
-              self.streamPromise = null
-              resolve()
-            }
-          })
-          bidiStream.end()
+          if (bidiStream) {
+            bidiStream.on('error', (err) => {
+              if (err.toString().indexOf('CANCELLED')) {
+                self.streamPromise = null
+                resolve()
+              }
+            })
+            bidiStream.end()
+          }
+          resolve()
         })
       }
       return Promise.resolve()
@@ -591,34 +662,25 @@ export namespace event {
      *
      * @param err  the stream error
      */
-    private onError (err: Error) {
+    private onError(err: Error) {
       if (!this.markedForClose) {
-        this.emitter.emit('error', this.mapName + ': Received onError', err)
-      }
-    }
-
-    /**
-     * Handles the end of an event stream.
-     */
-    private onEnd () {
-      if (!this.markedForClose) {
-        this.emitter.emit('error', this.mapName + ': Received onEnd')
-      }
-    }
-
-    /**
-     * Handles a stream being cancelled.
-     */
-    private onCancel () {
-      if (!this.markedForClose) {
-        this.emitter.emit('error', '** Received onCancel')
+        if (this.client.getChannel().getConnectivityState(false) == ConnectivityState.READY) {
+          // stream cancellation, but channel still okay
+          this.streamPromise = null;
+          this.keyMap.forEach(async value => {
+            await value.doSubscribe(value.registeredIsLite)
+          })
+          this.filterMap.forEach(async value => {
+            await value.doSubscribe(value.registeredIsLite)
+          })
+        }
       }
     }
   }
 
   /**
    * Manages a collection of MapEventListeners. Handles sending out
-   * MapListenerRequest subscriptions / unsubscriptions.  Also, handles
+   * MapListenerRequest subscriptions / un-subscriptions.  Also, handles
    * notification of all the registered listeners.
    */
   abstract class ListenerGroup<K, V> {
@@ -626,12 +688,6 @@ export namespace event {
      * Internal: A singleton resolved Promise.
      */
     private static RESOLVED = Promise.resolve()
-
-    /**
-     * Active status will be true if the subscribe request has been sent.
-     * It will be false if a unsubscribe request has been sent.
-     */
-    isActive: boolean = true // Initially active.
 
     /**
      * The key or the filter for which this group of callbacks will
@@ -644,7 +700,7 @@ export namespace event {
      * If a new listener is added to the group that requires isLite == false
      * but if the registeredIsLite is true, then a re-registration occurs.
      *
-     * Similarly if a listener is removed whose isLite == false but if all the
+     * Similarly, if a listener is removed whose isLite == false but if all the
      * remaining listeners are interested in only isLite == true, then a
      * re-registration occurs.
      */
@@ -935,6 +991,9 @@ export namespace event {
    * @internal
    */
   export enum SessionLifecycleEvent {
-    CLOSED = 'session_closed'
+    CLOSED = 'session_closed',
+    DISCONNECTED = 'session_disconnected',
+    RECONNECTED = 'session_reconnected',
+    CONNECTED = 'session_connected'
   }
 }
