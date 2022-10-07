@@ -13,7 +13,8 @@
   "excludeExternals": false,
   "disableSources": true,
   "exclude": [
-    "**/grpc/**"
+    "**/grpc/**",
+    "**/node_modules/**"
   ]
 }
 

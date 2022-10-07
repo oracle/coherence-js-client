@@ -654,8 +654,13 @@ export namespace aggregator {
 
     /**
      * The {@link Comparator} to apply against the extracted values.
+     * @private
      */
     protected comparator?: AggregatorComparator
+
+    /**
+     * The property that results will be ordered by.
+     */
     protected property?: string
 
     /**
@@ -804,7 +809,7 @@ export namespace aggregator {
  * various {@link EntryAggregator} classes, but in some cases provide additional type
  * safety. They also tend to make the code more readable, especially if imported
  * statically, so their use is strongly encouraged in lieu of direct construction
- * of EntryAggregator} classes.
+ * of {@link EntryAggregator} classes.
  */
 export class Aggregators {
 

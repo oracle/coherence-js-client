@@ -872,7 +872,7 @@ export namespace filter {
   }
 
   /**
-   * A {@code java.util.function.Predicate} based {@link ExtractorFilter}.
+   * A predicate based {@link ExtractorFilter}.
    */
   export class PredicateFilter
     extends ExtractorFilter {
