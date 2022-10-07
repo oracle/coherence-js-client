@@ -27,7 +27,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 oraclecoherence/coherence-ce:22.06
+docker run -d -p 1408:1408 oraclecoherence/coherence-ce:22.06.2
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
