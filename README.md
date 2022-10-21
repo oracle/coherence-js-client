@@ -18,7 +18,7 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 22.06 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://github.com/oracle/coherence/tree/master/prj/coherence-grpc-proxy)
+* Coherence CE 22.06 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
 * Node 14
 * NPM 8.x
 
