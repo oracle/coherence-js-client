@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023 Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -419,7 +419,7 @@ export class TlsOptions {
  * 3. {@link MapLifecycleEvent.RELEASED}: When the underlying cache is released
  * 4. {@link event.SessionLifecycleEvent.CONNECT}`: when the Session detects the underlying `gRPC` channel has connected.
  * 4. {@link event.SessionLifecycleEvent.DISCONNECT}`: when the Session detects the underlying `gRPC` channel has disconnected
- * 5. {@link event.SessionLifecycleEvent.DISCONNECT}`: when the Session detects the underlying `gRPC` channel has re-connected
+ * 5. {@link event.SessionLifecycleEvent.RECONNECTED}`: when the Session detects the underlying `gRPC` channel has re-connected
  * 5. {@link event.SessionLifecycleEvent.CLOSED}`: when the Session has been closed
  */
 export class Session
