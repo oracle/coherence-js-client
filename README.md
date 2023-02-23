@@ -397,3 +397,18 @@ Map size is 0
 ### References
 * Oracle Coherence JavaScript Client - https://coherence.community/20.06/api/js/index.html
 * Oracle Coherence CE Documentation - https://coherence.community/22.06/docs/#/docs/about/01_overview
+
+## Contributing
+
+This project welcomes contributions from the community. Before submitting a pull request, please [review our contribution guide](./CONTRIBUTING.md)
+
+## Security
+
+Please consult the [security guide](./SECURITY.md) for our responsible security vulnerability disclosure process
+
+## License
+
+Copyright (c) 2020, 2023 Oracle and/or its affiliates.
+
+Released under the Universal Permissive License v1.0 as shown at
+<https://oss.oracle.com/licenses/upl/>.
