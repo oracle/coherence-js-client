@@ -13,7 +13,8 @@
   "dependencies": {
     "@grpc/proto-loader": "^0.6",
     "@grpc/grpc-js": "^1.6",
-    "google-protobuf": "^3.20"
+    "google-protobuf": "^3.20",
+    "decimal.js": "^10.4"
   },
   "devDependencies": {
     "grpc-tools": "^1.11.1",
@@ -31,12 +32,11 @@
     "compile": "tsc -p src",
     "full-clean": "npm run clean; rm -rf node_modules",
     "clean": "rm -rf lib docs coverage .nyc_output oracle-*tgz",
-    "test": "npm run compile; mocha 'test/**.js' --recursive --exit",
+    "test": "npm run compile && mocha 'test/**.js' --recursive --exit",
+    "test-cycle": "npm run compile && npm run coh-up && mocha 'test/**.js'; npm run coh-down --recursive --exit",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
-    "coh-clean": "bin/docker-utils.sh -c",
     "coverage": "nyc mocha 'test/**.js' --exit",
-    "wait": "sleep 30",
     "dist": "npm run compile; typedoc; npm pack",
     "prepare": "bin/npm-post-install.sh"
   }

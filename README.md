@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+Copyright (c) 2020, 2023 Oracle and/or its affiliates.
 
 Licensed under the Universal Permissive License v 1.0 as shown at
 http://oss.oracle.com/licenses/upl.
@@ -27,7 +27,19 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:22.06.2
+docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:23.03.2
+```
+
+or to save some keystrokes/time, use the included npm script, `coh-up` to start a two-member Cluster with the gRPC port at 1408"
+```bash
+npm run coh-up
+```
+
+**Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.2`).
+To use a later Coherence version, such as `22.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+For example:
+```bash
+COHERENCE_VERSION=22.03 npm run coh-up
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
@@ -43,6 +55,16 @@ project's `package.json`:
 },
 ...
 ```
+
+### Compatibility with Java Types
+The following table provides a listing of mappings between Java types and Javascript types when working with
+Coherence 23.03 or later.  If using Coherence 22.06.x, these types will be returned as Number.  It is recommended
+using 23.03 if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
+
+| Java Type            | JavascriptType         |
+|----------------------|------------------------|
+| java.math.BigInteger | BigInt (ECMA standard) |
+| java.math.BigDecimal | Decimal ([decimal.js](https://www.npmjs.com/package/decimal.js))   |
 
 ### Examples
 
@@ -172,7 +194,7 @@ await map.forEach((value, key) => console.log(key + ': ' + value))
 
 Coherence provides a rich set of primitives that allow developers to create advanced queries against
 a set of entries returning only those keys and/or values matching the specified criteria.
-See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for details
+See the [documentation](https://oracle.github.io/coherence/23.03/api/java/index.html) for details
 on the Filters provided by this client.
 
 Let's assume we have a `NamedMap` in which we're storing `string` keys and some objects with the structure of:
@@ -213,7 +235,7 @@ await map.values(Filters.not(Filters.arrayContains('hobbies', 'gardening')))
 #### Aggregation
 
 Coherence provides developers with the ability to process some subset of the entries in a map,
-resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for aggregators provided by this client.
+resulting in an aggregated result. See the [documentation](https://oracle.github.io/coherence/23.03/api/java/index.html) for aggregators provided by this client.
 
 Assume the same set of keys and values are present from the filtering example above:
 
@@ -235,7 +257,7 @@ await map.aggregate(Filters.greater('age', 40), Aggregators.count())
 #### Entry Processing
 
 An entry processor allows mutation of map entries in-place within the cluster instead of bringing the entire object
-to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/22.06/api/java/index.html) for the processors provided by this client.
+to the client, updating, and pushing the value back.  See the [documentation](https://oracle.github.io/coherence/23.03/api/java/index.html) for the processors provided by this client.
 
 Assume the same set of keys and values are present from the filtering and aggregation examples:
 
@@ -396,7 +418,7 @@ Map size is 0
 
 ### References
 * Oracle Coherence JavaScript Client - https://coherence.community/20.06/api/js/index.html
-* Oracle Coherence CE Documentation - https://coherence.community/22.06/docs/#/docs/about/01_overview
+* Oracle Coherence CE Documentation - https://coherence.community/23.03/docs/#/docs/about/01_overview
 
 ## Contributing
 

@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 import { ClientReadableStream } from '@grpc/grpc-js'
@@ -39,6 +39,7 @@ import {
 } from './grpc/messages_pb'
 import { MapEntry, NamedCacheClient } from './named-cache-client'
 import { processor } from './processors'
+import Decimal from "decimal.js";
 
 export namespace util {
 
@@ -515,8 +516,8 @@ export namespace util {
      */
     [Symbol.toStringTag]: string | undefined
     /**
-     * {@link NamedCacheClient} reference to allow manipulate of underlying cache
-     * while pages processed.
+     * {@link NamedCacheClient} reference to allow the manipulation of an underlying cache
+     * while pages are processed.
      */
     protected readonly namedCache: NamedCacheClient<K, V>
 
@@ -1535,12 +1536,74 @@ export namespace util {
   }
 
   /**
+   * A TypeHandler is responsible for marshalling/unmarshalling Objects to and from JSON.
+   * Typically, in JavaScript, this is not necessary, however, in the case of Coherence,
+   * it has specific requirements when mapping objects between languages.
+   *
+   * Specifically, this revolves around `@class` metadata as the <em>first</em> property
+   * of a JSON object.  This `@class` metadata is an alias for a type that is known to Coherence.
+   * When Coherence serializes a type, it populates the `@class` metadata with the type alias name, which
+   * can be used to reconstruct the Java class running in another VM, or in our case reconstruct a similar
+   * object in Javascript.  Using 1BigInt` as an example; using a TypeHandler the BigInt can be deserialized
+   * to JSON in the required fashion in order to have a BigInteger created in Coherence and vice-versa.
+   */
+  abstract class TypeHandler {
+    protected readonly _type: string
+
+    /**
+     * Constructs a new TypeHandler.
+     *
+     * @param type the type alias for the Java Type managed by Coherence.
+     * @protected
+     */
+    protected constructor(type: any) {
+      this._type = type
+    }
+
+    /**
+     * Returns the type alias.
+     */
+    get type(): string {
+      return this._type
+    }
+
+    /**
+     * Used during serialization of a graph to determine if the Javascript type
+     * is handled by this TypeHandler.
+     *
+     * @param object the type to verify
+     */
+    abstract handles(object: any): boolean
+
+    /**
+     * Reconstitutes a specific JavaScript object from JSON.
+     *
+     * @param object the object being deserialized
+     */
+    abstract revive(object: any): any
+
+    /**
+     * Deconstructs a specific JavaScript object to a JSON format
+     * that can be used by Coherence to recreate a Java object.
+     *
+     * @param object being serialized
+     */
+    abstract replace(object: any): any
+  }
+
+  /**
    * A Serializer implementation supporting `JSON` as payload format.
    */
-  class JSONSerializer
+  export class JSONSerializer
     implements Serializer {
+    protected static _handlers: Map<string, TypeHandler> = new Map<string, TypeHandler>()
     protected static JSON_SERIALIZER_PREFIX: number = 21
-    private readonly _format: string = 'json'
+    readonly _format: string = 'json'
+
+    constructor() {
+      JSONSerializer.addTypeHandler(new DecimalHandler())
+      JSONSerializer.addTypeHandler(new BigIntHandler())
+    }
 
     /**
      * @inheritDoc
@@ -1555,7 +1618,18 @@ export namespace util {
     public serialize (obj: any): Buffer {
       const headerBuf = Buffer.alloc(1);
       headerBuf.writeInt8(JSONSerializer.JSON_SERIALIZER_PREFIX)
-      const valBuf = Buffer.from(JSON.stringify(obj));
+
+      let toSerialize = obj;
+      // Ugly, but we have to check if the top-level object is handled by any of the TypeHandlers.
+      // For example, if serializing a single BigNumber, by the time the replacer function has been
+      // called, the value has already been stringified and thus lost the type information.
+      for (const handler of JSONSerializer.typeHandlers.values()) {
+        if (handler.handles(toSerialize)) {
+          toSerialize = handler.replace(toSerialize)
+        }
+      }
+
+      const valBuf = Buffer.from(JSON.stringify(toSerialize, this._replace));
 
       return Buffer.concat([headerBuf, valBuf], headerBuf.length + valBuf.length);
     }
@@ -1568,12 +1642,126 @@ export namespace util {
         let buf = Buffer.from(value)
         if (buf.length > 0) {
           if (buf.readInt8(0) == JSONSerializer.JSON_SERIALIZER_PREFIX) {
-            buf = buf.slice(1)
+            buf = buf.subarray(1)
           }
-          return JSON.parse(buf.toString())
+          return JSON.parse(buf.toString(), this._revive)
         }
       }
       return null
+    }
+
+    /**
+     * Return the `Map` of known {@link TypeHandler}s.
+     */
+    static get typeHandlers (): Map<string, TypeHandler> {
+      return JSONSerializer._handlers
+    }
+
+    /**
+     * Adds or replaces a TypeHandler based on the result of `TypeHandler.type`.
+     *
+     * @param handler the {@link TypeHandler} to add/replace
+     */
+    static addTypeHandler(handler: TypeHandler): void {
+      ensureNotNull(handler, "a handler must be specified")
+      JSONSerializer._handlers.set(handler.type, handler)
+    }
+
+    /**
+     * Passed as the <em>reviver</em> argument to JSON.parse().
+     * This is responsible for reconstituting Objects based on the
+     * <em>@class</em> metadata sent from Coherence.
+     *
+     * @param key the key of the value being revived
+     * @param value the value associated with the key
+     * @protected
+     */
+    protected _revive(key: String, value: any): any {
+      if (value && value.hasOwnProperty("@class")) {
+        let type: string = value["@class"]
+        let handler: TypeHandler | undefined = JSONSerializer.typeHandlers.get(type)
+        if (handler) {
+          return handler.revive(value)
+        }
+        return value
+      }
+      return value
+    }
+
+    /**
+     * Passed as the <em>replacer</em> argument to JSON.stringify().
+     * This is responsible for converting Objects to a format that will
+     * be understood by Java/Coherence.
+     *
+     * @param key the key being of the value being replaced
+     * @param value the value associated with the key
+     * @protected
+     */
+    protected _replace(key: any, value: any): any {
+      if (value && typeof value === 'object') {
+        Object.entries(value).forEach(entry => {
+          let [key, v] = entry
+          for (const handler of JSONSerializer.typeHandlers.values()) {
+            if (handler.handles(v)) {
+              value[key] = handler.replace(v)
+            }
+          }
+        })
+      }
+      return value
+    }
+  }
+
+  /**
+   * Base {@link TypeHandler} for the supported large numeric types
+   * that map to Java's BigInteger and BigDecimal.
+   */
+  abstract class BaseNumericHandler extends TypeHandler {
+    protected constructor (type: any) {
+      super(type)
+    }
+
+    replace(object: any): any {
+      return {
+        "@class": this.type,
+        "value": object.toString()
+      }
+    }
+  }
+
+  /**
+   * {@link TypeHandler} implementation for Decimal types (decimal.js)
+   */
+  class DecimalHandler extends BaseNumericHandler {
+    constructor() {
+      super("math.BigDec");
+    }
+
+    handles(object: any): boolean {
+      return object instanceof Decimal
+    }
+
+    revive(object: any): any {
+      let value = object["value"]
+      return new Decimal(value)
+    }
+  }
+
+  /**
+   * {@link TypeHandler} implementation for BigInt types.
+   */
+  class BigIntHandler extends BaseNumericHandler {
+    constructor() {
+      super("math.BigInt");
+    }
+
+    handles(object: any): boolean {
+      return typeof object === 'bigint'
+    }
+
+    revive(object: any): any {
+      let value = object["value"]
+      return BigInt(value)
     }
   }
 
@@ -1651,6 +1839,7 @@ export namespace util {
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Ensure the provided array is not empty and if it is, throw a new {@link Error} with the provided
    * message as the cause.
@@ -1674,5 +1863,4 @@ export namespace util {
   export function isIterableType<T> (arg: any): arg is Iterable<T> {
     return arg && typeof arg[Symbol.iterator] === 'function'
   }
-
 }

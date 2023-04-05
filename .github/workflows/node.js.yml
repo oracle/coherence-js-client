@@ -1,6 +1,6 @@
-# Copyright 2020 Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright 2020, 2023, Oracle Corporation and/or its affiliates.  All rights reserved.
 # Licensed under the Universal Permissive License v 1.0 as shown at
-# http://oss.oracle.com/licenses/upl.
+# https://oss.oracle.com/licenses/upl.
 
 # ---------------------------------------------------------------------------
 # Coherence JavaScript Client GitHub Actions CI build.
@@ -26,8 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         node-version: [14.x]
+        coherence-version: [22.06.2, 23.03]
 
     steps:
     - uses: actions/checkout@v2
@@ -41,13 +43,12 @@ jobs:
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
     # install project deps
     - run: npm install
-    # start test container
-    - run: npm run coh-up
-    # give the container time to bootstrap
-    - run: npm run wait
-    # run the tests
-    - run: npm run test
-    # top the test container
-    - run: npm run coh-down
+    # run tests
+    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
     # clean up
-    - run: npm run coh-clean
+    - name: Archive production artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+          name: save-log-file
+          path: log-*.txt

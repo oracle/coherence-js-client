@@ -8,17 +8,17 @@ http://oss.oracle.com/licenses/upl.
 # Developing Coherence JavaScript Client
 
 ### Requirements
-* NPM version 8.x or later
+* NPM version 14.x or later
 
 ### Runnable NPM Scripts
 * `compile` - compiles the TypeScript sources to the `lib` directory
 * `clean` - removes all generated code, coverage, and documentation artifacts
 * `full-clean` - runs `clean` and removes the local `node_modules` directory 
 * `test` - runs the unit tests
+* `test-cycle` - starts the cluster and if successful, runs the unit tests.  After the cluster will be stopped.
 * `coverage` - runs the unit tests and gathers coverage metrics (results found in `coverage` directory)
-* `coh-up` - starts a Coherence container for testing/developing against
-* `coh-down` - stops the previously started Coherence container
-* `coh-clean` - removes the local image
+* `coh-up` - starts a two-member Coherence cluster for testing/developing against
+* `coh-down` - stops the previously started Coherence cluster
 * `dist` - creates a test distribution for inspection prior to publish
 
 ### Project Structure
@@ -35,6 +35,19 @@ http://oss.oracle.com/licenses/upl.
 * run `npm run coh-up` - this starts a Coherence test Docker container.  This instance exposes the `grpc` port `1408` and exposes port `5005` for java debugging of the Coherence instance.  To view the JSON payloads being sent to Coherence, check the docker container log for the instance this command started.
 * run `npm run test` - this will run all unit tests.  You may optionally run the tests individually via an IDE as long as the Coherence container mentioned in the previous step was started.
 * run `npm run coh-down` when testing is complete and the Coherence test container is no longer needed.
+
+The above can also be shortened to:
+* `npm run test-cycle` - this will start the cluster, run test tests if the cluster start was successful, and then stop the cluster
+
+However, if developing new functionality or tests, the manual start of the cluster using `coh-up` may be preferred as
+it avoids restarting the cluster allowing for quicker development times.
+
+**Important!** When calling `coh-up`, `test`, `coh-down`, or `test-cycle` the LTS version of Coherence will be used (`22.06.2`).
+To use a later Coherence version, such as `22.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+For example:
+```bash
+COHERENCE_VERSION=22.03 npm run test-cycle
+```
 
 ### Generating Documentation
 * Install `typedoc` globally: `npm install -g typescript && npm install -g typedoc`

@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 const { Aggregators, Filters, Session, aggregator } = require('../lib')
@@ -162,18 +162,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(result, 1158)
+      test.checkNumericResult(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(result, 702)
+      test.checkNumericResult(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(result, 579)
+      test.checkNumericResult(result, 579)
     })
   })
 
@@ -199,18 +199,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(result, 1158)
+      test.checkNumericResult(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(result, 702)
+      test.checkNumericResult(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(result, 579)
+      test.checkNumericResult(result, 579)
     })
   })
 
