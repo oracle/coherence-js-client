@@ -29,6 +29,7 @@ jobs:
       matrix:
         node-version: [14.x]
         coherence-version: [22.06.2, 23.03]
+        fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
