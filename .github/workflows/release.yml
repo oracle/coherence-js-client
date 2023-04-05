@@ -1,6 +1,6 @@
-# Copyright 2020 Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright 2020, 2023, Oracle Corporation and/or its affiliates.  All rights reserved.
 # Licensed under the Universal Permissive License v 1.0 as shown at
-# http://oss.oracle.com/licenses/upl.
+# https://oss.oracle.com/licenses/upl.
 
 # ---------------------------------------------------------------------------
 # Coherence JavaScript Client GitHub Release Actions build.
@@ -36,16 +36,9 @@ jobs:
       - run: unzip protoc-3.13.0-linux-x86_64.zip -d /tmp/grpc
       - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
       - run: npm install
-      # start test container
-      - run: npm run coh-up
-      # give the container time to bootstrap
-      - run: npm run wait 
-      # run the tests
-      - run: npm run test
-      # top the test container
-      - run: npm run coh-down
-      # clean up
-      - run: npm run coh-clean
+      # run unit tests
+      - run: COHERENCE_VERSION=22.06.2 npm run test-cycle
+      - run: COHERENCE_VERSION=23.03 npm run test-cycle
       - run: npm install --no-save typedoc
       # generate dist which runs other tasks
       - run: npm run dist

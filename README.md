@@ -45,7 +45,9 @@ project's `package.json`:
 ```
 
 ### Compatibility with Java Types
-The following table provides a listing of mappings between Java types and Javascript types.
+The following table provides a listing of mappings between Java types and Javascript types when working with
+Coherence 23.03 or later.  If using Coherence 22.06.x, these types will be returned as Number.  It is recommended
+using 23.03 if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
 
 | Java Type            | JavascriptType         |
 |----------------------|------------------------|

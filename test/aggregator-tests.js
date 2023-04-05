@@ -9,7 +9,6 @@ const { Aggregators, Filters, Session, aggregator } = require('../lib')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
-const Decimal = require("decimal.js");
 
 describe('Aggregators IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
@@ -163,18 +162,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.deepStrictEqual(result, new Decimal(1158))
+      test.checkNumericResult(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.deepStrictEqual(result, new Decimal(702))
+      test.checkNumericResult(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.deepStrictEqual(result, new Decimal(579))
+      test.checkNumericResult(result, 579)
     })
   })
 
@@ -200,18 +199,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.deepStrictEqual(result, new Decimal(1158))
+      test.checkNumericResult(result, 1158)
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.deepStrictEqual(result, new Decimal(702))
+      test.checkNumericResult(result, 702)
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.deepStrictEqual(result, new Decimal(579))
+      test.checkNumericResult(result, 579)
     })
   })
 

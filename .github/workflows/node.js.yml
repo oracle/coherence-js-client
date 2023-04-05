@@ -43,12 +43,8 @@ jobs:
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
     # install project deps
     - run: npm install
-    # start test container; command will fail if Coherence doesn't become healthy in 60s
-    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run coh-up
-    # run the tests
-    - run: npm run test
-    # top the test container
-    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run coh-down
+    # run tests
+    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
     # clean up
     - name: Archive production artifacts
       if: always()
