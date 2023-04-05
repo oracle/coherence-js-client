@@ -50,6 +50,7 @@ jobs:
     # clean up
     - run: npm run coh-clean
     - name: Archive production artifacts
+      if: always()
       uses: actions/upload-artifact@v3
       with:
           name: save-log-file
