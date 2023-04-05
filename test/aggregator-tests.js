@@ -1,14 +1,15 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 const { Aggregators, Filters, Session, aggregator } = require('../lib')
 const test = require('./util')
 const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
+const Decimal = require("decimal.js");
 
 describe('Aggregators IT Test Suite', function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
@@ -162,18 +163,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(result, 1158)
+      assert.deepStrictEqual(result, new Decimal(1158))
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(result, 702)
+      assert.deepStrictEqual(result, new Decimal(702))
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(result, 579)
+      assert.deepStrictEqual(result, new Decimal(579))
     })
   })
 
@@ -199,18 +200,18 @@ describe('Aggregators IT Test Suite', function () {
 
     it('should aggregate all entries', async () => {
       const result = await cache.aggregate(agg)
-      assert.equal(result, 1158)
+      assert.deepStrictEqual(result, new Decimal(1158))
     })
 
     it('should aggregate filtered entries', async () => {
       const filter = Filters.between('id', 123, 456, true, false)
       const result = await cache.aggregate(filter, agg)
-      assert.equal(result, 702)
+      assert.deepStrictEqual(result, new Decimal(702))
     })
 
     it('should aggregate entries based on keys', async () => {
       const result = await cache.aggregate([val123, val456], agg)
-      assert.equal(result, 579)
+      assert.deepStrictEqual(result, new Decimal(579))
     })
   })
 
