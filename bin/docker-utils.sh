@@ -15,7 +15,7 @@ function coh_up() {
   SECONDS=0
   echo "Waiting for Coherence to be healthy (within 60s) ..."
   while [ ${SECONDS} -le 60 ]; do
-    READY=$(curl -o /dev/null -s -w "%{http_code}" "http://127.0.0.1:6676/ready2") || true
+    READY=$(curl -o /dev/null -s -w "%{http_code}" "http://127.0.0.1:6676/ready") || true
     if [ "${READY}" -eq "200" ]; then
       echo "Coherence is ready!"
       return
