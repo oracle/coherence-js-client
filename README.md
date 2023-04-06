@@ -20,7 +20,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:23.03.2
+docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:23.03
 ```
 
 or to save some keystrokes/time, use the included npm script, `coh-up` to start a two-member Cluster with the gRPC port at 1408"
