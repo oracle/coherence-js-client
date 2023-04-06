@@ -8,7 +8,8 @@ http://oss.oracle.com/licenses/upl.
 # Developing Coherence JavaScript Client
 
 ### Requirements
-* NPM version 14.x or later
+* Node version 18.15.x or later
+* NPM 9.x or later
 
 ### Runnable NPM Scripts
 * `compile` - compiles the TypeScript sources to the `lib` directory

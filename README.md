@@ -19,8 +19,8 @@ the network transport.
 
 ### Requirements
 * Coherence CE 22.06 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
-* Node 14
-* NPM 8.x
+* Node 18.15.x or later
+* NPM 9.x or later
 
 ### Usage
 

@@ -25,10 +25,10 @@ jobs:
         with:
           ref: ${{ github.event.release.target_commitish }}
       # install Node.js
-      - name: Use Node.js 14.x
+      - name: Use Node.js 18.15.x
         uses: actions/setup-node@v1
         with:
-          node-version: 14.x
+          node-version: 18.15.x
           # Specifies the registry, this field is required!
           registry-url: https://registry.npmjs.org/
       # install protoc
