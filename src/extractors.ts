@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 import { util } from './util'
@@ -374,10 +374,10 @@ export namespace extractor {
  *
  * @remarks
  * The methods in this class are for the most part simple factory methods for
- * various {@link ValueExtractor} classes, but in some cases provide additional type
+ * various {@link extractor.ValueExtractor} classes, but in some cases provide additional type
  * safety. They also tend to make the code more readable, especially if imported
  * statically, so their use is strongly encouraged in lieu of direct construction
- * of {@link ValueExtractor} classes.
+ * of {@link extractor.ValueExtractor} classes.
  */
 export class Extractors {
   /**
@@ -390,7 +390,7 @@ export class Extractors {
    *                            field names to extract (if any field name contains a dot '.'
    *                            that field name is split into multiple field names delimiting on
    *                            the dots. If extractorsOrFields is of ValueExtractor[] type,
-   *                            then the {@link ValueExtractor}s are used to extract the values
+   *                            then the {@link extractor.ValueExtractor}s are used to extract the values
    *
    * @return an extractor that extracts the value(s) of the specified field(s)
    */

@@ -152,7 +152,7 @@ export namespace processor {
      * have a name of ("get" + sName) and the corresponding property setter's
      * name will be ("set + sName).
      *
-     * @param typeName                   the server-side {@link ValueManipulator} type identifier
+     * @param typeName                   the server-side {@link extractor.ValueManipulator} type identifier
      * @param manipulatorOrPropertyName  the manipulator or property name
      * @param useIs                      prefix with `is`
      */
@@ -854,7 +854,7 @@ export namespace processor {
 export class Processors {
 
   /**
-   * Construct a {@link ConditionalPut} that updates an entry with a new value if
+   * Construct a {@link processor.ConditionalPut} that updates an entry with a new value if
    * and only if the filter applied to the entry evaluates to `true`. This
    * processor optionally returns the current value as a result of the
    * invocation if it has not been updated (the filter evaluated to `false`).
@@ -863,7 +863,7 @@ export class Processors {
    *
    * @param filter       the filter to evaluate an entry
    * @param value        a value to update an entry with
-   * @param returnValue  specifies whether or not the processor should return
+   * @param returnValue  specifies whether the processor should return
    *                     the current value in case it has not been updated
    *
    * @return a put processor that updates an entry with a new value if
@@ -874,7 +874,7 @@ export class Processors {
   }
 
   /**
-   * Construct a {@link ConditionalPutAll} that updates an entry with a
+   * Construct a {@link processor.ConditionalPutAll} that updates an entry with a
    * new value if and only if the filter applied to the entry evaluates to
    * `true`. The new value is extracted from the specified map based on the
    * entry's key.
@@ -885,7 +885,7 @@ export class Processors {
    * @param filter  the filter to evaluate all supplied entries
    * @param map     a map of values to update entries with
    *
-   * @return a {@link ConditionalPutAll}  processor that updates an entry with a new value
+   * @return a {@link processor.ConditionalPutAll}  processor that updates an entry with a new value
    *         if and only if the filter applied to the entry evaluates to
    *         `true`.
    */
@@ -894,14 +894,14 @@ export class Processors {
   }
 
   /**
-   * Construct a {@link ConditionalRemove} processor that removes an InvocableMap
+   * Construct a {@link processor.ConditionalRemove} processor that removes an InvocableMap
    * entry if and only if the filter applied to the entry evaluates to `true`.
    * This processor may optionally return the current value as a result of
    * the invocation if it has not been removed (the filter evaluated to
    * `false`).
    *
    * @param filter       the filter to evaluate an entry
-   * @param returnValue  specifies whether or not the processor should return
+   * @param returnValue  specifies whether the processor should return
    *                     the current value if it has not been removed
    *
    * @return a remove processor that removes an InvocableMap entry
@@ -919,12 +919,12 @@ export class Processors {
    * @typeParam R  the type of the extracted value
    *
    * @param extractorOrFieldName  a Extractor object; passing null is equivalent
-   *                              to using the {@link IdentityExtractor} or the property
+   *                              to using the {@link extractor.IdentityExtractor} or the property
    *                              or method name to invoke to provide a value
    *
    * @return an extract processor based on the specified extractor.
    *
-   * @see ExtractorProcessor
+   * @see extractor.ExtractorProcessor
    */
   static extract<K = any, V = any, R = any> (extractorOrFieldName?: string): processor.EntryProcessor<K, V, R> {
     return new processor.ExtractorProcessor(extractorOrFieldName)
@@ -952,7 +952,7 @@ export class Processors {
   }
 
   /**
-   * Construct {@link MethodInvocationProcessor} appropriate for invoking an accessor.
+   * Construct {@link processor.MethodInvocationProcessor} appropriate for invoking an accessor.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
@@ -966,7 +966,7 @@ export class Processors {
   }
 
   /**
-   * Construct {@link MethodInvocationProcessor} appropriate for invoking a mutating method.
+   * Construct {@link processor.MethodInvocationProcessor} appropriate for invoking a mutating method.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
@@ -980,7 +980,7 @@ export class Processors {
   }
 
   /**
-   * Construct a {@link NumberMultiplier} processor that will multiply a property
+   * Construct a {@link processor.NumberMultiplier} processor that will multiply a property
    * value by a specified factor, returning either the old or the new value
    * as specified.
    *
@@ -1003,12 +1003,12 @@ export class Processors {
   }
 
   /**
-   * Return an {@link EntryProcessor} that does nothing and returns `true` as a result of execution.
+   * Return an {@link processor.EntryProcessor} that does nothing and returns `true` as a result of execution.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
    *
-   * @return an {@link EntryProcessor} that does nothing and returns `true` as a result of execution
+   * @return an {@link processor.EntryProcessor} that does nothing and returns `true` as a result of execution
    */
   static nop<K = any, V = any> (): processor.EntryProcessor<K, V> {
     return processor.NullProcessor.INSTANCE
@@ -1033,7 +1033,7 @@ export class Processors {
   }
 
   /**
-   * Construct a {@link VersionedPut} processor that updates an entry with
+   * Construct a {@link processor.VersionedPut} processor that updates an entry with
    * a new value if and only if the version of the new value matches
    * to the version of the current entry's value. This processor
    * optionally returns the current value as a result of the invocation
@@ -1054,7 +1054,7 @@ export class Processors {
   }
 
   /**
-   * Construct a {@link VersionedPutAll} processor that updates an entry with a new
+   * Construct a {@link processor.VersionedPutAll} processor that updates an entry with a new
    * value if and only if the version of the new value matches to the
    * version of the current entry's value (which must exist). This processor
    * optionally returns a map of entries that have not been updated (the
@@ -1064,12 +1064,12 @@ export class Processors {
    * @typeParam V  the type of the Map entry value
    *
    * @param map            a map of values to update entries with
-   * @param allowInsert    specifies whether or not an insert should be
+   * @param allowInsert    specifies whether an insert should be
    *                       allowed (no currently existing value)
-   * @param returnCurrent  specifies whether or not the processor should
+   * @param returnCurrent  specifies whether the processor should
    *                       return the entries that have not been updated
    *
-   * @return a {@link VersionedPutAll} processor
+   * @return a {@link processor.VersionedPutAll} processor
    */
   static versionedPutAll<K = any, V = any> (map: Map<K, V>, allowInsert: boolean = false, returnCurrent: boolean = false): processor.VersionedPutAll<K, V> {
     return new processor.VersionedPutAll(map, allowInsert, returnCurrent)
@@ -1088,31 +1088,31 @@ export class Processors {
   }
 
   /**
-   * Return a new {@link ScriptProcessor}.
+   * Return a new {@link processor.ScriptProcessor}.
    *
    * @typeParam K  the type of the Map entry key
    * @typeParam V  the type of the Map entry value
    *
    * @param language  the language the script is written. Currently, only
    *                  `js` (for JavaScript) is supported
-   * @param name      the name of the {@link EntryProcessor} that needs to
+   * @param name      the name of the {@link processor.EntryProcessor} that needs to
    *                  be executed
-   * @param args      the arguments to be passed to the {@link EntryProcessor}
+   * @param args      the arguments to be passed to the {@link processor.EntryProcessor}
    *
-   * @return a new  {@link ScriptProcessor}
+   * @return a new  {@link processor.ScriptProcessor}
    */
   static script<K = any, V = any, R = any> (language: string, name: string, ...args: any[]): processor.ScriptProcessor<K, V, R> {
     return new processor.ScriptProcessor(language, name, args)
   }
 
   /**
-   * Constructs a {@link TouchProcessor} that `touches` an entry (if present) in order to
+   * Constructs a {@link processor.TouchProcessor} that `touches` an entry (if present) in order to
    * trigger interceptor re-evaluation and possibly increment expiry time.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
    *
-   * @return a new {@link TouchProcessor}
+   * @return a new {@link processor.TouchProcessor}
    */
   static touch (): processor.TouchProcessor {
     return new processor.TouchProcessor()

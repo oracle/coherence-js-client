@@ -1,9 +1,9 @@
 {
   "tsconfig": "src/tsconfig.json",
   "entryPoints": [
-    "./src"
+    "./src/index.ts"
   ],
-  "entryPointStrategy": "expand",
+  "entryPointStrategy": "resolve",
   "out": "docs",
   "excludePrivate": true,
   "name": "Oracle Coherence JavaScript Client",

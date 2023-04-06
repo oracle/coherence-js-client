@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -55,7 +55,7 @@ export namespace event {
     protected oldValueBytes?: Uint8Array
 
     /**
-     * The {@link Serializer} to use to deserialize in-bound `MapEvents`.
+     * The {@link util.Serializer} to use to deserialize in-bound `MapEvents`.
      */
     protected serializer: util.Serializer
 
@@ -63,8 +63,8 @@ export namespace event {
      * Constructs a new `MapEvent`
      *
      * @param source             the event source
-     * @param mapEventResponse   the {@link MapEventResponse} from the server
-     * @param serializer
+     * @param mapEventResponse   the `gRPC` `MapEventResponse` from the server
+     * @param serializer         the {@link util.Serializer} to use to deserialize in-bound `MapEvents`.
      */
     constructor (source: NamedCache<K, V>, mapEventResponse: MapEventResponse, serializer: util.Serializer) {
       this._name = source.name
@@ -344,8 +344,8 @@ export namespace event {
      * @param namedMap    the {@link NamedMap} to manage events for
      * @param session     the associated {@link Session}
      * @param client      the `gRPC` interface for making requests
-     * @param serializer  the {@link Serializer} used by this map
-     * @param emitter     the {@link EventEmitter} to use
+     * @param serializer  the {@link util.Serializer} used by this map
+     * @param emitter     the `EventEmitter` to use
      */
     constructor (namedMap: NamedMap<K, V>, session: Session, client: NamedCacheServiceClient, serializer: util.Serializer, emitter: EventEmitter) {
       this.mapName = namedMap.name
@@ -438,9 +438,9 @@ export namespace event {
     }
 
     /**
-     * Process incoming `gRPC` {@link MapListenerResponse}s.
+     * Process incoming `gRPC` `MapListenerResponse`s.
      *
-     * @param resp  the {@link MapListenerResponse} to process
+     * @param resp  the `gRPC` `MapListenerResponse` to process
      */
     handleResponse (resp: MapListenerResponse) {
       switch (resp.getResponseTypeCase()) {
@@ -552,7 +552,7 @@ export namespace event {
      * Removes the registration of the listener for the provided filter.
      *
      * @param listener    the {@link MapListener}
-     * @param mapFilter   the {@link MapEventFilter} associated with the listener
+     * @param mapFilter   the {@link filter.MapEventFilter} associated with the listener
      */
     removeFilterListener (listener: event.MapListener<K, V>, mapFilter: filter.MapEventFilter<K, V> | null): Promise<void> {
       const filter = mapFilter == null ? MapEventsManager.DEFAULT_FILTER : mapFilter
@@ -566,9 +566,9 @@ export namespace event {
     }
 
     /**
-     * Write the provided `gRPC` {@link MapListenerRequest}.
+     * Write the provided `gRPC` `MapListenerRequest`.
      *
-     * @param request the {@link MapListenerRequest}
+     * @param request the `gRPC` `MapListenerRequest`
      *
      */
     writeRequest (request: MapListenerRequest): Promise<void> {
@@ -816,7 +816,7 @@ export namespace event {
     }
 
     /**
-     * Send a `gRPC` {@link MapListenerRequest} to subscribe the key or filter.
+     * Send a `gRPC` `MapListenerRequest` to subscribe the key or filter.
      *
      * @param isLite `true` if the event should only include the key, or `false`
      *               if the event should include old and new values as well as the key
@@ -829,7 +829,7 @@ export namespace event {
     }
 
     /**
-     * Send a `gRPC` {@link MapListenerRequest} to unsubscribe the key or filter.
+     * Send a `gRPC` `MapListenerRequest` to unsubscribe the key or filter.
      */
     async doUnsubscribe (): Promise<void> {
       // @ts-ignore
@@ -863,14 +863,14 @@ export namespace event {
     /**
      * Custom actions that implementations may need to make after a subscription has been completed.
      *
-     * @param request the {@link MapListenerRequest} that was used to subscribe
+     * @param request the `gRPC` `MapListenerRequest` that was used to subscribe
      */
     abstract postSubscribe (request: MapListenerRequest): void;
 
     /**
      * Custom actions that implementations may need to make after an unsubscription has been completed.
      *
-     * @param request the {@link MapListenerRequest} that was used to unsubscribe
+     * @param request the `gRPC` `MapListenerRequest` that was used to unsubscribe
      */
     abstract postUnsubscribe (request: MapListenerRequest): void;
   }

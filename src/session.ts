@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2023 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -414,11 +414,11 @@ export class TlsOptions {
  *
  * This class also extends EventEmitter and emits the following
  * events:
- * 1. {@link MapLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
- * 2. {@link MapLifecycleEvent.TRUNCATED}: When the underlying cache is truncated
- * 3. {@link MapLifecycleEvent.RELEASED}: When the underlying cache is released
- * 4. {@link event.SessionLifecycleEvent.CONNECT}`: when the Session detects the underlying `gRPC` channel has connected.
- * 4. {@link event.SessionLifecycleEvent.DISCONNECT}`: when the Session detects the underlying `gRPC` channel has disconnected
+ * 1. {@link event.MapLifecycleEvent.DESTROYED}: when the underlying cache is destroyed
+ * 2. {@link event.MapLifecycleEvent.TRUNCATED}: When the underlying cache is truncated
+ * 3. {@link event.MapLifecycleEvent.RELEASED}: When the underlying cache is released
+ * 4. {@link event.SessionLifecycleEvent.CONNECTED}`: when the Session detects the underlying `gRPC` channel has connected.
+ * 4. {@link event.SessionLifecycleEvent.DISCONNECTED}`: when the Session detects the underlying `gRPC` channel has disconnected
  * 5. {@link event.SessionLifecycleEvent.RECONNECTED}`: when the Session detects the underlying `gRPC` channel has re-connected
  * 5. {@link event.SessionLifecycleEvent.CLOSED}`: when the Session has been closed
  */
@@ -691,10 +691,7 @@ export class Session
   }
 
   /**
-   * Returns a {@link NamedCacheClient} for the specified cache name. This class
-   * maintains an internal cache (a Map) and if a {@link NamedCacheClient} exists
-   * in the cache it is returned. Else a new {@link NamedCacheClient} is created
-   * (then cached) and returned.
+   * Returns a {@link NamedCache} for the specified cache name.
    *
    * @param name    the cache name
    * @param format  the serialization format for keys and values stored within the cache
@@ -720,6 +717,12 @@ export class Session
     return namedCache
   }
 
+  /**
+   * Returns a {@link NamedMap} for the specified map name.
+   *
+   * @param name    the cache name
+   * @param format  the serialization format for keys and values stored within the cache
+   */
   getMap<K, V> (name: string, format: string = Session.DEFAULT_FORMAT): NamedMap<K, V> {
     return this.getCache(name, format) as NamedMap<K, V>
   }

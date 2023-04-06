@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -324,54 +324,56 @@ export interface NamedMap<K, V> {
   /**
    * Perform an aggregating operation against the entries specified by the passed keys.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
    * @param keys        the Iterable of keys that specify the entries within this Map to aggregate across
-   * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
+   * @param aggregator  the {@link aggregator.EntryAggregator} that is used to aggregate across the specified entries
+   *                    of this Map
    */
   aggregate<R> (keys: Iterable<K>, aggregator: EntryAggregator<K, V, R>): Promise<R>
 
   /**
-   * Perform an aggregating operation against the set of entries that are selected by the given {@link Filter}.
+   * Perform an aggregating operation against the set of entries that are selected by the given {@link filter.Filter}.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
-   * @param filter      the {@link Filter} that is used to select entries within this Map to aggregate across
-   * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
+   * @param filter      the {@link filter.Filter} that is used to select entries within this Map to aggregate across
+   * @param aggregator  the {@link aggregator.EntryAggregator} that is used to aggregate across the specified entries
+   *                    of this Map
    */
   aggregate<R> (filter: Filter, aggregator: EntryAggregator<K, V, R>): Promise<R>
 
   /**
    * Perform an aggregating operation against all the entries.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
-   * @param aggregator  the {@link EntryAggregator} that is used to aggregate across the specified entries of this Map
+   * @param aggregator  the {@link aggregator.EntryAggregator} that is used to aggregate across the specified entries of this Map
    */
   aggregate<R, T, E> (aggregator: EntryAggregator<K, V, R>): Promise<R>
 
   /**
-   * Invoke the passed {@link EntryProcessor} against the {@link Entry} specified by the
+   * Invoke the passed {@link processor.EntryProcessor} against the entry specified by the
    * passed key, returning the result of the invocation.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
    * @param key        the key to process it is not required to exist within the Map
-   * @param processor  the {@link EntryProcessor} to use to process the specified key
+   * @param processor  the {@link processor.EntryProcessor} to use to process the specified key
    *
-   * @return the result of the invocation as returned from the {@link EntryProcessor}
+   * @return the result of the invocation as returned from the {@link processor.EntryProcessor}
    */
   invoke<R> (key: K, processor: EntryProcessor<K, V, R>): Promise<R | null>
 
   /**
-   * Invoke the passed {@link EntryProcessor} against the entries specified by the
+   * Invoke the passed {@link processor.EntryProcessor} against the entries specified by the
    * passed keys, returning the result of the invocation for each.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
-   * @param processor  the {@link EntryProcessor} to use to process the specified keys
+   * @param processor  the {@link processor.EntryProcessor} to use to process the specified keys
    *
-   * @return a Map containing the results of invoking the {@link EntryProcessor}
+   * @return a Map containing the results of invoking the {@link processor.EntryProcessor}
    *         against each of the specified keys
    */
   invokeAll<R> (processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
@@ -380,16 +382,16 @@ export interface NamedMap<K, V> {
    * Invoke the passed EntryProcessor against the entries specified by the passed keys,
    * returning the result of the invocation for each.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
    * @param keys       the keys to process these keys are not required to exist within the Map
-   * @param processor  the {@link EntryProcessor} to use to process the specified keys
+   * @param processor  the {@link processor.EntryProcessor} to use to process the specified keys
    */
   invokeAll<R> (keys: Iterable<K>, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
 
   /**
-   * Invoke the passed EntryProcessor against the set of entries that are selected by the given Filter,
-   * returning the result of the invocation for each.
+   * Invoke the passed {@link processor.EntryProcessor} against the set of entries that are selected by the
+   * given {@link filter.Filter}, returning the result of the invocation for each.
    * <p>
    * Unless specified otherwise, implementations will perform this operation in two steps:
    * 1. use the filter to retrieve a matching entry set
@@ -398,12 +400,12 @@ export interface NamedMap<K, V> {
    * This algorithm assumes that the agent's processing does not affect the result of the specified filter evaluation,
    * since the filtering and processing could be performed in parallel on different threads. If this assumption does
    * not hold, the processor logic has to be idempotent, or at least re-evaluate the filter. This could be easily
-   * accomplished by wrapping the processor with the {@link ConditionalProcessor}.
+   * accomplished by wrapping the processor with the {@link processor.ConditionalProcessor}.
    *
-   * @typeParam R  the type of value returned by the {@link EntryProcessor}
+   * @typeParam R  the type of value returned by the {@link processor.EntryProcessor}
    *
-   * @param filter     a {@link Filter} that results in the set of keys to be processed
-   * @param processor  the {@link EntryProcessor} to use to process the specified keys
+   * @param filter     a {@link filter.Filter} that results in the set of keys to be processed
+   * @param processor  the {@link processor.EntryProcessor} to use to process the specified keys
    */
   invokeAll<R> (filter: Filter, processor: EntryProcessor<K, V, R>): Promise<Map<K, R>>
 
@@ -416,14 +418,15 @@ export interface NamedMap<K, V> {
   on (eventName: MapLifecycleEvent.RELEASED | MapLifecycleEvent.TRUNCATED | MapLifecycleEvent.DESTROYED, handler: (cacheName: string) => void): void
 
   /**
-   * Add a {@link MapListener} that will receive events (inserts,
+   * Add a {@link event.MapListener} that will receive events (inserts,
    * updates, deletes) that occur against the map, with the key, old-value
    * and new-value included.
    *
-   * @param listener     the {@link MapListener} to receive events
+   * @param listener     the {@link event.MapListener} to receive events
    * @param keyOrFilter  the optional the key that identifies the entry for which to raise events or a filter that
-   *                     will be passed MapEvent objects to select from; a {@link MapEvent} will be delivered to the
-   *                     listener only if the filter evaluates to true for that {@link MapEvent} (see {@link MapEventFilter});
+   *                     will be passed MapEvent objects to select from; a {@link event.MapEvent} will be delivered to the
+   *                     listener only if the filter evaluates to true for that {@link event.MapEvent}
+   *                     (see {@link filter.MapEventFilter});
    *                     `null` is equivalent to a filter that always returns `true`
    * @param isLite       optionally pass `true` to indicate that the MapEvent objects do not have to include the
    *                     old or new values in order to allow optimizations
@@ -434,7 +437,7 @@ export interface NamedMap<K, V> {
    * Remove a standard map listener that previously signed up for all
    * events. This has the same result as the following call:
    *
-   * @param listener     the {@link MapListener} to receive events
+   * @param listener     the {@link event.MapListener} to receive events
    * @param keyOrFilter  the key or filter passed to a previous addMapListener invocation
    */
   removeMapListener (listener: event.MapListener<K, V>, keyOrFilter?: K | MapEventFilter<K, V>): Promise<void>;
@@ -479,11 +482,11 @@ export interface NamedMap<K, V> {
    * Return a set view of the keys contained in this map for entries that
    * satisfy the criteria expressed by the filter.
    *
-   * Unlike the {@link keySet()} method, the set returned by this method may
+   * Unlike the {@link #keySet()} method, the set returned by this method may
    * not be backed by the map, so changes to the set may not be reflected in the
    * map, and vice-versa.
    *
-   * @param filter      the Filter object representing the criteria that the
+   * @param filter      the {@link filter.Filter} object representing the criteria that the
    *                    entries of this map should satisfy
    *
    * @return a set of keys for entries that satisfy the specified criteria
@@ -508,13 +511,13 @@ export interface NamedMap<K, V> {
    * criteria expressed by the filter.  Each element in the returned set is a
    * {@link MapEntry}.
    *
-   * Unlike the `entrySet()` method, the set returned by this method
+   * Unlike the {@link #entrySet()} method, the set returned by this method
    * may not be backed by the map, so changes to the set may not be reflected
    * in the map, and vice-versa.
    *
-   * @param filter      the Filter object representing the criteria that the
+   * @param filter      the {@link filter.Filter} object representing the criteria that the
    *                    entries of this map should satisfy
-   * @param comparator  the {@link Comparator} object which imposes an ordering on
+   * @param comparator  the {@link util.Comparator} object which imposes an ordering on
    *                    entries in the resulting set; or `null` if the
    *                    entries' values natural ordering should be used
    *
@@ -530,7 +533,7 @@ export interface NamedMap<K, V> {
    * cache.removeIndex(Extractors.extract('name'))
    * ```
    *
-   * @param extractor  The ValueExtractor object that is used to extract
+   * @param extractor  The {@link extractor.ValueExtractor} object that is used to extract
    *                   an indexable Object from a value stored in the
    *                   indexed Map. Must not be `null`.
    *
@@ -554,13 +557,13 @@ export interface NamedMap<K, V> {
    * Return a Set of the values contained in this map that satisfy the
    * criteria expressed by the filter.
    * <p>
-   * Unlike the `values()` method, the collection returned by this
+   * Unlike the {@link #values()} method, the collection returned by this
    * method may not be backed by the map, so changes to the collection may not
    * be reflected in the map, and vice-versa.
    *
-   * @param filter     the {@link Filter} object representing the criteria that the
+   * @param filter     the {@link filter.Filter} object representing the criteria that the
    *                   entries of this map should satisfy
-   * @param comparator the {@link Comparator} object which imposes an ordering on
+   * @param comparator the {@link util.Comparator} object which imposes an ordering on
    *                   entries in the resulting set; or <tt>null</tt> if the
    *                   entries' values natural ordering should be used
    *

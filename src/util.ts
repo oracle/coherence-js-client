@@ -516,7 +516,7 @@ export namespace util {
      */
     [Symbol.toStringTag]: string | undefined
     /**
-     * {@link NamedCacheClient} reference to allow the manipulation of an underlying cache
+     * {@link NamedCache} reference to allow the manipulation of an underlying cache
      * while pages are processed.
      */
     protected readonly namedCache: NamedCacheClient<K, V>
@@ -524,7 +524,7 @@ export namespace util {
     /**
      * Constructs a new `PageSet`.
      *
-     * @param namedCache  the {@link NamedCacheClient} to page through
+     * @param namedCache  the {@link NamedCache} to page through
      */
     protected constructor (namedCache: NamedCacheClient<K, V>) {
       this.namedCache = namedCache
@@ -576,7 +576,7 @@ export namespace util {
     /**
      * Constructs a new `KeySet`.
      *
-     * @param namedCache  the {@link NamedCacheClient} to page through
+     * @param namedCache  the {@link NamedCache} to page through
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       super(namedCache)
@@ -625,7 +625,7 @@ export namespace util {
     /**
      * Constructs a new `EntrySet`.
      *
-     * @param namedCache  the {@link NamedCacheClient} to page through
+     * @param namedCache  the {@link NamedCache} to page through
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       super(namedCache)
@@ -674,7 +674,7 @@ export namespace util {
     /**
      * Constructs  a new `ValueSet`.
      *
-     * @param namedCache  the {@link NamedCacheClient} to page through
+     * @param namedCache  the {@link NamedCache} to page through
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       super(namedCache)
@@ -719,7 +719,7 @@ export namespace util {
     /**
      * Constructs a new EntrySetHelper.
      *
-     * @param namedCache  the backing {@link NamedCacheClient}
+     * @param namedCache  the backing {@link NamedCache}
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       this.namedCache = namedCache
@@ -757,7 +757,7 @@ export namespace util {
     /**
      * Constructs a new ValueSetHelper.
      *
-     * @param namedCache  the backing {@link NamedCacheClient}
+     * @param namedCache  the backing {@link NamedCache}
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       this.namedCache = namedCache
@@ -795,7 +795,7 @@ export namespace util {
     /**
      * Constructs a new KeySetHelper.
      *
-     * @param namedCache  the backing {@link NamedCacheClient}
+     * @param namedCache  the backing {@link NamedCache}
      */
     constructor (namedCache: NamedCacheClient<K, V>) {
       this.namedCache = namedCache
@@ -1516,11 +1516,11 @@ export namespace util {
 
     /**
      * Serializes the specified object and returns the
-     * {@link Buffer} containing the serialized data.
+     * `Buffer`` containing the serialized data.
      *
      * @param obj  the object to be serialized
      *
-     * @returns the {@link Buffer} containing the serialized data.
+     * @returns the `Buffer`` containing the serialized data.
      */
     serialize (obj: any): Buffer;
 
@@ -1547,7 +1547,7 @@ export namespace util {
    * object in Javascript.  Using 1BigInt` as an example; using a TypeHandler the BigInt can be deserialized
    * to JSON in the required fashion in order to have a BigInteger created in Coherence and vice-versa.
    */
-  abstract class TypeHandler {
+  export abstract class TypeHandler {
     protected readonly _type: string
 
     /**
@@ -1713,7 +1713,7 @@ export namespace util {
   }
 
   /**
-   * Base {@link TypeHandler} for the supported large numeric types
+   * Base {@link util.TypeHandler} for the supported large numeric types
    * that map to Java's BigInteger and BigDecimal.
    */
   abstract class BaseNumericHandler extends TypeHandler {
@@ -1730,7 +1730,7 @@ export namespace util {
   }
 
   /**
-   * {@link TypeHandler} implementation for Decimal types (decimal.js)
+   * {@link util.TypeHandler} implementation for Decimal types (decimal.js)
    */
   class DecimalHandler extends BaseNumericHandler {
     constructor() {
@@ -1748,7 +1748,7 @@ export namespace util {
   }
 
   /**
-   * {@link TypeHandler} implementation for BigInt types.
+   * {@link util.TypeHandler} implementation for BigInt types.
    */
   class BigIntHandler extends BaseNumericHandler {
     constructor() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2023 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -117,9 +117,9 @@ export namespace filter {
      *
      * @param typeName           Server-side `Filter` implementation type identifier.
      * @param extractorOrMethod  the {@link extractor.ValueExtractor} to use by this {@link Filter} or a method name to
-     *                           make a {@link UniversalExtractor} for; this parameter can also be a dot-delimited
-     *                           sequence of method names which would result in an ExtractorFilter based on
-     *                           the {@link ChainedExtractor} that is based on an array of corresponding
+     *                           make a {@link extractor.UniversalExtractor} for; this parameter can also be a
+     *                           dot-delimited sequence of method names which would result in an ExtractorFilter based
+     *                           on the {@link extractor.ChainedExtractor} that is based on an array of corresponding
      *                           ReflectionExtractor objects
      */
     protected constructor (typeName: string, extractorOrMethod: extractor.ValueExtractor | string) {
@@ -809,7 +809,7 @@ export namespace filter {
      * Construct a MapEventFilter that evaluates MapEvent objects
      * based on the specified combination of event types.
      *
-     * @param maskOrFilter  combination of any of the E_* values or the filter passed previously to a keySet() query method
+     * @param maskOrFilter  combination of the E_* values or the filter passed previously to a keySet() query method
      * @param filter        the filter used for evaluating event values
      */
     constructor (maskOrFilter: number | Filter, filter?: Filter) {
@@ -899,7 +899,7 @@ export namespace filter {
    * Filter which returns true for entries that currently exist in a map.
    *
    * This Filter is intended to be used solely in combination with a
-   * {@link ConditionalProcessor} and is unnecessary
+   * {@link processor.ConditionalProcessor} and is unnecessary
    * for standard {@link NamedMap} operations.
    */
   export class PresentFilter
@@ -945,8 +945,8 @@ export namespace filter {
  *
  * @remarks
  * The methods in this class are simple factory methods for various
- * {@link Filter} classes. The use of these methods is strongly
- * encouraged in lieu of direct construction of {@link Filter} classes as
+ * {@link filter.Filter} classes. The use of these methods is strongly
+ * encouraged in lieu of direct construction of {@link filter.Filter} classes as
  * it makes the code more readable.
  */
 export class Filters {
@@ -1111,7 +1111,7 @@ export class Filters {
   }
 
   /**
-   * Return a {@link MapEventFilter} using the provided filter and {@link MapEventFilter} mask.
+   * Return a {@link filter.MapEventFilter} using the provided filter and {@link filter.MapEventFilter} mask.
    *
    * @param ff    the event filter
    * @param mask  the event mask

@@ -1,8 +1,8 @@
 /*
- * Copyright (c) 2020, 2022 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 import { extractor, Extractors } from './extractors'
@@ -15,7 +15,7 @@ export namespace aggregator {
 
   /**
    * An EntryAggregator represents processing that can be directed to occur
-   * against some subset of the entries in an cache, resulting in a
+   * against some subset of the entries in a cache, resulting in an
    * aggregated result. Common examples of aggregation include functions such
    * as min(), max() and avg(). However, the concept of aggregation applies to
    * any process that needs to evaluate a group of entries to come up with a
@@ -44,8 +44,9 @@ export namespace aggregator {
      * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
      *                             could be invoked via Java reflection and that returns values to aggregate; this
      *                             parameter can also be a dot-delimited sequence of method names which would
-     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-     *                             an array of corresponding {@link UniversalExtractor} objects; must not be `null`
+     *                             result in an aggregator based on the {@link extractor.ChainedExtractor}
+     *                             that is based on an array of corresponding {@link extractor.UniversalExtractor}
+     *                             objects ; must not be `null`
      */
     protected constructor (clz: string, extractorOrProperty?: extractor.ValueExtractor | string) {
       this['@class'] = clz
@@ -77,7 +78,7 @@ export namespace aggregator {
    * <ul>
    * <li>All the extracted objects must implement the Java Comparable interface, or</li>
    * <li>The AbstractComparableAggregator has to be provided with a
-   * {@link Comparator} object.</li>  This {@link Comparator} must exist on the server in order
+   * {@link util.Comparator} object.</li>  This {@link util.Comparator} must exist on the server in order
    * to be usable.
    * </ul>
    * If there are no entries to aggregate, the returned result will be `null`.
@@ -94,8 +95,9 @@ export namespace aggregator {
      * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
      *                             could be invoked via Java reflection and that returns values to aggregate; this
      *                             parameter can also be a dot-delimited sequence of method names which would
-     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-     *                             an array of corresponding {@link UniversalExtractor} objects
+     *                             result in an aggregator based on the {@link extractor.ChainedExtractor}
+     *                             that is based on an array of corresponding {@link extractor.UniversalExtractor}
+     *                             objects
      */
     protected constructor (clz: string, extractorOrProperty: extractor.ValueExtractor | string) {
       super(clz, extractorOrProperty)
@@ -119,8 +121,9 @@ export namespace aggregator {
      * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
      *                             could be invoked via Java reflection and that returns values to aggregate; this
      *                             parameter can also be a dot-delimited sequence of method names which would
-     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-     *                             an array of corresponding {@link UniversalExtractor} objects
+     *                             result in an aggregator based on the {@link extractor.ChainedExtractor}
+     *                             that is based on an array of corresponding {@link extractor.UniversalExtractor}
+     *                             objects
      */
     protected constructor (clz: string, extractorOrProperty: extractor.ValueExtractor | string) {
       super(clz, extractorOrProperty)
@@ -144,8 +147,8 @@ export namespace aggregator {
      *                              the name of the method that could be invoked via Java reflection and that
      *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
      *                              sequence of method names which would result in an aggregator based on the
-     *                              {@link ChainedExtractor} that is based on an array of corresponding
-     *                              {@link UniversalExtractor} objects.  May not be null
+     *                              {@link extractor.ChainedExtractor} that is based on an array of corresponding
+     *                              {@link extractor.UniversalExtractor} objects.  May not be null
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('BigDecimalAverage'), extractorOrProperty)
@@ -198,9 +201,8 @@ export namespace aggregator {
    * Return the set of unique values extracted from a set of entries in a
    * Map. If the set of entries is empty, an empty array is returned.
    *
-   * This aggregator could be used in combination with {@link
-    * UniversalExtractor} allowing to collect all unique combinations
-   * (tuples) of a given set of attributes.
+   * This aggregator could be used in combination with {@link extractor.UniversalExtractor}
+   * allowing to collect all unique combinations (tuples) of a given set of attributes.
    *
    * The DistinctValues aggregator covers a simple case of a more generic
    * aggregation pattern implemented by the `GroupAggregator`, which in
@@ -217,8 +219,9 @@ export namespace aggregator {
      * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
      *                             could be invoked via Java reflection and that returns values to aggregate; this
      *                             parameter can also be a dot-delimited sequence of method names which would
-     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-     *                             an array of corresponding {@link UniversalExtractor} objects
+     *                             result in an aggregator based on the {@link extractor.ChainedExtractor}
+     *                             that is based on an array of corresponding {@link extractor.UniversalExtractor}
+     *                             objects
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('DistinctValues'), extractorOrProperty)
@@ -229,16 +232,15 @@ export namespace aggregator {
    * The `GroupAggregator` provides an ability to split a subset of entries
    * in a Map into a collection of non-intersecting subsets and then
    * aggregate them separately and independently. The splitting (grouping)
-   * is performed using the results of the underlying {@link
-    * UniversalExtractor} in such a way that two entries will belong to the
-   * same group if and only if the result of the corresponding extract
-   * call produces the same value or tuple (list of values). After the
-   * entries are split into the groups, the underlying aggregator is
-   * applied separately to each group. The result of the aggregation by
-   * the` GroupAggregator` is a Map that has distinct values (or tuples) as
-   * keys and results of the individual aggregation as
+   * is performed using the results of the underlying {@link extractor.UniversalExtractor}
+   * in such a way that two entries will belong to the same group if and only
+   * if the result of the corresponding extract call produces the same value
+   * or tuple (list of values). After the entries are split into the groups,
+   * the underlying aggregator is applied separately to each group. The result
+   * of the aggregation by the` GroupAggregator` is a Map that has distinct values
+   * (or tuples) as keys and results of the individual aggregation as
    * values. Additionally, those results could be further reduced using an
-   * optional {@link Filter} object.
+   * optional {@link filter.Filter} object.
    *
    * Informally speaking, this aggregator is analogous to the SQL `group
    * by` and `having` clauses. Note that the `having` Filter is applied
@@ -265,7 +267,7 @@ export namespace aggregator {
     protected aggregator: EntryAggregator<K, V, R>
 
     /**
-     * The {@link Filter} object representing the `having` clause of this `group by`
+     * The {@link filter.Filter} object representing the `having` clause of this `group by`
      * aggregator.
      */
     protected filter?: filter.Filter
@@ -277,8 +279,8 @@ export namespace aggregator {
      * @param extractorOrProperty   a {@link extractor.ValueExtractor} object that is used to split entries into non-intersecting
      *                              subsets; may not be `null`. This parameter can also be a dot-delimited
      *                              sequence of method names which would result in an aggregator based on the
-     *                              {@link ChainedExtractor} that is based on an array of corresponding
-     *                              {@link UniversalExtractor} objects; may not be `null`
+     *                              {@link extractor.ChainedExtractor} that is based on an array of corresponding
+     *                              {@link extractor.UniversalExtractor} objects; may not be `null`
      * @param aggregator  an EntryAggregator object; may not be null
      * @param filter      an optional Filter object used to filter out
      *                    results of individual group aggregation results
@@ -311,8 +313,8 @@ export namespace aggregator {
      *                              the name of the method that could be invoked via Java reflection and that
      *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
      *                              sequence of method names which would result in an aggregator based on the
-     *                              {@link ChainedExtractor} that is based on an array of corresponding
-     *                              {@link UniversalExtractor} objects.  May not be null
+     *                              {@link extractor.ChainedExtractor} that is based on an array of corresponding
+     *                              {@link extractor.UniversalExtractor} objects.  May not be null
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('ComparableMax'), extractorOrProperty)
@@ -335,8 +337,8 @@ export namespace aggregator {
      *                              the name of the method that could be invoked via Java reflection and that
      *                              returns numeric values to aggregate; this parameter can also be a dot-delimited
      *                              sequence of method names which would result in an aggregator based on the
-     *                              {@link ChainedExtractor} that is based on an array of corresponding
-     *                              {@link UniversalExtractor} objects.  May not be null
+     *                              {@link extractor.ChainedExtractor} that is based on an array of corresponding
+     *                              {@link extractor.UniversalExtractor} objects.  May not be null
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('ComparableMin'), extractorOrProperty)
@@ -456,7 +458,7 @@ export namespace aggregator {
 
   /**
    * This aggregator is used to produce an object that contains an estimated or
-   * actual cost of the query execution for a given {@link Filter}.
+   * actual cost of the query execution for a given {@link filter.Filter}.
    *
    * For example, the following code will print a *QueryRecord*,
    * containing the estimated query cost and corresponding execution steps.
@@ -523,7 +525,7 @@ export namespace aggregator {
    * set of values, it will return a portion of value attributes based on the
    * provided {@link extractor.ValueExtractor}.
    *
-   * This aggregator could be used in combination with {@link MultiExtractor} allowing one
+   * This aggregator could be used in combination with {@link extractor.MultiExtractor} allowing one
    * to collect tuples that are a subset of the attributes of each object stored in
    * the cache.
    *
@@ -540,8 +542,9 @@ export namespace aggregator {
      * @param extractorOrProperty  the extractor that provides values to aggregate or the name of the method that
      *                             could be invoked via Java reflection and that returns values to aggregate; this
      *                             parameter can also be a dot-delimited sequence of method names which would
-     *                             result in an aggregator based on the {@link ChainedExtractor} that is based on
-     *                             an array of corresponding {@link UniversalExtractor} objects
+     *                             result in an aggregator based on the {@link extractor.ChainedExtractor}
+     *                             that is based on an array of corresponding {@link extractor.UniversalExtractor}
+     *                             objects
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('ReducerAggregator'), extractorOrProperty)
@@ -586,9 +589,9 @@ export namespace aggregator {
     /**
      * Create a {@link EntryAggregator} that wraps the specified script.
      *
-     * @param language         the language language with which the script is written in.
+     * @param language         the language with which the script is written in.
      *                         Currently, only `js` (for JavaScript) is supported
-     * @param name             the name of the {@link Filter} that needs to
+     * @param name             the name of the {@link filter.Filter} that needs to
      *                         be evaluated
      * @param args             the arguments to be passed to the script for evaluation
      */
@@ -605,7 +608,7 @@ export namespace aggregator {
   }
 
   /**
-   * Calculates an sum for values of any numeric type extracted from a set of
+   * Calculates a sum for values of any numeric type extracted from a set of
    * entries in a Map in a form of a numeric value.
    *
    * If the set of entries is empty, a 'null' result is returned.
@@ -617,8 +620,8 @@ export namespace aggregator {
      *                            the name of the method that could be invoked via Java reflection and that
      *                            returns numeric values to aggregate; this parameter can also be a dot-delimited
      *                            sequence of method names which would result in an aggregator based on the
-     *                            {@link ChainedExtractor} that is based on an array of corresponding
-     *                            {@link UniversalExtractor} objects.  May not be null
+     *                            {@link extractor.ChainedExtractor} that is based on an array of corresponding
+     *                            {@link extractor.UniversalExtractor} objects.  May not be` null`
      */
     constructor (extractorOrProperty: extractor.ValueExtractor | string) {
       super(aggregatorName('BigDecimalSum'), extractorOrProperty)
@@ -648,12 +651,12 @@ export namespace aggregator {
 
     /**
      * The extractor to obtain the values to aggregate.  If not explicitly set,
-     * this will default to an {@link IdentityExtractor}.
+     * this will default to an {@link extractor.IdentityExtractor}.
      */
     protected extractor: extractor.IdentityExtractor = Extractors.identity()
 
     /**
-     * The {@link Comparator} to apply against the extracted values.
+     * The {@link util.Comparator} to apply against the extracted values.
      * @private
      */
     protected comparator?: AggregatorComparator
@@ -806,10 +809,10 @@ export namespace aggregator {
  *
  * @remarks
  * The methods in this class are for the most part simple factory methods for
- * various {@link EntryAggregator} classes, but in some cases provide additional type
+ * various {@link aggregator.EntryAggregator} classes, but in some cases provide additional type
  * safety. They also tend to make the code more readable, especially if imported
  * statically, so their use is strongly encouraged in lieu of direct construction
- * of {@link EntryAggregator} classes.
+ * of {@link aggregator.EntryAggregator} classes.
  */
 export class Aggregators {
 
@@ -853,8 +856,8 @@ export class Aggregators {
   }
 
   /**
-   * Return a {@link GroupAggregator} based on a specified property or method name(s)
-   * and an {@link EntryAggregator}.
+   * Return a {@link aggregator.GroupAggregator} based on a specified property or method name(s)
+   * and an {@link aggregator.EntryAggregator}.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
@@ -863,11 +866,11 @@ export class Aggregators {
    * @typeParam R  the type of the group aggregator result
    *
    * @param extractorOrProperty  the extractor or method/property name to provide values for aggregation
-   * @param agg                  an underlying {@link EntryAggregator}
-   * @param filter               an optional {@link Filter} object used to filter out results
+   * @param agg                  an underlying {@link aggregator.EntryAggregator}
+   * @param filter               an optional {@link filter.Filter} object used to filter out results
    *                             of individual group aggregation results
    *
-   * @return a new {@link GroupAggregator}
+   * @return a new {@link aggregator.GroupAggregator}
    */
   static groupBy<K = any, V = any, T = any, E = any, R = any> (extractorOrProperty: extractor.ValueExtractor | string, agg: aggregator.EntryAggregator<K, V, T>, filter: filter.Filter): aggregator.EntryAggregator<K, V, Map<E, R>> {
     return new aggregator.GroupAggregator(extractorOrProperty, agg, filter)
@@ -903,17 +906,17 @@ export class Aggregators {
   }
 
   /**
-   * Return a new {@link PriorityAggregator} to control scheduling priority of an aggregation
+   * Return a new {@link aggregator.PriorityAggregator} to control scheduling priority of an aggregation
    * operation.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
    * @typeParam R  the type of the final result
    *
-   * @param agg                 the underlying {@link EntryAggregator}
-   * @param schedulingPriority  the {@link Schedule} priority
-   * @param executionTimeout    the execution {@link Timeout}
-   * @param requestTimeout      the request {@link Timeout}
+   * @param agg                 the underlying {@link aggregator.EntryAggregator}
+   * @param schedulingPriority  the schedule priority
+   * @param executionTimeout    the execution timeout
+   * @param requestTimeout      the request timeout
    */
   static priority<K = any, V = any, R = any> (agg: aggregator.EntryAggregator<K, V, R>, schedulingPriority: aggregator.Schedule = aggregator.Schedule.STANDARD,
                                               executionTimeout: number = aggregator.Timeout.DEFAULT, requestTimeout: number = aggregator.Timeout.DEFAULT): aggregator.PriorityAggregator<K, V, R> {
@@ -925,16 +928,16 @@ export class Aggregators {
   }
 
   /**
-   * Returns a new {@link QueryRecorder} aggregator which may be used is used to produce an object that
-   * contains an estimated or actual cost of the query execution for a given {@link Filter}.
+   * Returns a new {@link aggregator.QueryRecorder} aggregator which may be used is used to produce an object that
+   * contains an estimated or actual cost of the query execution for a given {@link filter.Filter}.
    *
    * @typeParam K  the type of the Map entry keys
    * @typeParam V  the type of the Map entry values
    *
-   * @param type the {@link RecordType}
+   * @param type the {@link aggregator.RecordType}
    *
-   * @return a new {@link QueryRecorder} aggregator which may be used is used to produce an object that
-   *         contains an estimated or actual cost of the query execution for a given {@link Filter}
+   * @return a new {@link aggregator.QueryRecorder} aggregator which may be used is used to produce an object that
+   *         contains an estimated or actual cost of the query execution for a given {@link filter.Filter}
    */
   static record<K = any, V = any> (type: aggregator.RecordType = aggregator.RecordType.EXPLAIN): aggregator.QueryRecorder<K, V> {
     return new aggregator.QueryRecorder<K, V>(type)
