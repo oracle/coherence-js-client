@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [14.x]
+        node-version: [14.x, 19.x]
         coherence-version: [22.06.2, 23.03]
 
     steps:
