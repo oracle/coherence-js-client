@@ -38,8 +38,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     # install protoc
-    - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v3.13.0/protoc-3.13.0-linux-x86_64.zip"
-    - run: unzip protoc-3.13.0-linux-x86_64.zip -d /tmp/grpc
+    - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
+    - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
     # install project deps
     - run: npm install
