@@ -209,15 +209,6 @@ export class Options {
   }
 
   /**
-   * Set the format.  This is a no-op
-   *
-   * @param format  the serialization format
-   */
-  set format(format: string) {
-    // no-op
-  }
-
-  /**
    * Returns the TLS-specific configuration options.
    *
    * @return the TLS-specific configuration options

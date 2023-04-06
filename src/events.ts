@@ -609,7 +609,7 @@ export namespace event {
         self.session.removeListener(SessionLifecycleEvent.RECONNECTED, self.onReconnect)
         self.session.removeListener(SessionLifecycleEvent.DISCONNECTED, self.onDisconnect)
 
-        await new Promise<void>(async (resolve) => {
+        await new Promise<void>((resolve) => {
           // Add an event handler for 'error' as calling cancel() on
           // the bidi stream will result in a CANCELLED status.
           if (bidiStream) {
