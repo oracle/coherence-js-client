@@ -8,6 +8,7 @@ lib
 src/grpc
 etc/proto
 .npmrc
+docs
 coverage
 /.nyc_output
 oracle-coherence-*tgz
