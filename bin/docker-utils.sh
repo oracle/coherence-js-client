@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2023, Oracle and/or its affiliates.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
@@ -11,7 +11,7 @@ declare VERSION=${COHERENCE_VERSION:=22.06.2}
 
 function coh_up() {
   echo "Starting test containers ..."
-  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml up -d
+  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml up --force-recreate --renew-anon-volumes -d
   SECONDS=0
   echo "Waiting for Coherence to be healthy (within 60s) ..."
   while [ ${SECONDS} -le 60 ]; do
@@ -32,10 +32,10 @@ function coh_up() {
 }
 
 function coh_down() {
-  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml down
+  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml down -v
 }
 
-while getopts "udc" OPTION; do
+while getopts "ud" OPTION; do
   case "${OPTION}" in
   u)
     coh_up

@@ -260,7 +260,9 @@ export class Options {
    * Construct a new {@link Options}.
    */
   constructor () {
-    this._address = process.env.grpc_proxy_address || Session.DEFAULT_ADDRESS
+    this._address = (process.env.grpc_proxy_address || process.env.COHERENCE_GRPC_PROXY_ADDRESS)
+        || Session.DEFAULT_ADDRESS
+
     this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
     this._readyTimeoutInMillis = Session.DEFAULT_READY_TIMEOUT
     this._format = Session.DEFAULT_FORMAT
@@ -305,6 +307,15 @@ export class TlsOptions {
    * The client certificate key.
    */
   private _clientKeyPath?: PathLike
+
+
+  constructor() {
+    this._clientKeyPath = process.env.COHERENCE_TLS_CLIENT_KEY || undefined
+    this._clientCertPath = process.env.COHERENCE_TLS_CLIENT_CERT || undefined
+    this._caCertPath = process.env.COHERENCE_TLS_CERTS_PATH || undefined
+    this._enabled = this._clientKeyPath !== undefined
+        && this._clientCertPath !== undefined && this._caCertPath !== undefined
+  }
 
   /**
    * Returns `true` if TLS is to be enabled.
@@ -498,11 +509,25 @@ export class Session
     }
 
     // If TLS is enabled then create an SSL channel credentials object.
-    this._channelCredentials = this.options.tls.enabled
-      ? credentials.createSsl(Session.readFile('caCert', this.options.tls.caCertPath),
-        Session.readFile('clientKey', this.options.tls.clientKeyPath),
-        Session.readFile('clientCert', this.options.tls.clientCertPath))
-      : credentials.createInsecure()
+    if (this.options.tls.enabled) {
+      let skipValidation: string | undefined = process.env.COHERENCE_IGNORE_INVALID_CERTS|| undefined
+      if (skipValidation !== undefined) {
+        console.warn("WARNING: you have turned off SSL certificate validation. This is insecure and not recommended.")
+      }
+
+      let caCert: Buffer = Session.readFile('caCert', this.options.tls.caCertPath)
+      let clientKey: Buffer = Session.readFile('clientKey', this.options.tls.clientKeyPath)
+      let clientCert: Buffer = Session.readFile('clientCert', this.options.tls.clientCertPath)
+
+      if (skipValidation !== undefined) {
+        this._channelCredentials = credentials.createSsl(caCert, clientKey,
+            clientCert, {checkServerIdentity: () => undefined})
+      } else {
+        this._channelCredentials = credentials.createSsl(caCert, clientKey, clientCert)
+      }
+    } else {
+      this._channelCredentials = credentials.createInsecure()
+    }
 
     let channel = this._channel = new Channel(this.options.address,
                                               this.channelCredentials,

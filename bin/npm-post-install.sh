@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2000, 2020, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2023, Oracle and/or its affiliates.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at
-# http://oss.oracle.com/licenses/upl.
+# https://oss.oracle.com/licenses/upl.
 
 set -e
 
@@ -26,23 +26,24 @@ function grab_proto_files() {
 
 # Generates and compiles the stubs generated from the installed proto files.
 function gen_compile_proto_files() {
-  declare -r PROTO_SRC_DIR="${ROOT}/etc/proto"
-  declare -r PROTO_GEN_SRC_DIR="${ROOT}/src/grpc"
-  declare -r PROTO_GEN_OUT_DIR="${ROOT}/lib/grpc"
+  declare -r PROTO_SRC_DIR="${ROOT}"/etc/proto
+  declare -r PROTO_GEN_SRC_DIR="${ROOT}"/src/grpc
+  declare -r PROTO_GEN_OUT_DIR="${ROOT}"/lib/grpc
 
   rm -rf "${PROTO_GEN_SRC_DIR}" "${PROTO_GEN_OUT_DIR}"
   mkdir -p "${PROTO_GEN_SRC_DIR}" "${PROTO_GEN_OUT_DIR}"
 
   npx grpc_tools_node_protoc \
     --plugin=protoc-gen-ts=node_modules/.bin/protoc-gen-ts \
-    --ts_out=grpc_js:${PROTO_GEN_SRC_DIR} \
-    --js_out=import_style=commonjs:${PROTO_GEN_OUT_DIR} \
-    --grpc_out=grpc_js:${PROTO_GEN_OUT_DIR} \
-    -I ${PROTO_SRC_DIR} \
-    ${PROTO_SRC_DIR}/*.proto
+    --ts_out=grpc_js:"${PROTO_GEN_SRC_DIR}" \
+    --js_out=import_style=commonjs:"${PROTO_GEN_OUT_DIR}" \
+    --grpc_out=grpc_js:"${PROTO_GEN_OUT_DIR}" \
+    -I "${PROTO_SRC_DIR}" \
+    "${PROTO_SRC_DIR}"/*.proto
 }
 
 function main() {
+  cp "${ROOT}"/etc/jvm-args-clear.txt "${ROOT}"/etc/jvm-args.txt
   grab_proto_files
   gen_compile_proto_files
 }

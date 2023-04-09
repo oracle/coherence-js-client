@@ -14,13 +14,14 @@ services:
     environment:
       - COHERENCE_WKA=server1
     ports:
-      - 30000:30000
-      - 1408:1408
-      - 9612:9612
-      - 8080:8080
-      - 6676:6676
-#    volumes:
-#      - ./certs:/certs
+      - "30000:30000"
+      - "1408:1408"
+      - "9612:9612"
+      - "8080:8080"
+      - "6676:6676"
+    volumes:
+      - .:/args
+      - ./cert:/certs
 
   coherence2:
     hostname: server2
@@ -32,7 +33,10 @@ services:
     environment:
       - COHERENCE_WKA=server1
     ports:
-      - 9613:9612
+      - "9613:9612"
+    volumes:
+      - .:/args
+      - ./cert:/certs
 
 networks:
   coherence:

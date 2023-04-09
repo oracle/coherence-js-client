@@ -16,12 +16,21 @@ describe('Session Tests Suite (unit/IT)', () => {
       it('should have the expected defaults', () => {
         const session = new Session()
 
+        if (process.env.COHERENCE_TLS_CERTS_PATH) {
+          let currentDir = process.cwd()
+          assert.equal(session.options.tls.enabled, true)
+          assert.equal(session.options.tls.caCertPath, currentDir + '/etc/cert/guardians-ca.crt')
+          assert.equal(session.options.tls.clientCertPath, currentDir + '/etc/cert/star-lord.crt')
+          assert.equal(session.options.tls.clientKeyPath, currentDir + '/etc/cert/star-lord.pem')
+        } else {
+          assert.equal(session.options.tls.enabled, false)
+          assert.equal(session.options.tls.caCertPath, undefined)
+          assert.equal(session.options.tls.clientCertPath, undefined)
+          assert.equal(session.options.tls.clientKeyPath, undefined)
+        }
+
         assert.equal(session.address, Session.DEFAULT_ADDRESS)
         assert.equal(session.options.requestTimeoutInMillis, 60000)
-        assert.equal(session.options.tls.enabled, false)
-        assert.equal(session.options.tls.caCertPath, undefined)
-        assert.equal(session.options.tls.clientCertPath, undefined)
-        assert.equal(session.options.tls.clientKeyPath, undefined)
         assert.equal(session.options.format, Session.DEFAULT_FORMAT)
       })
 
@@ -50,22 +59,6 @@ describe('Session Tests Suite (unit/IT)', () => {
         const fn = function () { Date.now() }
         const session = new Session({ callOptions: fn})
         assert.equal(session.options.callOptions, fn)
-      })
-
-      it('should be able enable tls', () => {
-        const opts1 = {
-          tls: {
-            enabled: true,
-            clientKeyPath: path.normalize(process.cwd() + '/etc/cert/clientKey.pem'),
-            clientCertPath: path.normalize(process.cwd() + '/etc/cert/clientCert.pem'),
-            caCertPath: path.normalize(process.cwd() + '/etc/cert/ca.pem') }
-        }
-        const session = new Session(opts1)
-
-        assert.equal(session.options.tls.enabled, true)
-        assert.equal(session.options.tls.caCertPath, process.cwd() + '/etc/cert/ca.pem')
-        assert.equal(session.options.tls.clientCertPath, process.cwd() + '/etc/cert/clientCert.pem')
-        assert.equal(session.options.tls.clientKeyPath, process.cwd() + '/etc/cert/clientKey.pem')
       })
     })
   })
