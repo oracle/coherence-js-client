@@ -30,7 +30,6 @@ jobs:
       matrix:
         node-version: [18.15.x, 19.x]
         coherence-version: [22.06.2, 23.03]
-        test-type: [test-cycle, test-cycle-tls]
 
     steps:
     - uses: actions/checkout@v3
@@ -45,7 +44,7 @@ jobs:
     # install project deps
     - run: npm install
     # run tests
-    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run ${{ matrix.test-type }}
+    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle-tls
     # clean up
     - name: Archive production artifacts
       if: always()

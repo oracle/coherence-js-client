@@ -6,7 +6,7 @@
 # https://oss.oracle.com/licenses/upl.
 #
 
-set -e
+set -ex
 mkdir -p "${PWD}"/etc/cert
 
 function run_secure() {
@@ -18,13 +18,16 @@ function run_secure() {
   export COHERENCE_TLS_CLIENT_KEY="${PWD}"/etc/cert/star-lord.pem
   export COHERENCE_IGNORE_INVALID_CERTS="true"
 
-  npm run compile
-  npm run coh-up
-  npm exec mocha "${PWD}"/test/**.js --recursive --exit
+  run_tests
 }
 
 function run_clear() {
   cp "${PWD}"/etc/jvm-args-clear.txt "${PWD}"/etc/jvm-args.txt
+  run_tests
+}
+
+function run_tests() {
+  env
   npm run compile
   npm run coh-up
   npm exec mocha "${PWD}"/test/**.js --recursive --exit
@@ -38,6 +41,7 @@ function cleanup() {
   export -n COHERENCE_IGNORE_INVALID_CERTS
   cp "${PWD}"/etc/jvm-args-clear.txt "${PWD}"/etc/jvm-args.txt
   rm -rf "${PWD}"/etc/cert
+  env
 }
 
 trap cleanup EXIT
