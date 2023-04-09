@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2023, Oracle and/or its affiliates.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
@@ -35,7 +35,7 @@ function coh_down() {
   COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml down
 }
 
-while getopts "udc" OPTION; do
+while getopts "ud" OPTION; do
   case "${OPTION}" in
   u)
     coh_up

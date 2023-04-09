@@ -86,9 +86,12 @@ The currently supported properties are:
 * `callOptions` - per-request gRPC call options.
 * `tls` - options related to the configuration of TLS.
     - `enabled` - determines if TLS is enabled or not.  This defaults to `false`.
-    - `caCertPath` - the path to the CA certificate.
-    - `clientCertPath` - the path to the client certificate.
-    - `clientKeyPath` - the path to the client certificate key.
+    - `caCertPath` - the path to the CA certificate.  This may be configured using the environment variable `COHERENCE_TLS_CERTS_PATH`
+    - `clientCertPath` - the path to the client certificate. This may be configured with the environment variable `COHERENCE_TLS_CLIENT_CERT`
+    - `clientKeyPath` - the path to the client certificate key. This may be configured with the environment variable `COHERENCE_TLS_CLIENT_KEY`
+
+*NOTE*: If testing locally generated certificates, set `COHERENCE_IGNORE_INVALID_CERTS` to `true` to disable
+TLS validation of the certificates.
 
 ```typescript
 const { Session } = require('@oracle/coherence')
@@ -124,7 +127,7 @@ let session = new Session(opts)
 ```
 
 It's also possible to control the default address the session will bind to by providing
-an address via the `grpc_proxy_address` environment variable.  The format of the value would
+an address via the `COHERENCE_GRPC_PROXY_ADDRESS` environment variable.  The format of the value would
 be the same as if you configured it programmatically as the above example shows.
 
 Once the session has been constructed, it will now be possible to create maps and caches.
