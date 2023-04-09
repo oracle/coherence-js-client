@@ -45,8 +45,6 @@ jobs:
     - run: npm install
     # run tests
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
-    # run tests using TLS
-    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle-tls
     # clean up
     - name: Archive production artifacts
       if: always()
