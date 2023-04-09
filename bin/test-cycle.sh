@@ -30,6 +30,7 @@ function run_tests() {
   env
   npm run compile
   npm run coh-up
+  sleep 10
   npm exec mocha "${PWD}"/test/**.js --recursive --exit
 }
 
