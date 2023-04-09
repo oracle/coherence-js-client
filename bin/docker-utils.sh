@@ -32,7 +32,7 @@ function coh_up() {
 }
 
 function coh_down() {
-  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml down -v --rmi
+  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml down -v
 }
 
 while getopts "ud" OPTION; do
