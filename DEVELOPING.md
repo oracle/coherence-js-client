@@ -39,6 +39,7 @@ https://oss.oracle.com/licenses/upl.
 
 The above can also be shortened to:
 * `npm run test-cycle` - this will start the cluster, run test tests if the cluster start was successful, and then stop the cluster
+* `npm run test-cycle-tls` - The same as `test-cycle`, but will use TLS
 
 However, if developing new functionality or tests, the manual start of the cluster using `coh-up` may be preferred as
 it avoids restarting the cluster allowing for quicker development times.
