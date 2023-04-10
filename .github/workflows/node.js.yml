@@ -38,7 +38,6 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     # install protoc
-    - run: echo "TIMESTAMP=$(date +'%s')" >> $GITHUB_ENV
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
     - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
@@ -46,9 +45,6 @@ jobs:
     - run: npm install
     # run tests
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
-    # gather logs regardless of test success/failure
-    - run: COHERENCE_VERSION=${{ matrix.coherence-version }} docker-compose -f etc/docker-compose-2-members.yaml logs > logs-$TIMESTAMP.txt
-    - run: cat logs-$TIMESTAMP.txt
     # clean up
     - name: Archive production artifacts
       if: always()
