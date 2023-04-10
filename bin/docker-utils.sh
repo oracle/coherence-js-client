@@ -20,8 +20,6 @@ function coh_up() {
       echo "Coherence is ready!"
       return
     fi
-
-    sleep 5
   done
   node_version=$(node -v)
   filename="logs-startup-${VERSION}-${node_version}.txt"
