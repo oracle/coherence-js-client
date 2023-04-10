@@ -34,7 +34,6 @@ function run_clear() {
 function run_tests() {
   npm run compile
   npm run coh-up
-  sleep 5
   timeout 3m npm exec mocha "${PWD}"/test/**.js --recursive --exit
 }
 
