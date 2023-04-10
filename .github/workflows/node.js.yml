@@ -54,4 +54,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
           name: save-log-file
-          path: log-*.txt
+          path: logs-*.txt
