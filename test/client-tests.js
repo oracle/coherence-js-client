@@ -51,7 +51,7 @@ describe('NamedCacheClient IT Test Suite', function () {
 
         setTimeout(() => {
           cache.release()
-        }, 100)
+        }, 3000)
       })
 
       await prom
@@ -69,7 +69,7 @@ describe('NamedCacheClient IT Test Suite', function () {
 
         setTimeout(() => {
           cache.destroy()
-        }, 100)
+        }, 3000)
       })
 
       await prom
@@ -375,7 +375,7 @@ describe('NamedCacheClient IT Test Suite', function () {
 
           setTimeout(() => {
             cache.release()
-          }, 100)
+          }, 3000)
         })
 
         await prom.finally(() => sess.close().finally(() => sess.waitUntilClosed()))
@@ -394,7 +394,7 @@ describe('NamedCacheClient IT Test Suite', function () {
 
           setTimeout(() => {
             cache.destroy()
-          }, 100)
+          }, 3000)
         })
 
         await prom.finally(() => sess.close().finally(() => sess.waitUntilClosed()))

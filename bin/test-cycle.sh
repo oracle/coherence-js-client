@@ -11,8 +11,10 @@ mkdir -p "${PWD}"/etc/cert
 chmod 777 "${PWD}"/etc/cert
 
 declare VERSION=${COHERENCE_VERSION:=22.06.2}
+declare LABEL=clear
 
 function run_secure() {
+  LABEL=tls
   "${PWD}"/bin/keys.sh "${PWD}"/etc/cert
   cp "${PWD}"/etc/jvm-args-tls.txt "${PWD}"/etc/jvm-args.txt
 
@@ -33,12 +35,16 @@ function run_tests() {
   npm run compile
   npm run coh-up
   sleep 10
-  npm exec mocha "${PWD}"/test/**.js --recursive --exit
+  timeout 3m npm exec mocha "${PWD}"/test/**.js --recursive --exit
+}
+
+function dump_logs() {
+  node_version=$(node -v)
+  COHERENCE_VERSION=${VERSION} docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"${1}"-test-"${VERSION}"-"${node_version}".txt
 }
 
 function cleanup() {
-  node_version=$(node -v)
-  COHERENCE_VERSION=${VERSION} docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-test-"${VERSION}"-"${node_version}".txt
+  dump_logs $LABEL
   npm run coh-down
   export -n COHERENCE_TLS_CERTS_PATH
   export -n COHERENCE_TLS_CLIENT_CERT
