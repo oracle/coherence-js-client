@@ -48,6 +48,7 @@ jobs:
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
     # gather logs regardless of test success/failure
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} docker-compose -f etc/docker-compose-2-members.yaml logs > logs-$TIMESTAMP.txt
+    - run: cat logs-$TIMESTAMP.txt
     # clean up
     - name: Archive production artifacts
       if: always()
