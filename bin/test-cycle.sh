@@ -36,7 +36,7 @@ function run_tests() {
 
 function cleanup() {
   timestamp=$(date +%s)
-  docker-compose -f etc/docker-compose-2-members.yaml logs > logs-"$timestamp".txt
+  docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"$timestamp".txt
   npm run coh-down
   export -n COHERENCE_TLS_CERTS_PATH
   export -n COHERENCE_TLS_CLIENT_CERT

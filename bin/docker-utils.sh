@@ -25,7 +25,7 @@ function coh_up() {
   done
   timestamp=$(date +%s)
   filename="logs-${timestamp}.txt"
-  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml logs > "${filename}"
+  COHERENCE_VERSION="${VERSION}" docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > "${filename}"
   echo "Coherence failed to become healthy.  See ${filename} for details."
   coh_down
   exit 1
