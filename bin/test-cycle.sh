@@ -6,8 +6,11 @@
 # https://oss.oracle.com/licenses/upl.
 #
 
-set -ex
+set -e
 mkdir -p "${PWD}"/etc/cert
+chmod 777 "${PWD}"/etc/cert
+
+declare VERSION=${COHERENCE_VERSION:=22.06.2}
 
 function run_secure() {
   "${PWD}"/bin/keys.sh "${PWD}"/etc/cert
@@ -27,7 +30,6 @@ function run_clear() {
 }
 
 function run_tests() {
-  env
   npm run compile
   npm run coh-up
   sleep 10
@@ -35,8 +37,8 @@ function run_tests() {
 }
 
 function cleanup() {
-  timestamp=$(date +%s)
-  docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"$timestamp".txt
+  node_version=$(node -v)
+  COHERENCE_VERSION=${VERSION} docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-test-"${VERSION}"-"${node_version}".txt
   npm run coh-down
   export -n COHERENCE_TLS_CERTS_PATH
   export -n COHERENCE_TLS_CLIENT_CERT
@@ -44,7 +46,6 @@ function cleanup() {
   export -n COHERENCE_IGNORE_INVALID_CERTS
   cp "${PWD}"/etc/jvm-args-clear.txt "${PWD}"/etc/jvm-args.txt
   rm -rf "${PWD}"/etc/cert
-  env
 }
 
 trap cleanup EXIT
