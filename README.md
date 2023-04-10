@@ -85,7 +85,7 @@ The currently supported properties are:
 * `requestTimeoutInMillis` - the gRPC request timeout in milliseconds.  This defaults to `60000`.
 * `callOptions` - per-request gRPC call options.
 * `tls` - options related to the configuration of TLS.
-    - `enabled` - determines if TLS is enabled or not.  This defaults to `false`.
+    - `enabled` - determines if TLS is enabled or not.  This defaults to `false` (NOTE: assumes `true` if all three `COHERENCE_TLS_*` (see subsequent bullets) environment variables are defined)
     - `caCertPath` - the path to the CA certificate.  This may be configured using the environment variable `COHERENCE_TLS_CERTS_PATH`
     - `clientCertPath` - the path to the client certificate. This may be configured with the environment variable `COHERENCE_TLS_CLIENT_CERT`
     - `clientKeyPath` - the path to the client certificate key. This may be configured with the environment variable `COHERENCE_TLS_CLIENT_KEY`
