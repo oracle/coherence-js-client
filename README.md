@@ -12,9 +12,9 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE 22.06 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
-* Node 18.15.x or later
-* NPM 9.x or later
+* Coherence CE `22.06` or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
+* Node `18.15.x` or later
+* NPM `9.x` or later
 
 ### Usage
 
@@ -52,8 +52,8 @@ project's `package.json`:
 
 ### Compatibility with Java Types
 The following table provides a listing of mappings between Java types and Javascript types when working with
-Coherence 23.03 or later.  If using Coherence 22.06.x, these types will be returned as Number.  It is recommended
-using 23.03 if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
+Coherence `23.03` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
+using `23.0`3 if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
 
 | Java Type            | JavascriptType         |
 |----------------------|------------------------|
