@@ -45,7 +45,7 @@ project's `package.json`:
 ```
 ...
 "dependencies": {
-    "@oracle/coherence": "^1.1",
+    "@oracle/coherence": "^1.2",
 },
 ...
 ```
