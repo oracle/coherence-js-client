@@ -15,3 +15,4 @@ SECURITY.md
 typedoc.json
 build_spec.yaml
 logs*.txt
+*.zip
