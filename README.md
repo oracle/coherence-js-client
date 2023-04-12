@@ -30,10 +30,10 @@ npm run coh-up
 ```
 
 **Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.2`).
-To use a later Coherence version, such as `22.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+To use a later Coherence version, such as `23.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash
-COHERENCE_VERSION=22.03 npm run coh-up
+COHERENCE_VERSION=23.03 npm run coh-up
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
