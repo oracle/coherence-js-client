@@ -7,7 +7,7 @@
 
 set -e
 
-declare VERSION=${COHERENCE_VERSION:=22.06.2}
+declare VERSION=${COHERENCE_VERSION:=22.06.5}
 
 function coh_up() {
   echo "Starting test containers ..."

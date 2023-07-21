@@ -7,13 +7,24 @@
 const Decimal = require("decimal.js");
 const assert = require('assert').strict
 
-const COHERENCE_VERSION = "COHERENCE_VERSION" in process.env ? process.env.COHERENCE_VERSION : "22.06"
+const COHERENCE_VERSION = "COHERENCE_VERSION" in process.env ? process.env.COHERENCE_VERSION : "22.06.5"
 
 module.exports = {
   COHERENCE_VERSION,
 
   checkNumericResult: function (result, expected) {
-    let numberResultExpected = COHERENCE_VERSION.startsWith("22.06")
+    let numberResultExpected = false
+    let is2206= COHERENCE_VERSION.startsWith("22.06")
+    if (is2206) {
+      let parts= COHERENCE_VERSION.split(".")
+      if (parts.length === 2) {
+        numberResultExpected = true
+      } else if (parts.length === 3) {
+        if (Number(parts[2]) >= 4) {
+          numberResultExpected = false
+        }
+      }
+    }
 
     if (numberResultExpected && typeof(result) === 'number') {
       assert.equal(result, expected)
