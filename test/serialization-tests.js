@@ -119,11 +119,6 @@ describe('Serialization Unit/Integration Test Suite', () => {
     })
 
     describe("Serialization Integration Tests", () => {
-        if (test.COHERENCE_VERSION.startsWith("22.06")) {
-            it("are skipped if running against 22.06", () => {} )
-            return
-        }
-
         const session = new Session()
         const cache = session.getCache("test-ser")
 

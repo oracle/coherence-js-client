@@ -7,19 +7,11 @@
 const Decimal = require("decimal.js");
 const assert = require('assert').strict
 
-const COHERENCE_VERSION = "COHERENCE_VERSION" in process.env ? process.env.COHERENCE_VERSION : "22.06"
-
 module.exports = {
-  COHERENCE_VERSION,
-
   checkNumericResult: function (result, expected) {
-    let numberResultExpected = COHERENCE_VERSION.startsWith("22.06")
-
-    if (numberResultExpected && typeof(result) === 'number') {
-      assert.equal(result, expected)
-    } else if (!numberResultExpected && result instanceof Decimal) {
+    if (result instanceof Decimal) {
       assert.deepStrictEqual(result, new Decimal(expected))
-    } else if (!numberResultExpected && typeof(result) === 'bigint') {
+    } else if (typeof(result) === 'bigint') {
         assert.deepStrictEqual(result, BigInt(expected))
     } else {
       assert(false, "Unexpected result type [" + typeof(result) + "]")
