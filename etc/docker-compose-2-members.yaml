@@ -10,7 +10,7 @@ services:
       coherence:
         aliases:
           - server1
-    image: ghcr.io/oracle/coherence-ce:${COHERENCE_VERSION}
+    image: ${DOCKER_REGISTRY}/${COHERENCE_TYPE}:${COHERENCE_VERSION}
     environment:
       - COHERENCE_WKA=server1
     ports:
@@ -29,7 +29,7 @@ services:
       coherence:
         aliases:
           - server2
-    image: ghcr.io/oracle/coherence-ce:${COHERENCE_VERSION}
+    image: ${DOCKER_REGISTRY}/${COHERENCE_TYPE}:${COHERENCE_VERSION}
     environment:
       - COHERENCE_WKA=server1
     ports:
