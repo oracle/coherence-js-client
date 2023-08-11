@@ -11,6 +11,8 @@ mkdir -p "${PWD}"/etc/cert
 chmod 777 "${PWD}"/etc/cert
 
 declare VERSION=${COHERENCE_VERSION:=22.06.2}
+declare TYPE=${COHERENCE_TYPE:=coherence-ce}
+declare REGISTRY=${DOCKER_REGISTRY:=ghcr.io/oracle}
 declare LABEL=clear
 
 function run_secure() {
@@ -40,7 +42,7 @@ function run_tests() {
 
 function dump_logs() {
   node_version=$(node -v)
-  COHERENCE_VERSION=${VERSION} docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"${1}"-test-"${VERSION}"-"${node_version}".txt
+  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"${1}"-test-"${VERSION}"-"${node_version}".txt
 }
 
 function cleanup() {
