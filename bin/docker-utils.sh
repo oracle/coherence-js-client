@@ -22,7 +22,7 @@ function coh_up() {
   while [ ${SECONDS} -le 60 ]; do
     READY=$(curl -o /dev/null -s -w "%{http_code}" "http://127.0.0.1:6676/ready") || true
     if [ "${READY}" -eq "200" ]; then
-      sleep 5
+      sleep 20
       echo "Coherence is ready!"
       return
     fi
