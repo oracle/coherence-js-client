@@ -19,7 +19,7 @@ on:
       - opened
       - committed
     branches:
-    - '*'
+    - 'main'
 jobs:
   build:
 
