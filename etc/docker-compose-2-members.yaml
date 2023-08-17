@@ -33,7 +33,7 @@ services:
     environment:
       - COHERENCE_WKA=server1
     ports:
-      - "9613:9612"
+      - "9613:9613"
     volumes:
       - .:/args
       - ./cert:/certs
