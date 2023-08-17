@@ -19,6 +19,13 @@ if [ -z "${CERTS_DIR}" ] ; then
   exit 1
 fi
 
+# check for location of openssl.cnf
+if [ -f "/etc/ssl/openssl.cnf" ]; then
+  export SSL_CNF=/etc/ssl/openssl.cnf
+else
+  export SSL_CNF=/etc/pki/tls/openssl.cnf
+fi
+
 mkdir -p "${CERTS_DIR}"
 
 # Generate random passwords for each run
@@ -31,7 +38,7 @@ echo "${CAPASS}" | openssl genrsa -passout stdin -aes256 \
 echo Generate Guardians CA certificate:
 echo "${CAPASS}" | openssl req -passin stdin -new -x509 -days 3650 \
     -reqexts SAN \
-    -config <(cat /etc/ssl/openssl.cnf \
+    -config <(cat "${SSL_CNF}" \
         <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,DNS:127.0.0.1")) \
     -key "${CERTS_DIR}"/guardians-ca.key \
     -out "${CERTS_DIR}"/guardians-ca.crt \
