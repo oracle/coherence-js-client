@@ -18,9 +18,6 @@ import {
   Entry,
   Entry as GrpcEntry,
   EntryResult,
-  IsEmptyRequest,
-  SizeRequest,
-  TruncateRequest
 } from './grpc/messages_pb'
 import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
 import { processor } from './processors'
@@ -90,6 +87,15 @@ export interface NamedMap<K, V> {
    * Signifies if this `NamedMap` has been destroyed.
    */
   readonly destroyed: boolean
+
+  /**
+   * Returns whether this `NamedMap` is ready to be used.
+   * </p>
+   * An example of when this method would return `false` would
+   * be where a partitioned cache service that owns this cache has no
+   * storage-enabled members.
+   */
+  readonly ready: Promise<boolean>
 
   /**
    * Release and destroy this cache.
@@ -350,7 +356,7 @@ export interface NamedMap<K, V> {
    *
    * @param aggregator  the {@link aggregator.EntryAggregator} that is used to aggregate across the specified entries of this Map
    */
-  aggregate<R, T, E> (aggregator: EntryAggregator<K, V, R>): Promise<R>
+  aggregate<R> (aggregator: EntryAggregator<K, V, R>): Promise<R>
 
   /**
    * Invoke the passed {@link processor.EntryProcessor} against the entry specified by the
@@ -748,6 +754,22 @@ export class NamedCacheClient<K = any, V = any>
     return this._released
   }
 
+  /**
+   * @inheritDoc
+   */
+  get ready () {
+    return this.promisify<boolean>((resolve, reject) => {
+      const request = this.requestFactory.ready()
+      this.client.isReady(request, new Metadata(), this.session.callOptions(), (err, resp) => {
+        if (err || !resp) {
+          reject(err)
+        } else {
+          resolve(resp.getValue())
+        }
+      })
+    })
+  }
+
   // ----- public functions -------------------------------------------------
 
   /**
@@ -769,8 +791,7 @@ export class NamedCacheClient<K = any, V = any>
   get empty (): Promise<boolean> {
     const self = this
     return this.promisify((resolve, reject) => {
-      const request = new IsEmptyRequest()
-      request.setCache(this.cacheName)
+      const request = this.requestFactory.empty()
       self.client.isEmpty(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         // @ts-ignore
         self.resolveValue(resolve, reject, err, () => resp ? resp.getValue() : resp)
@@ -783,7 +804,7 @@ export class NamedCacheClient<K = any, V = any>
    */
   get size () {
     return this.promisify<number>((resolve, reject) => {
-      const request = new SizeRequest()
+      const request = this.requestFactory.size()
       request.setCache(this.cacheName)
       this.client.size(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         if (err || !resp) {
@@ -1336,8 +1357,7 @@ export class NamedCacheClient<K = any, V = any>
       // can now send out the 'truncate' request. The handleResponse()
       // method will generate the appropriate event on the internalEmitter
       // for which our 'once & only once' listener is registered.
-      const request = new TruncateRequest()
-      request.setCache(this.cacheName)
+      const request = this.requestFactory.truncate()
       this.client.truncate(request, new Metadata(), this.session.callOptions(), (err, resp) => {
         if (err || !resp) {
           reject(err)
@@ -1366,7 +1386,17 @@ export class NamedCacheClient<K = any, V = any>
         if (error) {
           reject(error)
         }
-        logic(resolve, reject)
+        // wrap reject with custom logic for handling unsupported gRPC operations
+        let rejectWrapper: (reason?: any) => void = (reason?: any) => {
+          if (reason && reason?.code == 12) {
+            reject(new Error("This operation is not supported by the current gRPC proxy. " +
+            "Either upgrade the version of Coherence on the gRPC proxy or connect to" +
+            " a gRPC proxy that supports the operation"))
+          } else {
+            reject(reason)
+          }
+        }
+        logic(resolve, rejectWrapper)
       })
     })
   }

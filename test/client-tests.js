@@ -248,6 +248,18 @@ describe('NamedCacheClient IT Test Suite', function () {
       })
     })
 
+    describe('ready()', () => {
+      it('should return true if 22.06.5 or later, otherwise, it should raise error', async () => {
+        try {
+          assert.equal(await cache.ready, true)
+        } catch (err) {
+          if (!err.message.startsWith("This operation is")) {
+            assert.fail("Unexpected error", err)
+          }
+        }
+      })
+    })
+
     describe('removeMapping()', () => {
       it('should return true if a mapping was removed', async () => {
         assert.equal(await cache.removeMapping(val123, val123), true)
