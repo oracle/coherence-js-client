@@ -24,7 +24,7 @@ import {
   GetAllRequest,
   GetRequest,
   InvokeAllRequest,
-  InvokeRequest,
+  InvokeRequest, IsEmptyRequest, IsReadyRequest,
   KeySetRequest,
   MapListenerRequest,
   PageRequest, PutAllRequest,
@@ -34,7 +34,7 @@ import {
   RemoveMappingRequest,
   RemoveRequest,
   ReplaceMappingRequest,
-  ReplaceRequest,
+  ReplaceRequest, SizeRequest, TruncateRequest,
   ValuesRequest
 } from './grpc/messages_pb'
 import { MapEntry, NamedCacheClient } from './named-cache-client'
@@ -1223,6 +1223,16 @@ export namespace util {
     }
 
     /**
+     * Creates a new `IsEmptyRequest`.
+     */
+    empty(): IsEmptyRequest {
+      const request = new IsEmptyRequest()
+      this.initRequest(request)
+
+      return request
+    }
+
+    /**
      * Creates a new `EntrySetRequest`.
      */
     entrySet (filter?: filter.Filter, comparator?: any): EntrySetRequest {
@@ -1345,6 +1355,16 @@ export namespace util {
     }
 
     /**
+     * Creates a new `IsReadyRequest`.
+     */
+    ready(): IsReadyRequest {
+      const request = new IsReadyRequest()
+      this.initRequest(request)
+
+      return request
+    }
+
+    /**
      * Creates a new `RemoveRequest`.
      */
     remove (key: K): RemoveRequest {
@@ -1409,6 +1429,26 @@ export namespace util {
       if (cookie) {
         request.setCookie(cookie)
       }
+
+      return request
+    }
+
+    /**
+     * Creates a new `SizeRequest`.
+     */
+    size(): SizeRequest {
+      const request = new SizeRequest()
+      this.initRequest(request)
+
+      return request
+    }
+
+    /**
+     * Creates a new `TruncateRequest`.
+     */
+    truncate(): TruncateRequest {
+      const request = new TruncateRequest()
+      this.initRequest(request)
 
       return request
     }
