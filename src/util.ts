@@ -44,6 +44,96 @@ import Decimal from "decimal.js";
 export namespace util {
 
   /**
+   * Utility class to look up environment variables with type conversion and support
+   * for providing optional default values.
+   */
+  export class Config {
+    /**
+     * Return an integer value for the specified environment variable name.  If the environment
+     * variable is not defined, the value for `defaultValue` (if any) will be returned.
+     *
+     * @param name the environment variable name
+     * @param defaultValue the value to return if the provided environment variable is not set
+     *
+     * @return the value associated with the specified environment variable name as an integer type.
+     *         Will return `undefined` if no default is provided and the environment variable has not been set.
+     */
+    static getInteger(name: string, defaultValue: number): number {
+      return Config.getEnv(name, defaultValue, parseInt)
+    }
+
+    /**
+     * Return a float value for the specified environment variable name.  If the environment
+     * variable is not defined, the value for `defaultValue` (if any) will be returned.
+     *
+     * @param name the environment variable name
+     * @param defaultValue the value to return if the provided environment variable is not set
+     *
+     * @return the value associated with the specified environment variable name as a float type.
+     *         Will return `undefined` if no default is provided and the environment variable has not been set.
+     */
+    static getFloat(name: string, defaultValue?: number): number {
+      return Config.getEnv(name, defaultValue, parseFloat)
+    }
+
+    /**
+     * Return a boolean value for the specified environment variable name.  If the environment
+     * variable is not defined, the value for `defaultValue` (if any) will be returned.
+     *
+     * @param name the environment variable name
+     * @param defaultValue the value to return if the provided environment variable is not set
+     *
+     * @return the value associated with the specified environment variable name as a boolean type.
+     *         Will return `undefined` if no default is provided and the environment variable has not been set.
+     */
+    static getBoolean(name: string, defaultValue?: boolean): boolean {
+      return Config.getEnv(name, defaultValue, (v): boolean => {
+        return v?.toString().toLowerCase() === 'true'
+      })
+    }
+
+    /**
+     * Return the value for the specified environment variable name.  If the environment
+     * variable is not defined, the value for `defaultValue` (if any) will be returned.
+     *
+     * @param name the environment variable name
+     * @param defaultValue the value to return if the provided environment variable is not set
+     *
+     * @return the value associated with the specified environment variable name.
+     *         Will return `undefined` if no default is provided and the environment variable has not been set.
+     */
+    static getString(name: string, defaultValue?: string): string {
+      return Config.getEnv(name, defaultValue)
+    }
+
+    /**
+     * Obtains and converts the value of an environment variable.
+     *
+     * @param name the environment variable name
+     * @param defaultValue the default value, if any
+     * @param converter the function accepting the resolved environment variable value
+     *        which produces a converted result
+     *
+     * @template T the type returned by the specified converter; also the type of the specified default value
+     *
+     * @private
+     */
+    private static getEnv<T>(name: string, defaultValue?: T, converter?: ((v: string) => T)): T {
+      type Key = keyof typeof process.env;
+      let value = process.env[name as Key]
+
+      if (typeof value === 'undefined') {
+        return (defaultValue as T)
+      } else {
+        if (typeof converter === 'undefined') {
+          return (value as T)
+        }
+        return converter(value)
+      }
+    }
+  }
+
+  /**
    * A drop-in replacement for the default ECMA Map implementation that uses
    * hashes keys based on the string view of an Object.
    *

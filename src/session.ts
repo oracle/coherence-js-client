@@ -13,6 +13,7 @@ import {event} from './events'
 import {NamedCache, NamedCacheClient, NamedMap} from './named-cache-client'
 import {util} from './util'
 import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state";
+import Config = util.Config;
 
 /**
  * Supported {@link Session} options.
@@ -50,6 +51,14 @@ export class Options {
    * If not explicitly set, this defaults to `60000`.
    */
   private _readyTimeoutInMillis: number
+
+  /**
+   * defines the maximum amount of time an {@link NamedMap} or {@link NamedCache} operations may wait for the
+   * underlying `gRPC` channel to be ready.  This is independent of the request timeout which sets a deadline on how
+   * long the call may take after being dispatched.
+   * @private
+   */
+  private _disconnectTimeoutInMillis: number
 
   /**
    * The serialization format.  Currently, this is always `json`.
@@ -153,6 +162,24 @@ export class Options {
       timeout = Number.POSITIVE_INFINITY
     }
     this._readyTimeoutInMillis = timeout;
+  }
+
+  /**
+   * Returns the maximum time, in milliseconds, that a session may remain in a disconnected state.
+   *
+   * @return the maximum time, in milliseconds, that a session may remain in a disconnected state
+   */
+  get disconnectTimeoutInMillis(): number {
+    return this._disconnectTimeoutInMillis;
+  }
+
+  /**
+   * Sets the maximum time, in milliseconds, that a session may remain in a disconnected state.
+   *
+   * @param value the timeout in `milliseconds`
+   */
+  set disconnectTimeoutInMillis(value: number) {
+    this._disconnectTimeoutInMillis = value;
   }
 
   /**
@@ -260,11 +287,12 @@ export class Options {
    * Construct a new {@link Options}.
    */
   constructor () {
-    this._address = (process.env.grpc_proxy_address || process.env.COHERENCE_GRPC_PROXY_ADDRESS)
-        || Session.DEFAULT_ADDRESS
+    this._address = Config.getString("grpc_proxy_address" /* deprecated */,
+            Config.getString(Session.ENV_GRPC_PROXY_ADDRESS, Session.DEFAULT_ADDRESS))
 
-    this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
-    this._readyTimeoutInMillis = Session.DEFAULT_READY_TIMEOUT
+    this._requestTimeoutInMillis = Config.getInteger(Session.ENV_REQUEST_TIMEOUT, Session.DEFAULT_REQUEST_TIMEOUT)
+    this._readyTimeoutInMillis = Config.getInteger(Session.ENV_READY_TIMEOUT, Session.DEFAULT_READY_TIMEOUT)
+    this._disconnectTimeoutInMillis = Config.getInteger(Session.ENV_SESSION_DISCONNECT_TIMEOUT, Session.DEFAULT_SESSION_DISCONNECT_TIMEOUT)
     this._format = Session.DEFAULT_FORMAT
     this._scope = Session.DEFAULT_SCOPE
     this._channelOptions = {}
@@ -310,9 +338,9 @@ export class TlsOptions {
 
 
   constructor() {
-    this._clientKeyPath = process.env.COHERENCE_TLS_CLIENT_KEY || undefined
-    this._clientCertPath = process.env.COHERENCE_TLS_CLIENT_CERT || undefined
-    this._caCertPath = process.env.COHERENCE_TLS_CERTS_PATH || undefined
+    this._clientKeyPath = Config.getString(Session.ENV_CLIENT_KEY)
+    this._clientCertPath = Config.getString(Session.ENV_CLIENT_CERT)
+    this._caCertPath = Config.getString(Session.ENV_CA_CERT)
     this._enabled = this._clientKeyPath !== undefined
         && this._clientCertPath !== undefined && this._caCertPath !== undefined
   }
@@ -442,6 +470,68 @@ export class Session
   public static readonly DEFAULT_READY_TIMEOUT = 30000
 
   /**
+   * The maximum session disconnect timeout.
+   */
+  public static readonly DEFAULT_SESSION_DISCONNECT_TIMEOUT = 30000
+
+  /**
+   * The name of the environment variable that allows the user to specify the default
+   * client request timeout, i.e., how long a request may remain in-flight before being timed out.
+   *
+   * The value of this variable is the timeout in milliseconds.  If this environment variable
+   * is not set and the user does not explicitly provide a timeout when creating the session,
+   * a default of `60000`ms will be used.
+   */
+  public static readonly ENV_REQUEST_TIMEOUT = "COHERENCE_CLIENT_REQUEST_TIMEOUT"
+
+  /**
+   * The name of the environment variable that allows the user to specify how long a {@link NamedMap} or
+   * {@link NamedCache} operation may wait for the underlying gRPC channel to be ready.
+   *
+   * The value of this variable is the timeout in milliseconds.  If this environment variable
+   * is not set and the user does not explicitly provide a timeout when creating the session,
+   * a default of `30000`ms will be used.
+   */
+  public static readonly ENV_READY_TIMEOUT = "COHERENCE_READY_TIMEOUT"
+
+  /**
+   * The name of the environment variable that allows the user to specify how maximum time a session
+   * may remain in a disconnected state.
+   *
+   * The value of this variable is the timeout in milliseconds.  If this environment variable
+   * is not set and the user does not explicitly provide a timeout when creating the session,
+   * a default of `30000`ms will be used.
+   */
+  public static readonly ENV_SESSION_DISCONNECT_TIMEOUT = "COHERENCE_SESSION_DISCONNECT_TIMEOUT"
+
+  /**
+   * The name of the environment variable that allows the user to specify the path to the CA certificates.
+   */
+  public static readonly ENV_CA_CERT = "COHERENCE_TLS_CERTS_PATH"
+
+  /**
+   * The name of the environment variable that allows the user to specify the path to the client certificates.
+   */
+  public static readonly ENV_CLIENT_CERT = "COHERENCE_TLS_CLIENT_CERT"
+
+  /**
+   * The name of the environment variable that allows the user to specify the path to the client key.
+   */
+  public static readonly ENV_CLIENT_KEY: "COHERENCE_TLS_CLIENT_KEY"
+
+  /**
+   * The name of the environment variable that, when defined, will suppress errors raised by the security
+   * layer relating to invalid certificates.  This is not recommended to use in production environments; this
+   * will typically be used when testing using locally generated certificates.
+   */
+  public static readonly ENV_IGNORE_CERTS = "COHERENCE_IGNORE_INVALID_CERTS"
+
+  /**
+   * The name of the environment variable that allows the user to specify the default gRPC Proxy address.
+   */
+  public static readonly ENV_GRPC_PROXY_ADDRESS: "COHERENCE_GRPC_PROXY_ADDRESS"
+
+  /**
    * The default scope.
    */
   public static readonly DEFAULT_SCOPE = ''
@@ -510,7 +600,7 @@ export class Session
 
     // If TLS is enabled then create an SSL channel credentials object.
     if (this.options.tls.enabled) {
-      let skipValidation: string | undefined = process.env.COHERENCE_IGNORE_INVALID_CERTS|| undefined
+      let skipValidation: string | undefined = Config.getString(Session.ENV_IGNORE_CERTS)
       if (skipValidation !== undefined) {
         console.warn("WARNING: you have turned off SSL certificate validation. This is insecure and not recommended.")
       }
