@@ -517,7 +517,7 @@ export class Session
   /**
    * The name of the environment variable that allows the user to specify the path to the client key.
    */
-  public static readonly ENV_CLIENT_KEY: "COHERENCE_TLS_CLIENT_KEY"
+  public static readonly ENV_CLIENT_KEY = "COHERENCE_TLS_CLIENT_KEY"
 
   /**
    * The name of the environment variable that, when defined, will suppress errors raised by the security
@@ -529,7 +529,7 @@ export class Session
   /**
    * The name of the environment variable that allows the user to specify the default gRPC Proxy address.
    */
-  public static readonly ENV_GRPC_PROXY_ADDRESS: "COHERENCE_GRPC_PROXY_ADDRESS"
+  public static readonly ENV_GRPC_PROXY_ADDRESS = "COHERENCE_GRPC_PROXY_ADDRESS"
 
   /**
    * The default scope.
