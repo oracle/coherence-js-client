@@ -29,7 +29,7 @@ fi
 mkdir -p "${CERTS_DIR}"
 
 # Generate random passwords for each run
-CAPASS="${RANDOM}"
+CAPASS=$(uuidgen | sha256sum | cut -f 1 -d " ")
 
 echo Generate Guardians CA key:
 echo "${CAPASS}" | openssl genrsa -passout stdin -aes256 \
