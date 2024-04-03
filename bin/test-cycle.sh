@@ -42,7 +42,17 @@ function run_tests() {
 
 function dump_logs() {
   node_version=$(node -v)
-  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > logs-"${1}"-test-"${VERSION}"-"${node_version}".txt
+
+  if command -v docker-compose &> /dev/null
+  then
+    declare COMPOSE=docker-compose
+  else
+    declare COMPOSE="docker compose"
+  fi
+
+  echo "Using compose -> ${COMPOSE}"
+
+  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" "${COMPOSE}" -f etc/docker-compose-2-members.yaml logs --no-color > logs-"${1}"-test-"${VERSION}"-"${node_version}".txt
 }
 
 function cleanup() {

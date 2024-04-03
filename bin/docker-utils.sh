@@ -7,7 +7,7 @@
 
 set -e
 
-declare VERSION=${COHERENCE_VERSION:=22.06.5}
+declare VERSION=${COHERENCE_VERSION:=22.06.7}
 declare TYPE=${COHERENCE_TYPE:=coherence-ce}
 declare REGISTRY=${DOCKER_REGISTRY:=ghcr.io/oracle}
 
@@ -16,7 +16,7 @@ echo ${TYPE}
 
 function coh_up() {
   echo "Starting test containers ..."
-  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" docker-compose -f etc/docker-compose-2-members.yaml up --force-recreate --renew-anon-volumes -d
+  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" "${COMPOSE}" -f etc/docker-compose-2-members.yaml up --force-recreate --renew-anon-volumes -d
   SECONDS=0
   echo "Waiting for Coherence to be healthy (within 60s) ..."
   while [ ${SECONDS} -le 60 ]; do
@@ -29,15 +29,24 @@ function coh_up() {
   done
   node_version=$(node -v)
   filename="logs-startup-${VERSION}-${node_version}.txt"
-  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" docker-compose -f etc/docker-compose-2-members.yaml logs --no-color > "${filename}"
+  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" "${COMPOSE}" -f etc/docker-compose-2-members.yaml logs --no-color > "${filename}"
   echo "Coherence failed to become healthy.  See ${filename} for details."
   coh_down
   exit 1
 }
 
 function coh_down() {
-  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" docker-compose -f etc/docker-compose-2-members.yaml down -v
+  DOCKER_REGISTRY="${REGISTRY}" COHERENCE_VERSION="${VERSION}" COHERENCE_TYPE="${TYPE}" "${COMPOSE}" -f etc/docker-compose-2-members.yaml down -v
 }
+
+if command -v docker-compose &> /dev/null
+then
+  declare COMPOSE=docker-compose
+else
+  declare COMPOSE="docker compose"
+fi
+
+echo "Using compose -> ${COMPOSE}"
 
 while getopts "ud" OPTION; do
   case "${OPTION}" in
