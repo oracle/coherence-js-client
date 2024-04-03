@@ -46,6 +46,8 @@ else
   declare COMPOSE="docker compose"
 fi
 
+echo "Using compose -> ${COMPOSE}"
+
 while getopts "ud" OPTION; do
   case "${OPTION}" in
   u)
