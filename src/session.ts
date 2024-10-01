@@ -260,8 +260,15 @@ export class Options {
    * Construct a new {@link Options}.
    */
   constructor () {
-    this._address = (process.env.grpc_proxy_address || process.env.COHERENCE_GRPC_PROXY_ADDRESS)
+    this._address = (process.env.grpc_proxy_address ||
+                     process.env.COHERENCE_GRPC_PROXY_ADDRESS ||
+                     process.env.COHERENCE_SERVER_ADDRESS)
         || Session.DEFAULT_ADDRESS
+
+    if (process.env.COHERENCE_GRPC_PROXY_ADDRESS !== undefined) {
+      console.warn("The COHERENCE_GRPC_PROXY_ADDRESS environment variable"
+                   + " is deprecated. Please use COHERENCE_SERVER_ADDRESS instead.")
+    }
 
     this._requestTimeoutInMillis = Session.DEFAULT_REQUEST_TIMEOUT
     this._readyTimeoutInMillis = Session.DEFAULT_READY_TIMEOUT
