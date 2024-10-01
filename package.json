@@ -1,6 +1,6 @@
 {
   "name": "@oracle/coherence",
-  "version": "1.2.2-SNAPSHOT",
+  "version": "1.2.2",
   "license": "UPL-1.0",
   "main": "lib/index.js",
   "keywords": [
