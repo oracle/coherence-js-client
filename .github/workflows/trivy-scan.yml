@@ -1,9 +1,9 @@
-# Copyright 2025 Oracle Corporation and/or its affiliates.
+# Copyright 2024 Oracle Corporation and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
 
 # ---------------------------------------------------------------------------
-# Coherence Python Client GitHub Actions Scheduled Trivy Scan
+# Coherence JS Client GitHub Actions Scheduled Trivy Scan
 # ---------------------------------------------------------------------------
 name: Scheduled Trivy Scan
 
