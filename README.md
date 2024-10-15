@@ -29,7 +29,7 @@ or to save some keystrokes/time, use the included npm script, `coh-up` to start 
 npm run coh-up
 ```
 
-**Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.2`).
+**Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.10`).
 To use a later Coherence version, such as `24.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash
