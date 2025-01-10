@@ -1,4 +1,4 @@
-# Coherence JavaScript Client
+# JavaScript Client for Oracle Coherence
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=oracle_coherence-js-client&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=oracle_coherence-js-client)
 
 Coherence JavaScript Client allows Node applications to act as

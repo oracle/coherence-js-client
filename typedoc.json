@@ -6,7 +6,7 @@
   "entryPointStrategy": "resolve",
   "out": "docs",
   "excludePrivate": true,
-  "name": "Oracle Coherence JavaScript Client",
+  "name": "JavaScript Client API Reference for Oracle Coherence",
   "includeVersion": true,
   "readme": "README.md",
   "hideGenerator": true,
