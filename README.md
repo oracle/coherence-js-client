@@ -21,7 +21,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:24.09.1
+docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:24.09
 ```
 
 or to save some keystrokes/time, use the included npm script, `coh-up` to start a two-member Cluster with the gRPC port at 1408"
@@ -30,7 +30,7 @@ npm run coh-up
 ```
 
 **Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.11`).
-To use a later Coherence version, such as `24.09.1`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+To use a later Coherence version, such as `24.09`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash
 COHERENCE_VERSION=24.03 npm run coh-up
