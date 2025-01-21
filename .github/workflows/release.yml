@@ -25,7 +25,7 @@ jobs:
         with:
           ref: ${{ github.event.release.target_commitish }}
       # install Node.js
-      - name: Use Node.js 18.15.x
+      - name: Use Node.js 18.x
         uses: actions/setup-node@v3
         with:
           node-version: 18.15.x
@@ -37,8 +37,8 @@ jobs:
       - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
       - run: npm install
       # run unit tests
-      - run: COHERENCE_VERSION=22.06.10 npm run test-cycle
-      - run: COHERENCE_VERSION=24.09 npm run test-cycle
+      - run: COHERENCE_VERSION=22.06.11 npm run test-cycle
+      - run: COHERENCE_VERSION=24.09.1 npm run test-cycle
       - run: npm install --no-save typedoc
       # generate dist which runs other tasks
       - run: npm run dist

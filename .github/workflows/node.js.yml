@@ -27,8 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.15.x, 19.x]
-        coherence-version: [22.06.10, 24.09]
+        node-version: [18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
+        coherence-version: [22.06.11, 24.09.1]
 
     steps:
     - uses: actions/checkout@v3
