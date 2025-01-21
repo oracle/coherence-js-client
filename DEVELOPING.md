@@ -44,7 +44,7 @@ The above can also be shortened to:
 However, if developing new functionality or tests, the manual start of the cluster using `coh-up` may be preferred as
 it avoids restarting the cluster allowing for quicker development times.
 
-**Important!** When calling `coh-up`, `test`, `coh-down`, or `test-cycle` the LTS version of Coherence will be used (`22.06.10`).
+**Important!** When calling `coh-up`, `test`, `coh-down`, or `test-cycle` the LTS version of Coherence will be used (`22.06.11`).
 To use a later Coherence version, such as `22.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash

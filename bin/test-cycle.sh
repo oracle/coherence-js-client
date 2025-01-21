@@ -10,7 +10,7 @@ set -e
 mkdir -p "${PWD}"/etc/cert
 chmod 777 "${PWD}"/etc/cert
 
-declare VERSION=${COHERENCE_VERSION:=22.06.10}
+declare VERSION=${COHERENCE_VERSION:=22.06.11}
 declare TYPE=${COHERENCE_TYPE:=coherence-ce}
 declare REGISTRY=${DOCKER_REGISTRY:=ghcr.io/oracle}
 declare LABEL=clear
