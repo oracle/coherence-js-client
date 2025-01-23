@@ -51,5 +51,5 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-          name: save-log-file
+          name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}
           path: logs-*.txt
