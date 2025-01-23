@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
-        coherence-version: [22.06.11, 24.09]
+        coherence-version: [22.06.11, 24.09.2]
 
     steps:
     - uses: actions/checkout@v3
@@ -49,7 +49,7 @@ jobs:
     # clean up
     - name: Archive production artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-          name: save-log-file
+          name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}
           path: logs-*.txt
