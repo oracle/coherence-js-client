@@ -1,4 +1,4 @@
-# Copyright 2020, 2023, Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright 2020, 2025, Oracle Corporation and/or its affiliates.  All rights reserved.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
 
@@ -6,7 +6,7 @@
 # Coherence JavaScript Client GitHub Actions CI build.
 # ---------------------------------------------------------------------------
 
-name: Node.js CI
+name: JS Client Validation
 
 on:
   schedule:
@@ -18,7 +18,7 @@ on:
     types:
       - opened
     branches:
-    - 'main'
+    - '*'
 jobs:
   build:
 
@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
-        coherence-version: [22.06.11, 24.09.2]
+        coherence-version: [22.06.11, 14.1.2-0-1, 24.09.2]
 
     steps:
     - uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle-tls
     # clean up
     - name: Archive production artifacts
-      if: always()
+      if: failure()
       uses: actions/upload-artifact@v4
       with:
           name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}

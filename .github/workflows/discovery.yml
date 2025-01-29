@@ -1,0 +1,68 @@
+# Copyright 2025, Oracle Corporation and/or its affiliates.  All rights reserved.
+# Licensed under the Universal Permissive License v 1.0 as shown at
+# https://oss.oracle.com/licenses/upl.
+
+# ---------------------------------------------------------------------------
+# Coherence JavaScript Client GitHub Actions CI build.
+# ---------------------------------------------------------------------------
+
+name: JS Client Discovery Validation
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  push:
+    branches-ignore:
+    - ghpages
+  pull_request:
+    types:
+      - opened
+    branches:
+    - '*'
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20.x, 21.x, 22.x, 23.x]
+        coherence-version: [22.06.11, 14.1.2-0-1, 24.09.2]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
+    - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
+    - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
+    - run: npm install
+    - run: npm run compile
+
+    - name: Run Coherence Server
+      shell: bash
+      run: |
+        export COHERENCE_VERSION=${{ matrix.coherence-version }}
+        curl -sL https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh | bash
+        cohctl version
+        cohctl set profile grpc-cluster1 -v "-Dcoherence.grpc.server.port=10000" -y
+        cohctl create cluster grpc-cluster1 -P grpc-cluster1 -r 1 -v ${{ matrix.coherence-version }} -y -a coherence-grpc-proxy
+        cohctl set profile grpc-cluster2 -v "-Dcoherence.grpc.server.port=10001" -y
+        cohctl create cluster grpc-cluster2 -P grpc-cluster2 -r 1 -H 30001 -v ${{ matrix.coherence-version }} -y -a coherence-grpc-proxy
+        sleep 20
+        cohctl monitor health -n localhost:7574 -T 40 -w
+
+    - name: Run resolver tests
+      shell: bash
+      run: |
+        npm run test-resolver
+
+    - name: Archive production artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}
+        path: ~/.cohctl/logs/*.*.log
