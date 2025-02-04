@@ -152,6 +152,8 @@ const opts = new Options({address: 'example.com:4444',
 let session = new Session(opts)
 ```
 
+*NOTE* The Coherence NameService feature requires Node `20.x` or later.
+
 It's also possible to control the default address the session will bind to by providing
 an address via the `COHERENCE_SERVER_ADDRESS` environment variable.  The format of the value would
 be the same as if you configured it programmatically as the above example shows.
