@@ -128,13 +128,13 @@ let session = new Session(opts)
 
 As of v1.2.3 of the JavaScript Client for Oracle Coherence, it's now possible to use the Coherence
 NameService to lookup gRPC Proxy endpoints.  The format to enable this feature is
-`coherence:///<host>([:port]|[:cluster-name]|[:port:cluster-name])`
+`coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`
 
 For example:
  * `coherence:///localhost` will connect to the name service bound to a local coherence cluster on port `7574` (the default Coherence cluster port).
  * `coherence:///localhost:8000` will connect to the name service bound to a local coherence cluster on port `8000`.
- * `coherence:///localhost:remote-cluster` will connect to the name service bound to a local coherence cluster on port `7574` (the default Coherence cluster port) and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
- * `coherence:///localhost:8000:remote-cluster` will connect to the name service bound to a local coherence cluster on port `8000` and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
+ * `coherence:///localhost/remote-cluster` will connect to the name service bound to a local coherence cluster on port `7574` (the default Coherence cluster port) and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
+ * `coherence:///localhost:8000/remote-cluster` will connect to the name service bound to a local coherence cluster on port `8000` and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
 
 While this is useful for local development, this may have limited uses in a production environment.  For example,
 Coherence running within a container with the cluster port (`7574`) exposed so external clients may connect.  The
@@ -146,7 +146,7 @@ a custom channel option when creating the session:
 ```typescript
 const { Session } = require('@oracle/coherence')
 
-const opts = new Options({address: 'example.com:4444',
+const opts = new Options({address: 'coherence:///localhost',
   channelOptions: {'grpc.service_config': JSON.stringify({ loadBalancingConfig: [{ round_robin: {} }], })}})
 
 let session = new Session(opts)

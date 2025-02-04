@@ -32,7 +32,7 @@ export class Options {
   /**
    * Regular expression for basic validation of IPv4 address.
    */
-  private static readonly ADDRESS_REGEXP = RegExp('^(coherence:\/\/\/\\S+|coherence:\\S+:\\d{1,5}|coherence:\/\/\/\\S+:\\d{1,5}:[a-zA-Z0-9]+|coherence:\/\/\/\\S+:[a-zA-Z0-9]+|\\S+:\\d{1,5})$')
+  private static readonly ADDRESS_REGEXP = RegExp('^(coherence:///\\S+|coherence:\\S+:\\d{1,5}|coherence:///\\S+:\\d{1,5}/[a-zA-Z0-9]+|coherence:///\\S+/[a-zA-Z0-9]+|\\S+:\\d{1,5})$')
 
   /**
    * Address of the target Coherence cluster.  If not explicitly set, this defaults to {@link Session.DEFAULT_ADDRESS}.
@@ -107,11 +107,11 @@ export class Options {
    * If the Coherence cluster port is available, it's possible to uss
    * the Coherence name service in order to resolve and connect to the available
    * gRPC proxies. If using this functionality, the format is
-   * `coherence:///<host>([:port]|[:cluster-name]|[:port:cluster-name])`.
+   * `coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`.
    *
    * @param address  the IPv4 host address and port in the format of `[host]:[port]`
    *                 or the Coherence name service format of
-   *                 `coherence:///<host>([:port]|[:cluster-name]|[:port:cluster-name])`
+   *                 `coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`
    */
   set address (address: string) {
     if (this.locked) {
@@ -119,7 +119,7 @@ export class Options {
     }
     // ensure address is sane
     if (!Options.ADDRESS_REGEXP.test(address)) {
-      throw new Error('Expected address format is \'<hostname>:<port>\' or \'coherence:<host>([:port]|[:cluster-name]|[:port:cluster-name])\'.  Configured: ' + address)
+      throw new Error('Expected address format is \'<hostname>:<port>\' or \'coherence:<host>([:port]|[/cluster-name]|[:port/cluster-name])\'.  Configured: ' + address)
     }
 
     this._address = address
@@ -986,7 +986,7 @@ export class CoherenceResolver implements experimental.Resolver {
   }
 
   static parseConn(path: string): [string, string, string] {
-    let parts: string[] = path.split(':')
+    let parts: string[] = path.split(/[/:]/)
     const host = parts[0]
     let port = '7574'
     let clusterName = ''

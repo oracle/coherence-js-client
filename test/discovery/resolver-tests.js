@@ -47,12 +47,12 @@ describe('CoherenceResolver Test Suite (unit/IT)', () => {
     })
 
     it('should parse and resolve the connection format \'coherence:///[host]:[clusterName]\'', (done) => {
-      const resolver = new CoherenceResolver({scheme: 'coherence', path: 'localhost:grpc-cluster2'}, createListener(done, 10001), null)
+      const resolver = new CoherenceResolver({scheme: 'coherence', path: 'localhost/grpc-cluster2'}, createListener(done, 10001), null)
       resolver.updateResolution()
     })
 
     it('should parse and resolve the connection format \'coherence:///[host]:[port]:[clusterName]\'', (done) => {
-      const resolver = new CoherenceResolver({scheme: 'coherence', path: 'localhost:7574:grpc-cluster2'}, createListener(done, 10001), null)
+      const resolver = new CoherenceResolver({scheme: 'coherence', path: 'localhost:7574/grpc-cluster2'}, createListener(done, 10001), null)
       resolver.updateResolution()
     })
   })
@@ -67,7 +67,7 @@ describe('CoherenceResolver Test Suite (unit/IT)', () => {
     })
 
     it('should be able to resolve the gRPC Proxy of a foreign cluster', async () => {
-      const session = new Session({address: 'coherence:///localhost:grpc-cluster2'})
+      const session = new Session({address: 'coherence:///localhost/grpc-cluster2'})
       const cache = session.getCache('test')
       await cache.set('a', 'b')
       assert.equal(await cache.get('a'), 'b')
