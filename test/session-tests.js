@@ -1,14 +1,13 @@
 /*
- * Copyright (c) 2020 Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2025, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
- * http://oss.oracle.com/licenses/upl.
+ * https://oss.oracle.com/licenses/upl.
  */
 
 const { event, Session } = require('../lib')
 const assert = require('assert').strict
 const { describe, it } = require('mocha');
-const path = require('path')
 
 describe('Session Tests Suite (unit/IT)', () => {
   describe('Session Unit Test Suite', () => {
@@ -29,7 +28,9 @@ describe('Session Tests Suite (unit/IT)', () => {
           assert.equal(session.options.tls.clientKeyPath, undefined)
         }
 
-        assert.equal(session.address, Session.DEFAULT_ADDRESS)
+        if (!process.env.COHERENCE_SERVER_ADDRESS) {
+          assert.equal(session.address, Session.DEFAULT_ADDRESS)
+        }
         assert.equal(session.options.requestTimeoutInMillis, 60000)
         assert.equal(session.options.format, Session.DEFAULT_FORMAT)
       })
@@ -65,6 +66,29 @@ describe('Session Tests Suite (unit/IT)', () => {
 
   describe('Session IT Test Suite', () => {
     describe('A Session', () => {
+      it('should not allow invalid addresses', () => {
+        assert.throws(() => new Session({address: 'localhost'}))
+        assert.throws(() => new Session({address: 'localhost:801a'}))
+        assert.throws(() => new Session({address: 'localhost:800000'}))
+        assert.throws(() => new Session({address: 'localhost:8000:'}))
+        assert.throws(() => new Session({address: 'localhost:8000:test'}))
+        assert.throws(() => new Session({address: 'coherence'}))
+        assert.throws(() => new Session({address: 'coherence:'}))
+        assert.throws(() => new Session({address: 'coherence:/'}))
+        assert.throws(() => new Session({address: 'coherence://'}))
+        assert.throws(() => new Session({address: 'coherence://localhost'}))
+        // assert.throws(() => new Session({address: 'coherence:localhost:8080:'}))
+        // assert.throws(() => new Session({address: 'coherence:localhost:'}))
+      })
+
+      it('should allow valid addresses', () => {
+        assert.doesNotThrow(() => new Session({address: 'localhost:8080'}))
+        assert.doesNotThrow(() => new Session({address: 'coherence:///localhost'}))
+        assert.doesNotThrow(() => new Session({address: 'coherence:///localhost:8080'}))
+        assert.doesNotThrow(() => new Session({address: 'coherence:///localhost:test'}))
+        assert.doesNotThrow(() => new Session({address: 'coherence:///localhost:8080:test'}))
+      })
+
       it('should not have active sessions upon creation', async () => {
         const sess = new Session()
 

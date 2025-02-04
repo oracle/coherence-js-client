@@ -1,18 +1,29 @@
 /*
- * Copyright (c) 2020, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2020, 2025, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
  */
 
-import {CallOptions, Channel, ChannelCredentials, credentials} from '@grpc/grpc-js'
+import {
+  CallOptions,
+  Channel,
+  ChannelCredentials,
+  ChannelOptions,
+  credentials,
+  experimental, Metadata,
+  status,
+} from '@grpc/grpc-js'
 import {EventEmitter} from 'events'
 import {PathLike, readFileSync} from 'fs'
 import {event} from './events'
 
 import {NamedCache, NamedCacheClient, NamedMap} from './named-cache-client'
 import {util} from './util'
-import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state";
+import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state"
+import {registerResolver} from "@grpc/grpc-js/build/src/resolver"
+import {Endpoint} from "@grpc/grpc-js/build/src/subchannel-address"
+import * as net from "node:net"
 
 /**
  * Supported {@link Session} options.
@@ -21,7 +32,7 @@ export class Options {
   /**
    * Regular expression for basic validation of IPv4 address.
    */
-  private static readonly ADDRESS_REGEXP = RegExp('\\S+:\\d{1,5}$')
+  private static readonly ADDRESS_REGEXP = RegExp('^(coherence:///\\S+|coherence:\\S+:\\d{1,5}|coherence:///\\S+:\\d{1,5}/[a-zA-Z0-9]+|coherence:///\\S+/[a-zA-Z0-9]+|\\S+:\\d{1,5})$')
 
   /**
    * Address of the target Coherence cluster.  If not explicitly set, this defaults to {@link Session.DEFAULT_ADDRESS}.
@@ -74,7 +85,7 @@ export class Options {
   /**
    * Flag indicating mutations are no longer allowed.
    */
-  private locked: boolean = false;
+  private locked: boolean = false
 
   /**
    * Optional TLS configuration.
@@ -91,17 +102,24 @@ export class Options {
   }
 
   /**
-   * Set the IPv4 host address and port in the format of `[host]:[port]`
+   * Set the IPv4 host address and port in the format of `[host]:[port]`.
+   * <p>
+   * If the Coherence cluster port is available, it's possible to uss
+   * the Coherence name service in order to resolve and connect to the available
+   * gRPC proxies. If using this functionality, the format is
+   * `coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`.
    *
    * @param address  the IPv4 host address and port in the format of `[host]:[port]`
+   *                 or the Coherence name service format of
+   *                 `coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`
    */
   set address (address: string) {
     if (this.locked) {
-      return;
+      return
     }
     // ensure address is sane
     if (!Options.ADDRESS_REGEXP.test(address)) {
-      throw new Error('Expected address format is \'<hostname>:<port>\'.  Configured: ' + address)
+      throw new Error('Expected address format is \'<hostname>:<port>\' or \'coherence:<host>([:port]|[/cluster-name]|[:port/cluster-name])\'.  Configured: ' + address)
     }
 
     this._address = address
@@ -123,7 +141,7 @@ export class Options {
    */
   set requestTimeoutInMillis (timeout: number) {
     if (this.locked) {
-      return;
+      return
     }
     if (timeout <= 0) {
       timeout = Number.POSITIVE_INFINITY
@@ -137,7 +155,7 @@ export class Options {
    * @return the ready timeout in `milliseconds`
    */
   get readyTimeoutInMillis(): number {
-    return this._readyTimeoutInMillis;
+    return this._readyTimeoutInMillis
   }
 
   /**
@@ -147,12 +165,12 @@ export class Options {
    */
   set readyTimeoutInMillis(timeout: number) {
     if (this.locked) {
-      return;
+      return
     }
     if (timeout <= 0) {
       timeout = Number.POSITIVE_INFINITY
     }
-    this._readyTimeoutInMillis = timeout;
+    this._readyTimeoutInMillis = timeout
   }
 
   /**
@@ -181,7 +199,7 @@ export class Options {
    * Return the `gRPC` `ChannelOptions`.
    */
   get channelOptions(): { [p: string]: any } {
-    return this._channelOptions;
+    return this._channelOptions
   }
 
   /**
@@ -193,9 +211,9 @@ export class Options {
    */
   set channelOptions(value: { [p: string]: any }) {
     if (this.locked) {
-      return;
+      return
     }
-    this._channelOptions = value;
+    this._channelOptions = value
   }
 
   /**
@@ -233,7 +251,7 @@ export class Options {
    */
   set callOptions (callOptions: () => CallOptions) {
     if (this.locked) {
-      return;
+      return
     }
     this._callOptions = callOptions
   }
@@ -252,7 +270,7 @@ export class Options {
    * @hidden
    */
   lock(): void {
-    this.locked = true;
+    this.locked = true
     this.tls.lock()
   }
 
@@ -340,7 +358,7 @@ export class TlsOptions {
    */
   set enabled (value: boolean) {
     if (this.locked) {
-      return;
+      return
     }
     this._enabled = value
   }
@@ -361,7 +379,7 @@ export class TlsOptions {
    */
   set caCertPath (value: PathLike | undefined) {
     if (this.locked) {
-      return;
+      return
     }
     this._caCertPath = value
   }
@@ -382,7 +400,7 @@ export class TlsOptions {
    */
   set clientCertPath (value: PathLike | undefined) {
     if (this.locked) {
-      return;
+      return
     }
     this._clientCertPath = value
   }
@@ -403,7 +421,7 @@ export class TlsOptions {
    */
   set clientKeyPath (value: PathLike | undefined) {
     if (this.locked) {
-      return;
+      return
     }
     this._clientKeyPath = value
   }
@@ -507,6 +525,9 @@ export class Session
    */
   constructor (sessionOptions?: Options | object) {
     super()
+
+    registerResolver("coherence", CoherenceResolver)
+
     if (sessionOptions) {
       this._sessionOptions = Object.assign(new Options(), sessionOptions)
       // @ts-ignore  -- added for 'tls' index access
@@ -545,15 +566,15 @@ export class Session
     // emit the `disconnect` event.
     // When transitioning from any other state,
     // other than SHUTDOWN, to READY, emit the 'reconnect' event.
-    let connected: boolean = false;
-    let firstConnect: boolean = true;
-    let lastState: number = 0;
+    let connected: boolean = false
+    let firstConnect: boolean = true
+    let lastState: number = 0
     let callback = async () => {
-      let state = channel.getConnectivityState(false);
-      lastState = state;
+      let state = channel.getConnectivityState(false)
+      lastState = state
       if (state === ConnectivityState.SHUTDOWN) {
         // nothing to do
-        return;
+        return
       } else if (state === ConnectivityState.READY) {
         if (!firstConnect && !connected) {
           this.emit(event.SessionLifecycleEvent.RECONNECTED)
@@ -566,7 +587,7 @@ export class Session
       } else {
         if (connected) {
           this.emit(event.SessionLifecycleEvent.DISCONNECTED)
-          connected = false;
+          connected = false
         }
       }
       let deadline = Number.POSITIVE_INFINITY
@@ -836,3 +857,346 @@ export class Session
     })
   }
 }
+
+enum ResolveState {
+  CHANNEL,
+  CONNECTION,
+  DONE,
+  INITIAL,
+  LOOKUP,
+}
+
+class LookupState {
+  state: ResolveState = ResolveState.INITIAL
+  query: string
+  result?: string
+  channel?: Buffer
+  resolve?: (value: (PromiseLike<void> | void)) => void;
+  reject?: (reason?: any) => void
+  waitResolve: Promise<void>
+
+  constructor(query: string) {
+    this.query = query
+    this.waitResolve = new Promise((resolve, reject) => {
+      this.resolve = resolve
+      this.reject = reject
+    })
+  }
+}
+
+/**
+ * INTERNAL: Implementation of the gRPC Resolver that will resolve gRPC proxies endpoints
+ * using the Coherence name service.
+ */
+export class CoherenceResolver implements experimental.Resolver {
+
+  private static readonly MULTIPLEXED_SOCKET = Buffer.from([90, 193, 224, 0])
+  private static readonly NAME_SERVICE_SUB_PORT = Buffer.from([0, 0, 0, 3])
+  private static readonly CONNECTION_OPEN = Buffer.from([
+    0, 1, 2, 0, 66, 0, 1, 14, 0, 0, 66, 166, 182, 159, 222, 178, 81,
+    1, 65, 227, 243, 228, 221, 15, 2, 65, 143, 246, 186, 153, 1, 3,
+    65, 248, 180, 229, 242, 4, 4, 65, 196, 254, 220, 245, 5, 5, 65, 215,
+    206, 195, 141, 7, 6, 65, 219, 137, 220, 213, 10, 64, 2, 110, 3,
+    93, 78, 87, 2, 17, 77, 101, 115, 115, 97, 103, 105, 110, 103, 80,
+    114, 111, 116, 111, 99, 111, 108, 2, 65, 2, 65, 2, 19, 78, 97, 109,
+    101, 83, 101, 114, 118, 105, 99, 101, 80, 114, 111, 116, 111, 99,
+    111, 108, 2, 65, 1, 65, 1, 5, 160, 2, 0, 0, 14, 0, 0, 66, 174, 137,
+    158, 222, 178, 81, 1, 65, 129, 128, 128, 240, 15, 5, 65, 152, 159,
+    129, 128, 8, 6, 65, 147, 158, 1, 64, 1, 106, 2, 110, 3, 106, 4, 113,
+    5, 113, 6, 78, 8, 67, 108, 117, 115, 116, 101, 114, 66, 9, 78, 9, 108,
+    111, 99, 97, 108, 104, 111, 115, 116, 10, 78, 5, 50, 48, 50, 51, 51, 12,
+    78, 16, 67, 111, 104, 101, 114, 101, 110, 99, 101, 67, 111, 110, 115,
+    111, 108, 101, 64, 64,
+  ])
+  private static readonly CHANNEL_OPEN = Buffer.from([
+    0, 11, 2, 0, 66, 1, 1, 78, 19, 78, 97, 109, 101, 83, 101, 114, 118,
+    105, 99, 101, 80, 114, 111, 116, 111, 99, 111, 108, 2, 78, 11, 78,
+    97, 109, 101, 83, 101, 114, 118, 105, 99, 101, 64,
+  ])
+  private static readonly NS_LOOKUP_REQ_ID = Buffer.from([1, 1, 0, 66, 0, 1, 78])
+  private static readonly REQ_END_MARKER = Buffer.from([64])
+
+  private static readonly NAME_SERVICE: string = 'NameService/string'
+  private static readonly CLUSTER_NS_LOOKUP_PREFIX: string = `${CoherenceResolver.NAME_SERVICE}/Cluster/foreign/`
+  private static readonly CLUSTER_NS_LOOKUP_SUFFIX: string = '/NameService/localPort'
+  private static readonly GRPC_PROXY_LOOKUP: string = `${CoherenceResolver.NAME_SERVICE}/$GRPC:GrpcProxy`
+
+  private readonly target: experimental.GrpcUri
+  private readonly listener: experimental.ResolverListener
+
+  constructor (
+      target: experimental.GrpcUri,
+      listener: experimental.ResolverListener,
+      channelOptions: ChannelOptions
+  ) {
+    this.target = target
+    this.listener = listener
+  }
+
+  // ----- experimental.Resolver interface ----------------------------------
+
+  destroy(): void {
+  }
+
+  updateResolution(): void {
+    let [host, port, clusterName] = CoherenceResolver.parseConn(this.target.path)
+    let socket
+    // check for foreign cluster reference
+    if (clusterName.length > 0) {
+      let clusterNameState: LookupState = this.createForeignLookupState(clusterName)
+      socket = this.createSocket(clusterNameState)
+      socket.connect(parseInt(port), host)
+      clusterNameState.waitResolve.then(() => {
+        if (clusterNameState.result) {
+          port = clusterNameState.result
+          this.runLookup(this.createGrpcLookupState(), host, parseInt(port))
+        } else {
+          this.listener.onError({
+            code: status.UNAVAILABLE,
+            details: `Unable to resolve an address from ${JSON.stringify(this.target)}`,
+            metadata: new Metadata(),
+          })
+        }
+      }).catch(reason => {
+        console.log(`Unable to resolve an address from ${JSON.stringify(this.target)}: ${reason}`)
+        this.listener.onError({
+          code: status.UNAVAILABLE,
+          details: reason,
+          metadata: new Metadata(),
+        })
+      })
+    } else {
+      this.runLookup(this.createGrpcLookupState(), host, parseInt(port))
+    }
+  }
+
+  static getDefaultAuthority(target: experimental.GrpcUri): string {
+    let [host] = this.parseConn(target.path)
+    return host
+  }
+
+  // ----- internal ---------------------------------------------------------
+
+  createForeignLookupState(clusterName: string): LookupState {
+    return new LookupState(`${CoherenceResolver.CLUSTER_NS_LOOKUP_PREFIX}${clusterName}${CoherenceResolver.CLUSTER_NS_LOOKUP_SUFFIX}`)
+  }
+
+  createGrpcLookupState(): LookupState {
+    return new LookupState(CoherenceResolver.GRPC_PROXY_LOOKUP)
+  }
+
+  static parseConn(path: string): [string, string, string] {
+    let parts: string[] = path.split(/[/:]/)
+    const host = parts[0]
+    let port = '7574'
+    let clusterName = ''
+    if (parts.length === 2) {
+      let p = parseInt(parts[1])
+      if (isNaN(p)) {
+        // this is a cluster reference using the default port
+        clusterName = parts[1]
+      }
+    } else if (parts.length === 3) {
+      port = parts[1]
+      clusterName = parts[2]
+    }
+    return [host, port, clusterName]
+  }
+
+  private runLookup(state: LookupState, host: string, port: number): void {
+    let socket: net.Socket = this.createSocket(state)
+    socket.connect(port, host)
+    state.waitResolve.then(() => {
+      let ep: Endpoint[] = this.parseLookupResult(state)
+      if (ep.length > 0) {
+        this.listener.onSuccessfulResolution(ep, null, null, null, {})
+      } else {
+        this.listener.onError({
+          code: status.UNAVAILABLE,
+          details: `Unable to resolve an address from ${JSON.stringify(this.target)}`,
+          metadata: new Metadata(),
+        })
+      }
+    })
+  }
+
+  private parseLookupResult(state: LookupState): Endpoint[] {
+    if (state.result) {
+      const parts: string[] = state.result.substring(1, state.result.length - 1).split(', ')
+      if (parts) {
+        const iterCnt: number = parts.length / 2
+        return Array.from({length: iterCnt}, (_, i) => ({
+          addresses: [{
+            port: parseInt(parts[i * 2 + 1]),
+            host: parts[i * 2],
+          }],
+        }))
+      } else {
+        return []
+      }
+    }
+    return []
+  }
+
+  private static readResponse(socket: net.Socket): Buffer {
+    const length: number = CoherenceResolver.readPackedInt(socket)
+    return socket.read(length)
+  }
+
+  private static writePackedInt(n: number): Buffer {
+    let result: Buffer = Buffer.alloc(0)
+    let b = 0
+
+    if (n < 0) {
+      b = 0x40
+      n = ~n // bitwise negation
+    }
+
+    b |= n & 0x3F
+    n >>= 6
+
+    while (n !== 0) {
+      result = Buffer.concat([result, Buffer.from([b | 0x80])])
+      b = n & 0x7F
+      n >>= 7
+    }
+
+    return Buffer.concat([result, Buffer.from([b])])
+  }
+
+  private static readPackedInt(socket: net.Socket): number {
+    let bits = 6
+    let bytes: Buffer = socket.read(1)
+    let byte = bytes[0]
+    let negative: boolean = (byte & 0x40) !== 0
+    let result = (byte & 0x3F)
+
+    while ((byte & 0x80) !== 0) {
+      bytes = socket.read(1)
+      byte = bytes[0]
+      result |= (byte & 0x7F) << bits
+      bits += 7
+    }
+
+    return negative ? ~result : result
+  }
+
+  private static readPackedIntFromBuffer(bytes: Buffer): [number, number] {
+    let bits = 6
+
+    if (bytes.length > 7) {
+      let byte = bytes ? bytes[6] : 0
+      let negative: boolean = (byte & 0x40) !== 0
+      let result = (byte & 0x3F)
+
+      while ((byte & 0x80) !== 0) {
+        byte = bytes ? bytes[7] : 0
+        result |= (byte & 0x7F) << bits
+        bits += 7
+      }
+
+      return [negative ? ~result : result, bits]
+    }
+    return [0, bits]
+  }
+
+  private static sendConnectionOpen(socket: net.Socket) {
+    socket.write(CoherenceResolver.MULTIPLEXED_SOCKET)
+    socket.write(CoherenceResolver.NAME_SERVICE_SUB_PORT)
+    socket.write(CoherenceResolver.writePackedInt(CoherenceResolver.CONNECTION_OPEN.length))
+    socket.write(CoherenceResolver.CONNECTION_OPEN)
+  }
+
+  private static sendChannelOpen(socket: net.Socket) {
+    socket.write(CoherenceResolver.writePackedInt(CoherenceResolver.CHANNEL_OPEN.length))
+    socket.write(CoherenceResolver.CHANNEL_OPEN)
+  }
+
+  private static sendLookup(socket: net.Socket, channel: Buffer, query: string) {
+      const request = Buffer.concat([
+        channel,
+        CoherenceResolver.NS_LOOKUP_REQ_ID,
+        CoherenceResolver.writePackedInt(query.length),
+        Buffer.from(query),
+        CoherenceResolver.REQ_END_MARKER,
+      ])
+
+      socket.write(CoherenceResolver.writePackedInt(request.length))
+      socket.write(request)
+  }
+
+  // Read a string from the response
+  private static readString(data: Buffer): string {
+    let [len, bits] = CoherenceResolver.readPackedIntFromBuffer(data)
+    return data.subarray(7 + (bits / 7), 7 + (bits / 7) + len).toString()
+  }
+
+  private createSocket(state: LookupState): net.Socket {
+    let socket = new net.Socket()
+
+    socket.setNoDelay(true)
+    socket.setTimeout(10 * 1000) // Set timeout
+
+    socket.on("connect", () => {
+          CoherenceResolver.sendConnectionOpen(socket)
+          state.state = ResolveState.CONNECTION
+        }
+    )
+
+    socket.on('error', err => {
+      state.reject!(err)
+    })
+
+    socket.on('readable', () => {
+      switch (state.state) {
+        case ResolveState.DONE:
+          return
+
+        case ResolveState.CONNECTION: {
+          while (socket.read() !== null) {} // consume the open connection response
+
+          // open the remote channel
+          CoherenceResolver.sendChannelOpen(socket)
+
+          // transition read state
+          state.state = ResolveState.CHANNEL
+
+          break
+        }
+
+        case ResolveState.CHANNEL: {
+          let msg: Buffer = CoherenceResolver.readResponse(socket)
+
+          state.channel = msg.subarray(8, 8 + msg.length - 9)
+
+          if (!state.channel) {
+            state.state = ResolveState.DONE
+            state.reject!("Unable to parse channel from response")
+          }
+
+          CoherenceResolver.sendLookup(socket, state.channel, state.query)
+
+          // transition read state
+          state.state = ResolveState.LOOKUP
+
+          break
+        }
+
+        case ResolveState.LOOKUP: {
+          let msg = CoherenceResolver.readResponse(socket)
+          msg = msg.subarray(state.channel!.length + 1)
+          state.result = CoherenceResolver.readString(msg)
+          socket.destroy()
+          if (state.result.length > 0) {
+            state.resolve!() // signal caller, resolution completed
+          } else {
+            state.reject!("Failure to parse lookup response")
+          }
+        }
+      }
+    })
+
+    return socket
+  }
+}
+

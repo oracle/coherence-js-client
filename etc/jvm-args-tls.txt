@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Oracle and/or its affiliates.
+# Copyright (c) 2023, 2025, Oracle and/or its affiliates.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
@@ -6,7 +6,7 @@
 -Xms1g
 -Xmx1g
 -Dcoherence.log.level=9
--Dcoherence.io.json.debug=true
+-Dcoherence.io.json.debug=false
 -Dcoherence.grpc.server.socketprovider=tls-files
 -Dcoherence.security.key=/certs/star-lord.pem
 -Dcoherence.security.cert=/certs/star-lord.crt

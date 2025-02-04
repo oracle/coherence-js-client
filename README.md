@@ -12,7 +12,7 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE `22.06` or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
+* Coherence CE versions `22.06`, `14.1.2-0-0`, `24.09` or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
 * Node `18.15.x` or later
 * NPM `9.x` or later
 
@@ -40,7 +40,7 @@ For more details on the image, see the [documentation](https://github.com/oracle
 
 ### Declare Your Dependency
 
-To use the Coherence gRPC JavaScript Client, simply declare it as a dependency in your
+To use the JavaScript Client for Oracle Coherence, simply declare it as a dependency in your
 project's `package.json`:
 ```
 ...
@@ -52,8 +52,8 @@ project's `package.json`:
 
 ### Compatibility with Java Types
 The following table provides a listing of mappings between Java types and Javascript types when working with
-Coherence `23.09` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
-using `23.09` if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
+Coherence `24.09` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
+using `24.09` if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
 
 | Java Type            | JavascriptType         |
 |----------------------|------------------------|
@@ -68,7 +68,7 @@ using `23.09` if intentionally using `java.math.BigInteger` or `java.math.BigDec
 #### Establishing a Session
 
 The Coherence uses the concept of a `Session` to manage a set of related Coherence resources,
-such as maps and/or caches. When using the Coherence JavaScript Client, a `Session` connects to a specific
+such as maps and/or caches. When using the JavaScript Client for Oracle Coherence, a `Session` connects to a specific
 gRPC endpoint and uses a specific serialization format to marshal requests and responses.
 This means that different sessions using different serializers may connect to the same server endpoint. Typically,
 for efficiency the client and server would be configured to use matching serialization formats to avoid
@@ -76,7 +76,7 @@ deserialization of data on the server, but this does not have to be the case. If
 serializer for the server-side caches, it must be able to deserialize the client's requests, so there must be
 a serializer configured on the server to match that used by the client.
 
-> NOTE: Currently, the Coherence JavaScript client only supports JSON serialization
+> NOTE: Currently, the JavaScript Client for Oracle Coherence only supports JSON serialization
 
 A `Session` is constructed using an `Options` instance, or a generic object with the same keys and values.
 
@@ -125,6 +125,34 @@ const opts = new Options({address: 'example.com:4444'})
 
 let session = new Session(opts)
 ```
+
+As of v1.2.3 of the JavaScript Client for Oracle Coherence, it's now possible to use the Coherence
+NameService to lookup gRPC Proxy endpoints.  The format to enable this feature is
+`coherence:///<host>([:port]|[/cluster-name]|[:port/cluster-name])`
+
+For example:
+ * `coherence:///localhost` will connect to the name service bound to a local coherence cluster on port `7574` (the default Coherence cluster port).
+ * `coherence:///localhost:8000` will connect to the name service bound to a local coherence cluster on port `8000`.
+ * `coherence:///localhost/remote-cluster` will connect to the name service bound to a local coherence cluster on port `7574` (the default Coherence cluster port) and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
+ * `coherence:///localhost:8000/remote-cluster` will connect to the name service bound to a local coherence cluster on port `8000` and look up the name service for the given cluster name.  Note: this typically means both clusters have a local member sharing a cluster port.
+
+While this is useful for local development, this may have limited uses in a production environment.  For example,
+Coherence running within a container with the cluster port (`7574`) exposed so external clients may connect.  The
+lookup will fail to work for the client as the Coherence name service return a private network address which
+won't resolve. Lastly, if connecting to a cluster that has multiple proxies bound to different ports, gRPC, by default,
+will use the first address returned by the resolver.  It is possible to enable round-robin load balancing by including
+a custom channel option when creating the session:
+
+```typescript
+const { Session } = require('@oracle/coherence')
+
+const opts = new Options({address: 'coherence:///localhost',
+  channelOptions: {'grpc.service_config': JSON.stringify({ loadBalancingConfig: [{ round_robin: {} }], })}})
+
+let session = new Session(opts)
+```
+
+*NOTE* The Coherence NameService feature requires Node `20.x` or later.
 
 It's also possible to control the default address the session will bind to by providing
 an address via the `COHERENCE_SERVER_ADDRESS` environment variable.  The format of the value would

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, 2023, Oracle and/or its affiliates.
+ * Copyright (c) 2022, 2025, Oracle and/or its affiliates.
  *
  * Licensed under the Universal Permissive License v 1.0 as shown at
  * https://oss.oracle.com/licenses/upl.
@@ -1585,7 +1585,7 @@ export namespace util {
    * When Coherence serializes a type, it populates the `@class` metadata with the type alias name, which
    * can be used to reconstruct the Java class running in another VM, or in our case reconstruct a similar
    * object in Javascript.  Using 1BigInt` as an example; using a TypeHandler the BigInt can be deserialized
-   * to JSON in the required fashion in order to have a BigInteger created in Coherence and vice-versa.
+   * to JSON in the required fashion in order to have a BigInteger created in Coherence and vice versa.
    */
   export abstract class TypeHandler {
     protected readonly _type: string

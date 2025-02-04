@@ -35,6 +35,7 @@
     "test": "npm run compile && npm exec mocha 'test/**.js' --recursive --exit",
     "test-cycle": "bin/test-cycle.sh -c",
     "test-cycle-tls": "bin/test-cycle.sh -s",
+    "test-resolver": "npm run compile && npm exec mocha test/discovery/resolver-tests.js --recursive --exit",
     "coh-up": "bin/docker-utils.sh -u",
     "coh-down": "bin/docker-utils.sh -d",
     "coverage": "nyc mocha 'test/**.js' --exit",
