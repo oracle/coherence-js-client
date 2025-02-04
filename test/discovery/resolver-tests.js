@@ -71,7 +71,6 @@ describe('CoherenceResolver Test Suite (unit/IT)', () => {
       const cache = session.getCache('test')
       await cache.set('a', 'b')
       assert.equal(await cache.get('a'), 'b')
-      console.log("HERE")
       await session.close()
     })
   })
