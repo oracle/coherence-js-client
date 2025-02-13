@@ -1,4 +1,4 @@
-# Copyright 2020, 2023, Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright 2020, 2025, Oracle Corporation and/or its affiliates.  All rights reserved.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
 
@@ -46,3 +46,9 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
+      - name: Archive Failure Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm.log
+          path: /home/runner/.npm/_logs/*
