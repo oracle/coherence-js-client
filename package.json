@@ -25,7 +25,7 @@
     "nyc": "^15.1",
     "source-map-support": "^0.5",
     "ts-node": "^10.9",
-    "typescript": "^5.7"
+    "typescript": "^5.8"
   },
   "scripts": {
     "grpc": "bin/npm-post-install.sh",
