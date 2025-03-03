@@ -1488,7 +1488,7 @@ export class NamedCacheClient<K = any, V = any>
    *
    * @return the deserialized value
    */
-  protected toValue<V> (value: Uint8Array): V {
+  protected toValue<V> (value: Uint8Array): V | null {
     return (value && value.length > 0)
       ? this.getRequestFactory().serializer.deserialize(value)
       : null
