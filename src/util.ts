@@ -5,12 +5,12 @@
  * https://oss.oracle.com/licenses/upl.
  */
 
-import { ClientReadableStream } from '@grpc/grpc-js'
-import { BytesValue } from 'google-protobuf/google/protobuf/wrappers_pb'
-import { aggregator } from './aggregators'
-import { event } from './events'
-import { extractor } from './extractors'
-import { filter } from './filters'
+import {ClientReadableStream} from '@grpc/grpc-js'
+import {BoolValue, BytesValue, Int32Value} from 'google-protobuf/google/protobuf/wrappers_pb'
+import {aggregator} from './aggregators'
+import {event} from './events'
+import {extractor} from './extractors'
+import {filter} from './filters'
 import {
   AddIndexRequest,
   AggregateRequest,
@@ -18,28 +18,45 @@ import {
   ContainsEntryRequest,
   ContainsKeyRequest,
   ContainsValueRequest,
-  DestroyRequest, Entry,
+  DestroyRequest,
+  Entry,
   EntryResult,
   EntrySetRequest,
   GetAllRequest,
   GetRequest,
   InvokeAllRequest,
-  InvokeRequest, IsEmptyRequest, IsReadyRequest,
+  InvokeRequest,
+  IsEmptyRequest,
+  IsReadyRequest,
   KeySetRequest,
   MapListenerRequest,
-  PageRequest, PutAllRequest,
+  PageRequest,
+  PutAllRequest,
   PutIfAbsentRequest,
   PutRequest,
   RemoveIndexRequest,
   RemoveMappingRequest,
   RemoveRequest,
   ReplaceMappingRequest,
-  ReplaceRequest, SizeRequest, TruncateRequest,
+  ReplaceRequest,
+  SizeRequest,
+  TruncateRequest,
   ValuesRequest
 } from './grpc/messages_pb'
-import { MapEntry, NamedCacheClient } from './named-cache-client'
-import { processor } from './processors'
+import {MapEntry, NamedCacheClient} from './named-cache-client'
+import {processor} from './processors'
 import Decimal from "decimal.js";
+
+import {InitRequest, ProxyRequest} from "./grpc/proxy_service_messages_v1_pb";
+import {
+  EnsureCacheRequest,
+  NamedCacheRequest,
+  NamedCacheRequestType,
+  NamedCacheResponse
+} from "./grpc/cache_service_messages_v1_pb";
+import {BinaryKeyAndValue, OptionalValue} from "./grpc/common_messages_v1_pb";
+import {Any} from "google-protobuf/google/protobuf/any_pb";
+import {PutRequest as PutRequestV1} from "./grpc/cache_service_messages_v1_pb"
 
 export namespace util {
 
@@ -1033,6 +1050,375 @@ export namespace util {
   export interface Comparator {
     '@class': string;
   }
+  
+  export interface ScalarResultProducer<T> {
+    result(): T | undefined
+  }
+
+  export abstract class ResponseTransformer<T> {
+    private _serializer: Serializer
+
+    constructor(serializer: util.Serializer) {
+      this._serializer = serializer;
+    }
+
+    public abstract transform(response: NamedCacheResponse): T
+
+    get serializer(): util.Serializer {
+      return this._serializer;
+    }
+  }
+
+  export class EntryTransformer<K, V>
+    extends ResponseTransformer<MapEntry<K, V>> {
+
+    constructor(serializer: util.Serializer) {
+      super(serializer)
+    }
+
+    transform(response: NamedCacheResponse): MapEntry<K, V> {
+      let message: Any = response.getMessage()!
+      let binary: BinaryKeyAndValue = message.unpack(BinaryKeyAndValue.deserializeBinary, message.getTypeUrl())!
+      return new NamedCacheEntry<K, V>(binary.getKey_asU8(), binary.getValue_asU8(), this.serializer)
+    }
+  }
+
+  export class ValueTransformer<V>
+    extends ResponseTransformer<V> {
+    constructor(serializer: util.Serializer) {
+      super(serializer)
+    }
+
+    transform(response: NamedCacheResponse): V {
+      let message: Any = response.getMessage()!
+      let binary: BinaryKeyAndValue = message.unpack(BinaryKeyAndValue.deserializeBinary, message.getTypeUrl())!
+      return this.serializer.deserialize(binary.getValue_asU8())
+    }
+  }
+
+  export class OptionalValueTransformer<V>
+      extends ResponseTransformer<V | null> {
+    constructor(serializer: util.Serializer) {
+      super(serializer)
+    }
+
+    transform(response: NamedCacheResponse): V | null {
+      let message: Any = response.getMessage()!
+      let binary: OptionalValue = message.unpack(OptionalValue.deserializeBinary, message.getTypeUrl())!
+      return binary.getPresent() ? this.serializer.deserialize(binary.getValue_asU8()) : null
+    }
+  }
+
+  export class IntValueTransformer
+    extends ResponseTransformer<number> {
+    constructor(serializer: util.Serializer) {
+      super(serializer)
+    }
+
+    transform(response: NamedCacheResponse): number {
+      let message: Any = response.getMessage()!
+      let binary: Int32Value = message.unpack(Int32Value.deserializeBinary, message.getTypeUrl())!
+      return binary.getValue()
+    }
+  }
+  
+  export class BoolValueTransformer
+    extends ResponseTransformer<boolean> {
+    constructor(serializer: util.Serializer) {
+      super(serializer)
+    }
+
+    transform(response: NamedCacheResponse): boolean {
+      let message: Any = response.getMessage()!
+      let binary: BoolValue = message.unpack(BoolValue.deserializeBinary, message.getTypeUrl())!
+      return binary.getValue()
+    }
+  }
+  
+  export class BytesValueTransformer<T>
+    extends ResponseTransformer<T | null> {
+
+    transform(response: NamedCacheResponse): T | null {
+      let message: Any = response.getMessage()!
+      let binary: BytesValue = message.unpack(BytesValue.deserializeBinary, message.getTypeUrl())!
+      return this.serializer.deserialize(binary.getValue_asU8())
+    }
+  }
+  
+  export class CookieTransformer
+    extends ResponseTransformer<Uint8Array> {
+
+    transform(response: NamedCacheResponse): Uint8Array {
+      let message: Any = response.getMessage()!
+      let binary: BytesValue = message.unpack(BytesValue.deserializeBinary, message.getTypeUrl())!
+      return binary.getValue_asU8()
+    }
+  }
+
+  export class CacheIdTransformer
+    extends ResponseTransformer<number> {
+    transform(response: NamedCacheResponse): number {
+      return response.getCacheid()
+    }
+  }
+
+  export abstract class ResponseObserver {
+    protected request: ProxyRequest
+    protected _error?: Error
+    protected complete: boolean
+    protected waiter: Event
+
+    constructor(request: ProxyRequest) {
+      this.request = request
+      this.complete = false
+      this.waiter = new Event()
+    }
+
+    public abstract next(response: NamedCacheResponse): void
+
+    public error(error: Error): void {
+      this._error = error
+      this.done()
+    }
+
+    public done(): void {
+      this.complete = true
+      this.waiter.set()
+    }
+
+    public get id(): number {
+      return this.request.getId()
+    }
+  }
+
+  export interface Dispatcher {
+
+    dispatch(streamHandler: any): Promise<void>
+  }
+  
+  export class UnaryDispatcher<T>
+    extends ResponseObserver
+    implements Dispatcher, ScalarResultProducer<T | null> {
+
+    private readonly timeout: number
+    private readonly transformer: ResponseTransformer<T> | null
+    private _result: T | null = null
+    
+    constructor(timeout: number, request: ProxyRequest, transformer: ResponseTransformer<T> | null = null) {
+      super(request)
+      this.timeout = timeout
+      this.transformer = transformer;
+    }
+
+    async dispatch(streamHandler: any): Promise<void> {
+      // TODO
+      return Promise.resolve(undefined);
+    }
+
+    next(response: NamedCacheResponse): void {
+      if (this.complete) {
+        return
+      }
+
+      if (this.transformer !== null) {
+        this._result = this.transformer.transform(response)
+      }
+    }
+
+    result(): T | null {
+      return this._result
+    }
+  }
+
+  // TODO fix generics on async iterator
+  export class StreamingDispatcher<T>
+    extends ResponseObserver
+    implements AsyncIterable<string>, Dispatcher {
+    [Symbol.asyncIterator](): AsyncIterator<string> {
+      return {
+        next: async () => {
+          return Promise.resolve({value: 'a', done: true})
+        }
+      };
+    }
+
+    dispatch(streamHandler: any): Promise<void> {
+      return Promise.resolve(undefined);
+    }
+
+    next(response: NamedCacheResponse): void {
+    }
+  }
+
+  // TODO fix generics on async iterator
+  export class PaginggDispatcher<T>
+      extends ResponseObserver
+      implements AsyncIterable<string>, Dispatcher {
+    [Symbol.asyncIterator](): AsyncIterator<string> {
+      return {
+        next: async () => {
+          return Promise.resolve({value: 'a', done: true})
+        }
+      };
+    }
+
+    dispatch(streamHandler: any): Promise<void> {
+      return Promise.resolve(undefined);
+    }
+
+    next(response: NamedCacheResponse): void {
+    }
+
+  }
+
+  /**
+   * Constructs gRPC messages Coherence services.
+   * @hidden
+   */
+  export class RequestFactoryV1<K, V> {
+    /**
+     * The cache this `RequestFactory` will be making requests for.
+     */
+    private readonly _cacheName: string
+
+    /**
+     * The scope of the cache.
+     */
+    private readonly _scope: string
+
+    /**
+     * The next request id.
+     */
+    private _nextRequestId: number = 0
+
+    /**
+     * The filter ID to be used when registering filter-based listeners.
+     */
+    private _nextFilterId: number = 0
+
+    private _cacheId: number = 0
+
+    private timeout: number
+
+    /**
+     * The payload serializer.
+     */
+    private readonly _serializer: Serializer
+
+    constructor (cacheName: string, scope: string, serializer: Serializer, timeout: number) {
+      if (!cacheName) {
+        throw new Error('cache name cannot be null or undefined')
+      }
+      this._cacheName = cacheName
+      this._serializer = serializer
+      this._scope = scope
+      this.timeout = timeout
+    }
+
+    get cacheName(): string {
+      return this._cacheName;
+    }
+
+    get scope(): string {
+      return this._scope;
+    }
+
+    get nextRequestId(): number {
+      return this._nextRequestId;
+    }
+
+    get nextFilterId(): number {
+      return this._nextFilterId;
+    }
+
+    get serializer(): util.Serializer {
+      return this._serializer;
+    }
+
+
+    set cacheId(value: number) {
+      this._cacheId = value;
+    }
+
+    createProxyRequest(request: NamedCacheRequest): ProxyRequest {
+      let message: Any = new Any()
+      message.pack(request.serializeBinary(), 'coherence.cache.v1.NamedCacheRequest')
+
+      let proxyRequest: ProxyRequest = new ProxyRequest()
+      proxyRequest.setMessage(message)
+      proxyRequest.setId(1)
+
+      return proxyRequest
+    }
+
+    initSubChannel(scope: string = "",
+                   format: string = "json",
+                   protocol: string = "CacheService",
+                   protocolVersion: number = 1,
+                   supportedVersion: number = 1,
+                   heartbeat: number = 0): ProxyRequest {
+      let init: InitRequest = new InitRequest()
+      init.setScope(scope)
+      init.setFormat(format)
+      init.setProtocol(protocol)
+      init.setProtocolversion(protocolVersion)
+      init.setSupportedprotocolversion(supportedVersion)
+      init.setHeartbeat(heartbeat)
+
+      let request: ProxyRequest = new ProxyRequest()
+      request.setId(2)
+      request.setInit(init)
+
+      return request
+    }
+
+    ensureCache(cacheName: string): UnaryDispatcher<number> {
+      let ensureRequest: EnsureCacheRequest = new EnsureCacheRequest()
+      ensureRequest.setCache(cacheName)
+
+      let message: Any = new Any()
+      message.pack(ensureRequest.serializeBinary(), 'coherence.cache.v1.EnsureCacheRequest')
+
+      let request: NamedCacheRequest = new NamedCacheRequest()
+      request.setType(NamedCacheRequestType.ENSURECACHE)
+      request.setMessage(message)
+
+      return new UnaryDispatcher(this.timeout, this.createProxyRequest(request), new CacheIdTransformer(this.serializer))
+    }
+
+    getRequest(key: K): UnaryDispatcher<V | null> {
+      let getRequest: GetRequest = new GetRequest()
+      getRequest.setKey(this.serializer.serialize(key))
+
+      let message: Any = new Any()
+      message.pack(getRequest.serializeBinary(), 'coherence.GetRequest')
+
+      let request: NamedCacheRequest = new NamedCacheRequest()
+      request.setType(NamedCacheRequestType.GET)
+      request.setCacheid(this._cacheId)
+      request.setMessage(message)
+
+      return new UnaryDispatcher(this.timeout, this.createProxyRequest(request), new OptionalValueTransformer(this.serializer))
+    }
+
+    putRequest(key: K, value: V, ttl: number = 0): UnaryDispatcher<V | null> {
+      let putRequest: PutRequestV1 = new PutRequestV1()
+      putRequest.setKey(this.serializer.serialize(key))
+      putRequest.setValue(this.serializer.serialize(value))
+      putRequest.setTtl(ttl)
+
+      let message: Any = new Any()
+      message.pack(putRequest.serializeBinary(), 'coherence.cache.v1.PutRequest')
+
+      let request: NamedCacheRequest = new NamedCacheRequest()
+      request.setType(NamedCacheRequestType.PUT)
+      request.setCacheid(this._cacheId)
+      request.setMessage(message)
+
+      return new UnaryDispatcher(this.timeout, this.createProxyRequest(request), new OptionalValueTransformer(this.serializer))
+    }
+
+  }
 
   /**
    * A class to facilitate Request objects creation.
@@ -1903,4 +2289,44 @@ export namespace util {
   export function isIterableType<T> (arg: any): arg is Iterable<T> {
     return arg && typeof arg[Symbol.iterator] === 'function'
   }
+
+  export class Event {
+    private isSet: boolean = false;
+    private waitingResolvers: Array<() => void> = [];
+
+    // Method to wait for the event to be set
+    public async wait(): Promise<void> {
+      if (this.isSet) {
+        return; // If the event is already set, immediately return
+      }
+
+      // Otherwise, create a promise and push its resolver to the waiting list
+      await new Promise<void>((resolve) => {
+        this.waitingResolvers.push(resolve);
+      });
+    }
+
+    // Method to set the event, which wakes up all waiting tasks
+    public set(): void {
+      if (!this.isSet) {
+        this.isSet = true;
+        // Resolve all waiting promises
+        while (this.waitingResolvers.length > 0) {
+          const resolve = this.waitingResolvers.shift();
+          resolve?.();
+        }
+      }
+    }
+
+    // Method to clear the event (like resetting it)
+    public clear(): void {
+      this.isSet = false;
+    }
+
+    // Method to check if the event is set
+    public isSetStatus(): boolean {
+      return this.isSet;
+    }
+  }
+
 }

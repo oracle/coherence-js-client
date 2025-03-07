@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2020, 2023, Oracle and/or its affiliates.
+# Copyright (c) 2020, 2025, Oracle and/or its affiliates.
 #
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
@@ -11,8 +11,9 @@ declare -r ROOT="${PWD}"
 
 # Grabs the proto files from the Coherence project.
 function grab_proto_files() {
-  declare -r BASE_URL="https://raw.githubusercontent.com/oracle/coherence/22.06.10/prj/coherence-grpc/src/main/proto/"
-  declare -r PROTO_FILES=("messages.proto" "services.proto")
+  declare -r BASE_URL="https://raw.githubusercontent.com/oracle/coherence/24.09.3/prj/coherence-grpc/src/main/proto/"
+  declare -r PROTO_FILES=("messages.proto" "services.proto" "proxy_service_v1.proto" "proxy_service_messages_v1.proto"
+   "common_messages_v1.proto" "cache_service_messages_v1.proto")
   declare -r PROTO_DIR="${ROOT}/etc/proto"
 
   if [[ ! -d "${PROTO_DIR}" ]]; then
