@@ -9,10 +9,10 @@ import {
   CallOptions,
   Channel,
   ChannelCredentials,
-  ChannelOptions,
+  ChannelOptions, ClientDuplexStream,
   credentials,
   experimental, Metadata,
-  status,
+  status, StatusObject,
 } from '@grpc/grpc-js'
 import {EventEmitter} from 'events'
 import {PathLike, readFileSync} from 'fs'
@@ -24,6 +24,11 @@ import {ConnectivityState} from "@grpc/grpc-js/build/src/connectivity-state"
 import {registerResolver} from "@grpc/grpc-js/build/src/resolver"
 import {Endpoint} from "@grpc/grpc-js/build/src/subchannel-address"
 import * as net from "node:net"
+import {ProxyServiceClient} from "./grpc/proxy_service_v1_grpc_pb";
+import {InitResponse, ProxyResponse} from "./grpc/proxy_service_messages_v1_pb";
+import { v4 as uuidv4 } from 'uuid';
+
+import RequestFactoryV1 = util.RequestFactoryV1;
 
 /**
  * Supported {@link Session} options.
@@ -518,6 +523,10 @@ export class Session
    */
   private readonly sessionClosedPromise: Promise<boolean>
 
+  private _handshake?: HandShake
+
+  private _id: string = uuidv4().toString()
+
   /**
    * Construct a new `Session` based on the provided {@link Options}.
    *
@@ -568,10 +577,8 @@ export class Session
     // other than SHUTDOWN, to READY, emit the 'reconnect' event.
     let connected: boolean = false
     let firstConnect: boolean = true
-    let lastState: number = 0
     let callback = async () => {
       let state = channel.getConnectivityState(false)
-      lastState = state
       if (state === ConnectivityState.SHUTDOWN) {
         // nothing to do
         return
@@ -618,6 +625,25 @@ export class Session
     this._sessionOptions.lock()
   }
 
+  // TODO docs
+  public static async create(sessionOptions?: Options | object): Promise<Session> {
+    let session: Session = new Session(sessionOptions)
+    let handshake: HandShake = new HandShake(session)
+    session.handshake = handshake
+    await handshake.handshake()
+
+    if (session.protocolVersion > 0) {
+      console.info(`Session [${session.id}] connected to [${session.options.address}] \
+proxy-version=${session.proxyVersion}, protocol-version=${session.protocolVersion} \
+proxy-member-id=${session.proxyMemberId}`)
+    } else {
+      console.info(`Session [${session.id}] connected to [${session.options.address}] \
+protocol-version=${session.protocolVersion}`)
+    }
+
+    return session
+  }
+
   /**
    * An internal method to read a cert file given its path.
    *
@@ -631,6 +657,26 @@ export class Session
       throw new Error('When TLS is enabled, ' + certType + ' cannot be undefined or null')
     }
     return readFileSync(nameOrURL)
+  }
+
+  private set handshake(handshake: HandShake) {
+    this._handshake = handshake;
+  }
+
+  private get protocolVersion(): number {
+    return this._handshake!.protocolVersion!
+  }
+
+  private get proxyVersion(): string {
+    return this._handshake!.proxyVersion
+  }
+
+  private get proxyMemberId(): number {
+    return this._handshake!.proxyMemberId
+  }
+
+  get id(): string {
+    return this._id
   }
 
   /**
@@ -855,6 +901,59 @@ export class Session
       self.caches.delete(Session.makeCacheKey(cacheName, format))
       self.emit(event.MapLifecycleEvent.RELEASED, cacheName, format)
     })
+  }
+}
+
+class HandShake {
+  private _protocolVersion: number = 0
+  private _proxyVersion: string = "unknown"
+  private _proxyMemberId: number = 0
+  private readonly session: Session
+  private readonly channel: Channel
+  private stream?: ClientDuplexStream<any, any>
+
+  constructor(session: Session) {
+    this.session = session
+    this.channel = session.channel
+  }
+
+  // TODO TIMEOUTS
+  async handshake(): Promise<void> {
+    let stub: ProxyServiceClient = new ProxyServiceClient(this.session.address,
+        this.session.channelCredentials, {channelOverride: this.channel})
+    try {
+      this.stream = stub.subChannel()
+      let stream_local = this.stream
+
+      await new Promise<void>((resolve) => {
+        stream_local.on('data', (response: ProxyResponse) => {
+          let initResponse: InitResponse = response.getInit()!
+          this._proxyVersion = initResponse.getVersion()
+          this._protocolVersion = initResponse.getProtocolversion()
+          this._proxyMemberId = initResponse.getProxymemberid()
+          resolve()
+        })
+        stream_local.on('error', (status: StatusObject) => {
+          resolve()
+        })
+        stream_local.write(RequestFactoryV1.initSubChannel(), null)
+      })
+    } catch (error) {
+      await Promise.reject(Error(`Unexpected error, ${error}, when attempting to handshake with proxy`))
+    }
+    await Promise.resolve()
+  }
+
+  get protocolVersion(): number {
+    return this._protocolVersion;
+  }
+
+  get proxyVersion(): string {
+    return this._proxyVersion;
+  }
+
+  get proxyMemberId(): number {
+    return this._proxyMemberId;
   }
 }
 

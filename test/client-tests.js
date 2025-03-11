@@ -11,15 +11,20 @@ const assert = require('assert').strict
 const { describe, it, after, beforeEach } = require('mocha')
 const MapListener = event.MapListener
 
-describe('NamedCacheClient IT Test Suite', function () {
+describe('NamedCacheClient IT Test Suite', async function () {
   const val123 = { id: 123, str: '123', ival: 123, fval: 12.3, iarr: [1, 2, 3], group: 1 }
   const val234 = { id: 234, str: '234', ival: 234, fval: 23.4, iarr: [2, 3, 4], group: 2, nullIfOdd: 'non-null' }
   const val345 = { id: 345, str: '345', ival: 345, fval: 34.5, iarr: [3, 4, 5], group: 2 }
   const val456 = { id: 456, str: '456', ival: 456, fval: 45.6, iarr: [4, 5, 6], group: 3, nullIfOdd: 'non-null' }
 
-  const session = new Session()
-  const cache = session.getCache('cache-client')
+  let session = undefined
+  let cache = undefined
   this.timeout(30000)
+
+  before(async () => {
+    session = await Session.create()
+    cache = session.getCache('cache-client')
+  })
 
   beforeEach(async () => {
     await cache.clear()
@@ -375,7 +380,7 @@ describe('NamedCacheClient IT Test Suite', function () {
     })
     describe('The cache lifecycle', () => {
       it('should generate \'released\' event when the cache is released', async () => {
-        const sess = new Session()
+        const sess = await Session.create()
         const cache = sess.getCache('test')
 
         const prom = new Promise((resolve) => {
@@ -394,7 +399,7 @@ describe('NamedCacheClient IT Test Suite', function () {
       })
 
       it('should generate \'destroyed\' event when the cache is destroyed', async () => {
-        const sess = new Session()
+        const sess = await Session.create()
         const cache = sess.getCache('test')
 
         const prom = new Promise((resolve) => {

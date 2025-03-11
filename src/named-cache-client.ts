@@ -20,6 +20,7 @@ import {
   EntryResult,
 } from './grpc/messages_pb'
 import { NamedCacheServiceClient } from './grpc/services_grpc_pb'
+import { ProxyServiceClient } from './grpc/proxy_service_v1_grpc_pb'
 import { processor } from './processors'
 import { Session } from './session'
 import { util } from './util'
@@ -42,6 +43,7 @@ import LocalSet = util.LocalSet
 import NamedCacheEntry = util.NamedCacheEntry
 import RemoteSet = util.RemoteSet
 import RequestFactory = util.RequestFactory
+import RequestFactoryV1 = util.RequestFactoryV1
 import Serializer = util.Serializer
 import ValueSet = util.ValueSet
 
@@ -645,6 +647,113 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
   setIfAbsent (key: K, value: V, ttl?: number): Promise<V | null>
 }
 
+abstract class BaseNamedCacheClient<K = any, V = any>
+    extends EventEmitter {
+  /**
+   * @internal
+   * The session with the remote Coherence cluster.
+   */
+  protected readonly session: Session
+  /**
+   * The name of the Coherence `NamedCache`.
+   */
+  protected readonly cacheName: string
+  /**
+   * The {@link Serializer} that will be used to ser/deser message payloads.
+   */
+  protected readonly serializer: Serializer
+
+  /**
+   * @internal
+   * The internalEventEmitter is used by Session and this class for internal purposes. This
+   * allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
+   * to be handled independent of the eventual events seen by the client application.
+   */
+  protected readonly internalEmitter: EventEmitter = new EventEmitter()
+
+  /**
+   * Create a new NamedCacheClient with the specified address and cache name.
+   *
+   * @param cacheName   the name of the coherence NamedCache
+   * @param session     the session with the Coherence cluster
+   * @param serializer  the serializer used to ser/deser messages
+   */
+  constructor(cacheName: string, session: Session, serializer: Serializer) {
+    super()
+
+    this.cacheName = cacheName
+    this.session = session
+    this.serializer = serializer
+
+    // We maintain two separate EventEmitters;
+    //
+    // 1. The NamedCacheClient itself is an EventEmitter that is used by the client / application.
+    //    Any client application that wishes to listen for CacheLifecycle events can simply
+    //    use the ObservableMap interface and register EventListeners. ObservableMap provides
+    //    the 'on()' method that can be used to register Listeners.
+    //
+    // 2. The internalEventEmitter is used by Session and this class for internal purposes. This
+    //    allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
+    //    to be handled independent of the eventual events seen by the client application.
+    this.setupEventHandlers()
+  }
+
+  /**
+   * @internal
+   * Flag to track released state.
+   */
+  private _released: boolean = false
+
+  /**
+   * @inheritDoc
+   */
+  get released () {
+    return this._released
+  }
+
+  /**
+   * @internal
+   * Flag to track destroyed state.
+   */
+  private _destroyed: boolean = false
+
+  /**
+   * @inheritDoc
+   */
+  get destroyed () {
+    return this._destroyed
+  }
+
+  protected abstract get mapEventsManager(): MapEventsManager<K, V>
+
+  protected setupEventHandlers(): void {
+    const self = this
+    self.internalEmitter.on(MapLifecycleEvent.DESTROYED, (cacheName: string) => {
+      if (cacheName == self.cacheName) {
+        // noinspection JSIgnoredPromiseFromCall
+        this.mapEventsManager.closeEventStream()
+        self._destroyed = true
+        self.emit(MapLifecycleEvent.DESTROYED, cacheName) // notify NamedCacheClient level listeners
+      }
+    })
+
+    self.internalEmitter.on(MapLifecycleEvent.TRUNCATED, (cacheName: string) => {
+      if (cacheName == self.cacheName) {
+        self.emit(MapLifecycleEvent.TRUNCATED, cacheName) // notify NamedCacheClient level listeners
+      }
+    })
+
+    self.internalEmitter.on(MapLifecycleEvent.RELEASED, (cacheName: string) => {
+      if (cacheName == self.cacheName) {
+        // noinspection JSIgnoredPromiseFromCall
+        this.mapEventsManager.closeEventStream()
+        self._released = true
+        self.emit(MapLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners
+      }
+    })
+  }
+}
+
 
 /**
  * Class NamedCacheClient is a client to a NamedCache which is a Map that
@@ -664,45 +773,25 @@ export interface NamedCache<K, V> extends NamedMap<K, V> {
  * @typeParam V  the type of the cache values
  */
 export class NamedCacheClient<K = any, V = any>
-  extends EventEmitter
-  implements NamedCache<K, V> {
-
-  /**
-   * @internal
-   * The session with the remote Coherence cluster.
-   */
-  private readonly session: Session
-  /**
-   * The name of the Coherence `NamedCache`.
-   */
-  private readonly cacheName: string
-  /**
-   * The {@link Serializer} that will be used to ser/deser message payloads.
-   */
-  private readonly serializer: Serializer
-  /**
-   * @internal
-   * The `gRPC` service client.
-   */
-  private readonly client: NamedCacheServiceClient
-  /**
-   * @internal
-   * The `gRPC` request factory.
-   */
-  private readonly requestFactory: RequestFactory<K, V>
+  extends BaseNamedCacheClient<K, V>
+  implements NamedCache<K, V>{
   /**
    * @internal
    * Events handling is a complex beast. So, best handled
    * by a separate class.
    */
-  private readonly mapEventsHandler: MapEventsManager<K, V>
+  private readonly _mapEventsHandler: MapEventsManager<K, V>
+
   /**
    * @internal
-   * The internalEventEmitter is used by Session and this class for internal purposes. This
-   * allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
-   * to be handled independent of the eventual events seen by the client application.
+   * The `gRPC` service client.
    */
-  private readonly internalEmitter: EventEmitter = new EventEmitter()
+  protected readonly client: NamedCacheServiceClient
+  /**
+   * @internal
+   * The `gRPC` request factory.
+   */
+  protected readonly requestFactory: RequestFactory<K, V>
 
   /**
    * Create a new NamedCacheClient with the specified address and cache name.
@@ -712,17 +801,17 @@ export class NamedCacheClient<K = any, V = any>
    * @param serializer  the serializer used to ser/deser messages
    */
   constructor (cacheName: string, session: Session, serializer: Serializer) {
-    super()
-
-    this.cacheName = cacheName
-    this.session = session
-    this.serializer = serializer
+    super(cacheName, session, serializer)
 
     this.requestFactory = new RequestFactory(this.cacheName, this.session.scope, this.serializer)
     this.client = new NamedCacheServiceClient(
       session.address, // Ignored since we are using a shared Channel
       session.channelCredentials,
       session.clientOptions) // shared channel defined here
+
+    // Now open the events channel.
+    this._mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>,
+        this.session, this.client, this.serializer, this.internalEmitter)
 
     // We maintain two separate EventEmitters;
     //
@@ -735,29 +824,16 @@ export class NamedCacheClient<K = any, V = any>
     //    allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
     //    to be handled independent of the eventual events seen by the client application.
     this.setupEventHandlers()
-
-    // Now open the events channel.
-    this.mapEventsHandler = new MapEventsManager(this as NamedMap<K, V>,
-        this.session, this.client, this.serializer, this.internalEmitter)
   }
 
-  /**
-   * @internal
-   * Flag to track released state.
-   */
-  private _released: boolean = false
-
-  /**
-   * @inheritDoc
-   */
-  get released () {
-    return this._released
+  protected get mapEventsManager(): event.MapEventsManager<K, V> {
+    return this._mapEventsHandler
   }
 
   /**
    * @inheritDoc
    */
-  get ready () {
+  get ready (): Promise<boolean>{
     return this.promisify<boolean>((resolve, reject) => {
       const request = this.requestFactory.ready()
       this.client.isReady(request, new Metadata(), this.session.callOptions(), (err, resp) => {
@@ -771,19 +847,6 @@ export class NamedCacheClient<K = any, V = any>
   }
 
   // ----- public functions -------------------------------------------------
-
-  /**
-   * @internal
-   * Flag to track destroyed state.
-   */
-  private _destroyed: boolean = false
-
-  /**
-   * @inheritDoc
-   */
-  get destroyed () {
-    return this._destroyed
-  }
 
   /**
    * @inheritDoc
@@ -995,17 +1058,17 @@ export class NamedCacheClient<K = any, V = any>
     }
     if (keyOrFilterOrLite) {
       if (keyOrFilterOrLite instanceof Filter) {
-        return this.mapEventsHandler.registerFilterListener(listener, keyOrFilterOrLite, lite)
+        return this.mapEventsManager.registerFilterListener(listener, keyOrFilterOrLite, lite)
       } else if (typeof keyOrFilterOrLite === 'boolean') {
         // Two arg invocation.
-        return this.mapEventsHandler.registerFilterListener(listener, null, lite)
+        return this.mapEventsManager.registerFilterListener(listener, null, lite)
       } else {
-        return this.mapEventsHandler.registerKeyListener(listener, keyOrFilterOrLite, lite)
+        return this.mapEventsManager.registerKeyListener(listener, keyOrFilterOrLite, lite)
       }
     }
 
     // One arg invocation.
-    return this.mapEventsHandler.registerFilterListener(listener, null, lite)
+    return this.mapEventsManager.registerFilterListener(listener, null, lite)
   }
 
   /**
@@ -1014,10 +1077,10 @@ export class NamedCacheClient<K = any, V = any>
   removeMapListener (listener: event.MapListener<K, V>, keyOrFilter?: MapEventFilter<K, V> | K | null): Promise<void> {
     if (keyOrFilter) {
       return (keyOrFilter instanceof MapEventFilter)
-        ? this.mapEventsHandler.removeFilterListener(listener, keyOrFilter)
-        : this.mapEventsHandler.removeKeyListener(listener, keyOrFilter)
+        ? this.mapEventsManager.removeFilterListener(listener, keyOrFilter)
+        : this.mapEventsManager.removeKeyListener(listener, keyOrFilter)
     }
-    return this.mapEventsHandler.removeFilterListener(listener, null)
+    return this.mapEventsManager.removeFilterListener(listener, null)
   }
 
   /**
@@ -1431,37 +1494,6 @@ export class NamedCacheClient<K = any, V = any>
   }
 
   /**
-   * Initialize event handlers for this client.
-   *
-   */
-  protected setupEventHandlers () {
-    const self = this
-    self.internalEmitter.on(MapLifecycleEvent.DESTROYED, (cacheName: string) => {
-      if (cacheName == self.cacheName) {
-        // noinspection JSIgnoredPromiseFromCall
-        self.mapEventsHandler.closeEventStream()
-        self._destroyed = true
-        self.emit(MapLifecycleEvent.DESTROYED, cacheName) // notify NamedCacheClient level listeners
-      }
-    })
-
-    self.internalEmitter.on(MapLifecycleEvent.TRUNCATED, (cacheName: string) => {
-      if (cacheName == self.cacheName) {
-        self.emit(MapLifecycleEvent.TRUNCATED, cacheName) // notify NamedCacheClient level listeners
-      }
-    })
-
-    self.internalEmitter.on(MapLifecycleEvent.RELEASED, (cacheName: string) => {
-      if (cacheName == self.cacheName) {
-        // noinspection JSIgnoredPromiseFromCall
-        self.mapEventsHandler.closeEventStream()
-        self._released = true
-        self.emit(MapLifecycleEvent.RELEASED, cacheName, this.serializer.format) // notify NamedCacheClient level listeners
-      }
-    })
-  }
-
-  /**
    * Resolve a promise.
    *
    * @param resolve  resolution callback handler
@@ -1518,5 +1550,200 @@ export class NamedCacheClient<K = any, V = any>
         reject(e)
       })
     })
+  }
+}
+
+export class NamedCacheClientV1<K = any, V = any>
+    extends BaseNamedCacheClient<K, V>
+    implements NamedCache<K, V>{
+
+  private requestFactory: RequestFactoryV1<K, V>
+  private client: ProxyServiceClient
+  private _mapEventsManager: MapEventsManager<K, V> | null = null
+
+  /**
+   * Create a new NamedCacheClient with the specified address and cache name.
+   *
+   * @param cacheName   the name of the coherence NamedCache
+   * @param session     the session with the Coherence cluster
+   * @param serializer  the serializer used to ser/deser messages
+   */
+  constructor (cacheName: string, session: Session, serializer: Serializer) {
+
+    super(cacheName, session, serializer)
+    // TODO wire in timeout
+    this.requestFactory = new RequestFactoryV1(this.cacheName, this.session.scope, this.serializer, 30.0)
+    this.client = new ProxyServiceClient(
+        session.address, // Ignored since we are using a shared Channel
+        session.channelCredentials,
+        session.clientOptions) // shared channel defined here
+
+    // Now open the events channel.
+    // this._mapEventsManager = new MapEventsManager(this as NamedMap<K, V>,
+    //     this.session, this.client, this.serializer, this.internalEmitter)
+
+    // We maintain two separate EventEmitters;
+    //
+    // 1. The NamedCacheClient itself is an EventEmitter that is used by the client / application.
+    //    Any client application that wishes to listen for CacheLifecycle events can simply
+    //    use the ObservableMap interface and register EventListeners. ObservableMap provides
+    //    the 'on()' method that can be used to register Listeners.
+    //
+    // 2. The internalEventEmitter is used by Session and this class for internal purposes. This
+    //    allows any asynchronous communication between Session | NamedCacheClient | MapEventsManager
+    //    to be handled independent of the eventual events seen by the client application.
+    this.setupEventHandlers()
+
+  }
+
+  get ready (): Promise<boolean> {
+    return Promise.resolve(false)
+  }
+
+  getRequestFactory (): RequestFactoryV1<K, V> {
+    return this.requestFactory
+  }
+
+  get active (): boolean {
+    return false
+  }
+
+  get name (): string {
+    return ""
+  }
+
+  get size (): Promise<number> {
+    return Promise.resolve(0)
+  }
+
+  get empty (): Promise<boolean> {
+    return Promise.resolve(false)
+  }
+
+  protected setupEventHandlers() {
+    // Now open the events channel.
+    // TODO update mapeventmanager for v1
+
+    super.setupEventHandlers();
+  }
+
+  protected get mapEventsManager(): event.MapEventsManager<K, V> {
+    return this._mapEventsManager!
+  }
+
+  addIndex(extractor: extractor.ValueExtractor, ordered?: boolean, comparator?: util.Comparator): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  addMapListener(listener: event.MapListener<K, V>, keyOrFilter?: filter.Filter | K, isLite?: boolean): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  aggregate<R = any> (kfa: Iterable<K> | Filter | EntryAggregator<K, V, R>, agg?: EntryAggregator<K, V, R>): Promise<any> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  clear(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  delete(key: K): Promise<V | null> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  destroy(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  entries (filter?: Filter, comp?: Comparator): Promise<RemoteSet<MapEntry<K, V>>> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, thisArg?: any): Promise<void>
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, keys: Iterable<K>, thisArg?: any): Promise<void>
+  forEach (action: (value: V, key: K, map: NamedMap<K, V>) => void, filter: filter.Filter, thisArg?: any): Promise<void>
+  forEach (action: ((value: V, key: K, map: NamedMap<K, V>) => void), keysOrFilter?: Iterable<K> | filter.Filter, thisArg?: any): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  get(key: K): Promise<V | null> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  getAll(keys: Iterable<K>): Promise<Map<K, V>> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  getOrDefault(key: K, defaultValue: V): Promise<V | null> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  has(key: K): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  hasEntry(key: K, value: V): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  hasValue(value: V): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  invoke<R>(key: K, processor: processor.EntryProcessor<K, V, R>): Promise<R | null> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  invokeAll<R = any> (keysOrFilterOrProcessor: Iterable<K> | Filter | EntryProcessor<K, V, R>, processor?: EntryProcessor<K, V, R>): Promise<Map<K, R>> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  keys(): Promise<util.RemoteSet<K>>;
+  keys (filter?: Filter): Promise<RemoteSet<K>> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  release(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  removeIndex(extractor: extractor.ValueExtractor): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  removeMapListener(listener: event.MapListener<K, V>, keyOrFilter?: filter.MapEventFilter<K, V> | K): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  removeMapping(key: K, value: V): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  replace(key: K, value: V): Promise<V | null> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  replaceMapping(key: K, oldValue: V, newValue: V): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  set (key: K, value: V, ttl?: number): Promise<V> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  setAll(map: Map<K, V>): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  setIfAbsent (key: K, value: V, ttl?: number): Promise<V> {
+    return new Promise(() => { Promise.resolve() })
+  }
+
+  truncate(): Promise<void> {
+    return Promise.resolve(undefined);
+  }
+
+  values (filter?: Filter, comparator?: Comparator): Promise<RemoteSet<V>> {
+    return new Promise(() => { Promise.resolve() })
   }
 }

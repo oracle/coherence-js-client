@@ -1351,7 +1351,7 @@ export namespace util {
       return proxyRequest
     }
 
-    initSubChannel(scope: string = "",
+    static initSubChannel(scope: string = "",
                    format: string = "json",
                    protocol: string = "CacheService",
                    protocolVersion: number = 1,
