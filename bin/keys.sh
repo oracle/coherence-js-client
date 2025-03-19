@@ -39,7 +39,7 @@ echo Generate Guardians CA certificate:
 echo "${CAPASS}" | openssl req -passin stdin -new -x509 -days 3650 \
     -reqexts SAN \
     -config <(cat "${SSL_CNF}" \
-        <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,DNS:127.0.0.1\nextendedKeyUsage=any")) \
+        <(printf "\n[SAN]\nsubjectAltName=DNS:localhost,DNS:127.0.0.1\nextendedKeyUsage=serverAuth,clientAuth")) \
     -key "${CERTS_DIR}"/guardians-ca.key \
     -out "${CERTS_DIR}"/guardians-ca.crt \
     -subj "/CN=${COMPUTER_NAME}" # guardians-ca.crt is a trustCertCollectionFile
