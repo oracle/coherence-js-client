@@ -11,7 +11,7 @@ the network transport.
 * Registration of listeners to be notified of map mutations
 
 ### Requirements
-* Coherence CE versions `22.06`, `14.1.2-0-0`, `24.09` or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
+* Coherence CE versions `22.06`, `14.1.2-0-0`, `25.03 or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
 * Node `18.15.x` or later
 * NPM `9.x` or later
 
@@ -20,7 +20,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:24.09.3
+docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:25.03
 ```
 
 or to save some keystrokes/time, use the included npm script, `coh-up` to start a two-member Cluster with the gRPC port at 1408"
@@ -29,10 +29,10 @@ npm run coh-up
 ```
 
 **Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.11`).
-To use a later Coherence version, such as `24.09.3`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+To use a later Coherence version, such as `25.03`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash
-COHERENCE_VERSION=24.09.3 npm run coh-up
+COHERENCE_VERSION=25.03 npm run coh-up
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
@@ -51,8 +51,8 @@ project's `package.json`:
 
 ### Compatibility with Java Types
 The following table provides a listing of mappings between Java types and Javascript types when working with
-Coherence `24.09` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
-using `24.09` if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
+Coherence `25.03` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
+using `25.03` if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
 
 | Java Type            | JavascriptType         |
 |----------------------|------------------------|
