@@ -38,6 +38,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
     - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
+    - run: curl -L "https://github.com/docker/compose/releases/download/v2.36./docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
     - run: npm install
     - run: npm run compile
@@ -45,6 +46,7 @@ jobs:
     - name: Run Coherence Server
       shell: bash
       run: |
+        export PATH=$PWD:$PATH
         export COHERENCE_VERSION=${{ matrix.coherence-version }}
         curl -sL https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh | bash
         cohctl version
