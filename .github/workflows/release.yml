@@ -35,6 +35,8 @@ jobs:
       - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
       - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
       - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
+      - run: curl -L "https://github.com/docker/compose/releases/download/v2.36./docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
+      - run: chmod 700 ./docker-compose
       - run: npm install
       # run unit tests
       - run: COHERENCE_VERSION=22.06.11 npm run test-cycle
