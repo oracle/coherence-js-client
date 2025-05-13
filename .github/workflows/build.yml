@@ -42,6 +42,7 @@ jobs:
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
     - run: curl -L "https://github.com/docker/compose/releases/download/v2.36./docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
     - run: chmod 700 ./docker-compose
+    - run: which docker-compose
     - run: export PATH=$PWD:$PATH
     # install project deps
     - run: npm install
