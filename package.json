@@ -21,7 +21,7 @@
     "@types/google-protobuf": "^3.15",
     "glob-parent": "^6.0",
     "grpc_tools_node_protoc_ts": "^5.3",
-    "mocha": "^11.4",
+    "mocha": "^11.5",
     "nyc": "^15.1",
     "source-map-support": "^0.5",
     "ts-node": "^10.9",
