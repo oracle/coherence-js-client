@@ -14,7 +14,7 @@
     "@grpc/proto-loader": "^0.7",
     "@grpc/grpc-js": "^1.13",
     "google-protobuf": "^3.21",
-    "decimal.js": "^10.5"
+    "decimal.js": "^10.6"
   },
   "devDependencies": {
     "grpc-tools": "^1.13",
