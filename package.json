@@ -11,7 +11,7 @@
   ],
   "repository": "https://github.com/oracle/coherence-js-client",
   "dependencies": {
-    "@grpc/proto-loader": "^0.7",
+    "@grpc/proto-loader": "^0.8",
     "@grpc/grpc-js": "^1.13",
     "google-protobuf": "^3.21",
     "decimal.js": "^10.6"
