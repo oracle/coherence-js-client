@@ -12,7 +12,7 @@ the network transport.
 
 ### Requirements
 * Coherence CE versions `22.06`, `14.1.2-0-0`, `25.03` or later (or equivalent non-open source editions) with a configured [gRPC Proxy](https://docs.oracle.com/en/middleware/standalone/coherence/14.1.1.2206/develop-remote-clients/using-coherence-grpc-server.html)
-* Node `18.15.x` or later
+* Node `20.19.x` or later
 * NPM `9.x` or later
 
 ### Usage
@@ -20,7 +20,7 @@ the network transport.
 Before testing the library, you must ensure a Coherence cluster is available.  For local development, we recommend using the Coherence CE Docker image; it contains everything necessary for the client to operate correctly.
 
 ```bash
-docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:25.03.1
+docker run -d -p 1408:1408 ghcr.io/oracle/coherence-ce:25.03.2
 ```
 
 or to save some keystrokes/time, use the included npm script, `coh-up` to start a two-member Cluster with the gRPC port at 1408"
@@ -28,11 +28,11 @@ or to save some keystrokes/time, use the included npm script, `coh-up` to start 
 npm run coh-up
 ```
 
-**Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.11`).
-To use a later Coherence version, such as `25.03.1`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
+**Important!** When calling `coh-up` or `coh-down`, the LTS version of Coherence will be used (`22.06.12`).
+To use a later Coherence version, such as `25.03.2`, prefix the calls with, or export `COHERENCE_VERSION=<desired-version>`.
 For example:
 ```bash
-COHERENCE_VERSION=25.03.1 npm run coh-up
+COHERENCE_VERSION=25.03.2 npm run coh-up
 ```
 
 For more details on the image, see the [documentation](https://github.com/oracle/coherence/tree/master/prj/coherence-docker).
@@ -54,10 +54,10 @@ The following table provides a listing of mappings between Java types and Javasc
 Coherence `25.03` or later.  If using Coherence `22.06.x`, these types will be returned as Number.  It is recommended
 using `25.03` if intentionally using `java.math.BigInteger` or `java.math.BigDecimal` as part of your application.
 
-| Java Type            | JavascriptType         |
-|----------------------|------------------------|
-| java.math.BigInteger | BigInt (ECMA standard) |
-| java.math.BigDecimal | Decimal ([decimal.js](https://www.npmjs.com/package/decimal.js))   |
+| Java Type            | JavascriptType                                                   |
+|----------------------|------------------------------------------------------------------|
+| java.math.BigInteger | BigInt (ECMA standard)                                           |
+| java.math.BigDecimal | Decimal ([decimal.js](https://www.npmjs.com/package/decimal.js)) |
 
 ### Examples
 

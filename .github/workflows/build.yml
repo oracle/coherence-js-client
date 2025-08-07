@@ -27,8 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
-        coherence-version: [22.06.12, 14.1.2-0-2, 25.03.1]
+        node-version: [20.x, 22.x, 24.x]
+        coherence-version: [22.06.12, 14.1.2-0-2, 25.03.2]
 
     steps:
     - uses: actions/checkout@v4
@@ -40,6 +40,8 @@ jobs:
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
     - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
+    # print version of typescript
+    - run: npx tsc -v
     # install project deps
     - run: npm install
     # run tests
