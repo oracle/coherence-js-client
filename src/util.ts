@@ -162,11 +162,11 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    entries (): IterableIterator<[K, V]> {
+    entries (): MapIterator<[K, V]> {
       return new EntryIterator(this.buckets)
     }
 
-    values (): IterableIterator<V> {
+    values (): MapIterator<V> {
       return new ValueIterator(this.buckets)
     }
 
@@ -175,7 +175,7 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    keys (): IterableIterator<K> {
+    keys (): MapIterator<K> {
       return new KeyIterator(this.buckets)
     }
 
@@ -215,7 +215,7 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    [Symbol.iterator] (): IterableIterator<[K, V]> {
+    [Symbol.iterator] (): MapIterator<[K, V]> {
       return new EntryIterator(this.buckets)
     }
 
@@ -317,7 +317,7 @@ export namespace util {
   /**
    * {@link IterableIterator} implementation for {@link HashMap} entries.
    */
-  class EntryIterator<K, V> implements IterableIterator<[K, V]> {
+  class EntryIterator<K, V> implements MapIterator<[K, V]> {
 
     /**
      * The buckets from the map this iterator will be processing.
@@ -333,6 +333,7 @@ export namespace util {
      * The current index within the bucket.
      */
     protected bucketContentsIdx: number = 0
+
 
     /**
      * Constructs a new `EntryIterator`.
@@ -363,9 +364,14 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    [Symbol.iterator] (): IterableIterator<[K, V]> {
+    [Symbol.iterator] (): MapIterator<[K, V]> {
       return this
     }
+
+    /**
+     * @inheritDoc
+     */
+    [Symbol.dispose] (): void {}
 
     /**
      * Return the iteration result appropriate to this iterator type.
@@ -380,7 +386,7 @@ export namespace util {
   /**
    * {@link IterableIterator} implementation for {@link HashMap} keys.
    */
-  class KeyIterator<K> implements IterableIterator<K> {
+  class KeyIterator<K> implements MapIterator<K> {
 
     /**
      * The wrapped {@link EntryIterator}.
@@ -410,15 +416,20 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    [Symbol.iterator] (): IterableIterator<K> {
+    [Symbol.iterator] (): MapIterator<K> {
       return this
     }
+
+   /**
+    * @inheritDoc
+    */
+   [Symbol.dispose] (): void {}
   }
 
   /**
    * {@link IterableIterator} implementation for {@link HashMap} values.
    */
-  class ValueIterator<V> implements IterableIterator<V> {
+  class ValueIterator<V> implements MapIterator<V> {
 
     /**
      * The wrapped {@link EntryIterator}.
@@ -448,9 +459,14 @@ export namespace util {
     /**
      * @inheritDoc
      */
-    [Symbol.iterator] (): IterableIterator<V> {
+    [Symbol.iterator] (): MapIterator<V> {
       return this
     }
+
+    /**
+     * @inheritDoc
+     */
+    [Symbol.dispose] (): void {}
   }
 
   /**

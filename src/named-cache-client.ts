@@ -519,7 +519,7 @@ export interface NamedMap<K, V> {
    *
    * Unlike the {@link #entrySet()} method, the set returned by this method
    * may not be backed by the map, so changes to the set may not be reflected
-   * in the map, and vice-versa.
+   * in the map, and vice versa.
    *
    * @param filter      the {@link filter.Filter} object representing the criteria that the
    *                    entries of this map should satisfy
@@ -550,7 +550,7 @@ export interface NamedMap<K, V> {
   /**
    * Returns a Set view of the values contained in this map.
    * The collection is backed by the map, so changes to the map are
-   * reflected in the collection, and vice-versa.  If the map is
+   * reflected in the collection, and vice versa.  If the map is
    * modified while an iteration over the collection is in progress
    * (except through the iterator's own `remove` operation),
    * the results of the iteration are undefined.
