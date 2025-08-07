@@ -40,10 +40,10 @@ jobs:
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
     - run: unzip protoc-22.2-linux-x86_64.zip -d /tmp/grpc
     - run: echo "/tmp/grpc/bin" >> $GITHUB_PATH
-    # print version of typescript
-    - run: npx tsc -v
     # install project deps
     - run: npm install
+    # print version of typescript
+    - run: npx tsc -v
     # run tests
     - run: COHERENCE_VERSION=${{ matrix.coherence-version }} npm run test-cycle
     # run tests using TLS
