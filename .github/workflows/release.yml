@@ -39,6 +39,7 @@ jobs:
       # run unit tests
       - run: COHERENCE_VERSION=22.06.12 npm run test-cycle
       - run: COHERENCE_VERSION=25.03.2 npm run test-cycle
+      - run: COHERENCE_VERSION=14.1.2-0-3 npm run test-cycle
       - run: npm install --no-save typedoc
       # generate dist which runs other tasks
       - run: npm run dist
