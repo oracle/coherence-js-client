@@ -26,7 +26,7 @@ jobs:
           ref: ${{ github.event.release.target_commitish }}
       # install Node.js
       - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20.19.x
           # Specifies the registry, this field is required!
