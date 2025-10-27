@@ -62,7 +62,7 @@ jobs:
 
     - name: Archive production artifacts
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}
         path: ~/.cohctl/logs/*.*.log

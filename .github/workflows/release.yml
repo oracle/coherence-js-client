@@ -49,7 +49,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_KEY }}
       - name: Archive Failure Logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm.log
           path: /home/runner/.npm/_logs/*
