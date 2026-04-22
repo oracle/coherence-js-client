@@ -1,4 +1,4 @@
-# Copyright 2025, Oracle Corporation and/or its affiliates.  All rights reserved.
+# Copyright 2025, 2026, Oracle Corporation and/or its affiliates.  All rights reserved.
 # Licensed under the Universal Permissive License v 1.0 as shown at
 # https://oss.oracle.com/licenses/upl.
 
@@ -19,6 +19,10 @@ on:
       - opened
     branches:
     - '*'
+
+permissions:
+  contents: read
+
 jobs:
   build:
 
@@ -31,9 +35,9 @@ jobs:
         coherence-version: [22.06.12, 14.1.2-0-3, 25.03.2]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
       with:
         node-version: ${{ matrix.node-version }}
     - run: curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v22.2/protoc-22.2-linux-x86_64.zip"
@@ -44,9 +48,16 @@ jobs:
 
     - name: Run Coherence Server
       shell: bash
+      env:
+        COHCTL_INSTALL_URL: https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh
+        COHCTL_INSTALL_SHA256: 45ac74a3d9e5fbe8e7f4d412e8a04a56d3cf6e0670f127d9ad0d8a71ce09e27c
       run: |
         export COHERENCE_VERSION=${{ matrix.coherence-version }}
-        curl -sL https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh | bash
+        install_script="$(mktemp)"
+        trap 'rm -f "$install_script"' EXIT
+        curl -fsSL "$COHCTL_INSTALL_URL" -o "$install_script"
+        echo "${COHCTL_INSTALL_SHA256}  ${install_script}" | sha256sum -c -
+        bash "$install_script"
         cohctl version
         cohctl set profile grpc-cluster1 -v "-Dcoherence.grpc.server.port=10000" -y
         cohctl create cluster grpc-cluster1 -P grpc-cluster1 -r 1 -v ${{ matrix.coherence-version }} -y -a coherence-grpc-proxy
@@ -62,7 +73,7 @@ jobs:
 
     - name: Archive production artifacts
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: save-log-file-${{ matrix.node-version }}-${{ matrix.coherence-version }}
         path: ~/.cohctl/logs/*.*.log
