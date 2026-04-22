@@ -48,9 +48,16 @@ jobs:
 
     - name: Run Coherence Server
       shell: bash
+      env:
+        COHCTL_INSTALL_URL: https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh
+        COHCTL_INSTALL_SHA256: 45ac74a3d9e5fbe8e7f4d412e8a04a56d3cf6e0670f127d9ad0d8a71ce09e27c
       run: |
         export COHERENCE_VERSION=${{ matrix.coherence-version }}
-        curl -sL https://raw.githubusercontent.com/oracle/coherence-cli/main/scripts/install.sh | bash
+        install_script="$(mktemp)"
+        trap 'rm -f "$install_script"' EXIT
+        curl -fsSL "$COHCTL_INSTALL_URL" -o "$install_script"
+        echo "${COHCTL_INSTALL_SHA256}  ${install_script}" | sha256sum -c -
+        bash "$install_script"
         cohctl version
         cohctl set profile grpc-cluster1 -v "-Dcoherence.grpc.server.port=10000" -y
         cohctl create cluster grpc-cluster1 -P grpc-cluster1 -r 1 -v ${{ matrix.coherence-version }} -y -a coherence-grpc-proxy
