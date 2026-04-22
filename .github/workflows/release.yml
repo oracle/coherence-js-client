@@ -14,6 +14,9 @@ on:
     # This specifies that the build will be triggered when we publish a release
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
 

@@ -19,6 +19,10 @@ on:
       - opened
     branches:
     - '*'
+
+permissions:
+  contents: read
+
 jobs:
   build:
 
