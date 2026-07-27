@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Macaron check-github-actions policy
-        uses: oracle/macaron@b31acfe389133a5587d9639063ec70cb84e7bc47
+        uses: oracle/macaron@794eec32782979f577efb5ff71d585f683a3550f
         with:
           repo_path: https://github.com/${{ github.repository }}
           policy_file: check-github-actions
